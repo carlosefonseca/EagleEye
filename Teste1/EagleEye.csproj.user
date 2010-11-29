@@ -1,0 +1,8 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <StartArguments>C:\Fotos\smallset</StartArguments>
+    <StartWorkingDirectory>C:\Documents and Settings\Administrator\Desktop\Stuff\Teste1\Teste1\</StartWorkingDirectory>
+    <StartAction>Program</StartAction>
+    <StartProgram>C:\Documents and Settings\Administrator\Desktop\Stuff\Teste1\Teste1\bin\Debug\Teste1.exe</StartProgram>
+  </PropertyGroup>
+</Project>

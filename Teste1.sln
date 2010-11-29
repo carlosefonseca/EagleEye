@@ -1,0 +1,61 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EagleEye", "Teste1\EagleEye.csproj", "{6A7B858C-D506-4804-A43D-EB5D01C96319}"
+	ProjectSection(ProjectDependencies) = postProject
+		{3475D740-F00E-4087-916D-9CD2145462F4} = {3475D740-F00E-4087-916D-9CD2145462F4}
+		{10B77271-4903-4FD5-A0A7-650F09D1B86B} = {10B77271-4903-4FD5-A0A7-650F09D1B86B}
+		{684FE77A-C318-4325-964E-85B16C6E94B2} = {684FE77A-C318-4325-964E-85B16C6E94B2}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EagleEye.Plugins.FeatureExtraction", "EagleEye.Plugins.FeatureExtraction\EagleEye.Plugins.FeatureExtraction.csproj", "{684FE77A-C318-4325-964E-85B16C6E94B2}"
+	ProjectSection(ProjectDependencies) = postProject
+		{47B8BF32-A83D-419E-9ACA-8D5857808B74} = {47B8BF32-A83D-419E-9ACA-8D5857808B74}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GPS", "GPS\GPS.csproj", "{3475D740-F00E-4087-916D-9CD2145462F4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "Common\Common.csproj", "{47B8BF32-A83D-419E-9ACA-8D5857808B74}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenCV", "OpenCV\OpenCV.csproj", "{10B77271-4903-4FD5-A0A7-650F09D1B86B}"
+	ProjectSection(ProjectDependencies) = postProject
+		{1D3D2FD4-C146-40C9-A671-52AFD3FB0DBD} = {1D3D2FD4-C146-40C9-A671-52AFD3FB0DBD}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenCVTest", "OpenCVTest\OpenCVTest.csproj", "{1D3D2FD4-C146-40C9-A671-52AFD3FB0DBD}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6A7B858C-D506-4804-A43D-EB5D01C96319}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6A7B858C-D506-4804-A43D-EB5D01C96319}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6A7B858C-D506-4804-A43D-EB5D01C96319}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6A7B858C-D506-4804-A43D-EB5D01C96319}.Release|Any CPU.Build.0 = Release|Any CPU
+		{684FE77A-C318-4325-964E-85B16C6E94B2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{684FE77A-C318-4325-964E-85B16C6E94B2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{684FE77A-C318-4325-964E-85B16C6E94B2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{684FE77A-C318-4325-964E-85B16C6E94B2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3475D740-F00E-4087-916D-9CD2145462F4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3475D740-F00E-4087-916D-9CD2145462F4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3475D740-F00E-4087-916D-9CD2145462F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3475D740-F00E-4087-916D-9CD2145462F4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{47B8BF32-A83D-419E-9ACA-8D5857808B74}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{47B8BF32-A83D-419E-9ACA-8D5857808B74}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{47B8BF32-A83D-419E-9ACA-8D5857808B74}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{47B8BF32-A83D-419E-9ACA-8D5857808B74}.Release|Any CPU.Build.0 = Release|Any CPU
+		{10B77271-4903-4FD5-A0A7-650F09D1B86B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{10B77271-4903-4FD5-A0A7-650F09D1B86B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{10B77271-4903-4FD5-A0A7-650F09D1B86B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{10B77271-4903-4FD5-A0A7-650F09D1B86B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1D3D2FD4-C146-40C9-A671-52AFD3FB0DBD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1D3D2FD4-C146-40C9-A671-52AFD3FB0DBD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1D3D2FD4-C146-40C9-A671-52AFD3FB0DBD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1D3D2FD4-C146-40C9-A671-52AFD3FB0DBD}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
