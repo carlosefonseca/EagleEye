@@ -66,4 +66,7 @@
   <Target Name="AfterBuild">
   </Target>
   -->
+  <PropertyGroup>
+    <PostBuildEvent>move "$(TargetPath)" "$(SolutionDir)App\plugins\"</PostBuildEvent>
+  </PropertyGroup>
 </Project>

@@ -33,6 +33,10 @@ namespace EEPlugin {
 					Prepare();
 				}
 				foreach (EagleEye.Common.Image i in ic.ToList()) {
+					if (PluginIndex.ContainsKey(i.id)) {
+						Console.WriteLine("Skipping " + i.path);
+						continue;
+					}
 					Console.Write("Face Detecting " + i.path + "... ");
 					Rectangle[] result = RunDetection(i.path);
 					PluginIndex.Add(i.id, result);
@@ -58,6 +62,8 @@ namespace EEPlugin {
 
 		public String ImageInfo(EagleEye.Common.Image i) {
 			if (PluginIndex.ContainsKey(i.id)) {
+				Rectangle[] faces = PluginIndex[i.id];
+				if (faces == null) return "No faces.";
 				int n = PluginIndex[i.id].Length;
 				return n + " face" + (n == 1 ? "" : "s");
 			}
@@ -96,7 +102,9 @@ namespace EEPlugin {
 			if (txt == "none") {
 				return null;
 			}
-			string[] txts = txt.Split(";".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+			char[] chars = new char[1];
+			chars[0]=';';
+			string[] txts = txt.Split(chars, StringSplitOptions.RemoveEmptyEntries);
 			Rectangle[] faces = new Rectangle[txts.Length];
 			int i = 0;
 			foreach (string t in txts) {
@@ -107,6 +115,7 @@ namespace EEPlugin {
 				int h = int.Parse(ts[7]);
 				Rectangle r = new Rectangle(x, y, w, h);
 				faces[i] = r;
+				i++;
 			}
 			return faces;
 		}
