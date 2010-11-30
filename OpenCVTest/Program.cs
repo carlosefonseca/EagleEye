@@ -13,35 +13,37 @@ using System.Diagnostics;
 namespace OpenCVTest {
 	class Program {
 		const string fdfile = "haarcascade_frontalface_alt_tree.xml";
-		const string asmName = "OpenCVTest.bin.Debug";
+		const string asmName = "OpenCVTest.EmguCV";
 		const int smallSize = 1500;
 		const bool DEBUG = false;
-		
-		private static string fullfdf;
+
+		private static string fullfdf, fdfres;
 		private static HaarCascade face;
 		
 		static void Main(string[] a) {
-
-			//foreach (string ass in Assembly.GetExecutingAssembly().GetManifestResourceNames())
-			//    Console.WriteLine(ass);
-
-
+			#region Load Embeded Libs
+			foreach (string asm in Assembly.GetExecutingAssembly().GetManifestResourceNames()) {
+				if (asm.Contains(fdfile)) fdfres = asm;
+				if (DEBUG) Console.WriteLine(asm);
+			}
+			
 			AppDomain.CurrentDomain.AssemblyResolve += (sender, args) => {
 				String resourceName = asmName + "." + new AssemblyName(args.Name).Name + ".dll";
-				//Console.WriteLine("Trying to find " + resourceName);
+//				Console.WriteLine("Trying to find " + resourceName);
 				using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resourceName)) {
 					Byte[] assemblyData = new Byte[stream.Length];
 					stream.Read(assemblyData, 0, assemblyData.Length);
 					return Assembly.Load(assemblyData);
 				}
 			};
+			#endregion Load Embeded Libs
 
 			string currDir = Path.GetDirectoryName(Assembly.GetAssembly(typeof(Program)).CodeBase);
 			currDir = currDir.Substring(6);
 			fullfdf = currDir + "\\" + fdfile;
 
 			if (!File.Exists(fullfdf)) {
-				var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(asmName + "." + fdfile);
+				var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(fdfres);
 				Byte[] assemblyData = new Byte[stream.Length];
 				stream.Read(assemblyData, 0, assemblyData.Length);
 				FileStream fd = new FileStream(fullfdf, FileMode.Create);
@@ -106,6 +108,7 @@ namespace OpenCVTest {
 			string o = "";
 			foreach (MCvAvgComp f in facesDetected[0]) {
 				o += f.rect.ToString() + ";";
+#region NIU
 				/*
 				//draw the face detected in the 0th (gray) channel with blue color
 				image.Draw(f.rect, new Bgr(Color.Blue), 2);
@@ -125,6 +128,7 @@ namespace OpenCVTest {
 					eyeRect.Offset(f.rect.X, f.rect.Y);
 					image.Draw(eyeRect, new Bgr(Color.Red), 2);
 				}*/
+#endregion NIU
 			}
 			return (o == "" ? "none" : o);
 		}

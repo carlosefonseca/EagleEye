@@ -70,40 +70,10 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="bin\Debug\cv210.dll" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="bin\Debug\cvaux210.dll" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="bin\Debug\cvextern.dll" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="bin\Debug\cxcore210.dll" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="bin\Debug\Emgu.CV.DebuggerVisualizers.dll" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="bin\Debug\Emgu.CV.dll" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="bin\Debug\Emgu.CV.ML.dll" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="bin\Debug\Emgu.CV.UI.dll" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="bin\Debug\Emgu.Util.dll" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="bin\Debug\haarcascade_eye.xml" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="bin\Debug\haarcascade_frontalface_alt_tree.xml" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="bin\Debug\zlib.net.dll" />
+    <EmbeddedResource Include="EmguCV\cxcore210.dll" />
+    <EmbeddedResource Include="EmguCV\Emgu.CV.dll" />
+    <EmbeddedResource Include="EmguCV\Emgu.Util.dll" />
+    <EmbeddedResource Include="EmguCV\haarcascade_frontalface_alt_tree.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

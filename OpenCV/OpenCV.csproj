@@ -12,6 +12,7 @@
     <AssemblyName>FaceDetection.eep</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -90,4 +91,8 @@
   <Target Name="AfterBuild">
   </Target>
   -->
+  <PropertyGroup>
+    <PostBuildEvent>move "$(TargetPath)" "$(SolutionDir)App\plugins"
+move "$(TargetDir)FaceDetect.exe" "$(SolutionDir)App\plugins"</PostBuildEvent>
+  </PropertyGroup>
 </Project>

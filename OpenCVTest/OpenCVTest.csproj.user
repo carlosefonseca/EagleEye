@@ -1,8 +1,8 @@
 ﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <StartWorkingDirectory>C:\Documents and Settings\Administrator\Desktop\Stuff\</StartWorkingDirectory>
-    <StartAction>Program</StartAction>
-    <StartProgram>C:\Documents and Settings\Administrator\Desktop\Stuff\Teste1\OpenCVTest\bin\OpenCVTest.exe</StartProgram>
+    <StartWorkingDirectory>C:\Dropbox\tese2\App\plugins\</StartWorkingDirectory>
+    <StartAction>Project</StartAction>
+    <StartProgram>C:\Dropbox\tese2\App\plugins\FaceDetect.exe</StartProgram>
   </PropertyGroup>
   <PropertyGroup>
     <ReferencePath>
