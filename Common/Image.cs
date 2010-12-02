@@ -6,7 +6,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 
 namespace EagleEye.Common {
 	[Serializable]
-	public class Image {
+	public class Image : EEPersistable<Image> {
 		public long id = -1;
 		public string path;
 		public bool exifImported = false;
@@ -82,11 +82,15 @@ namespace EagleEye.Common {
 			memStream.Close();
 		}
 
+		public Image Set(byte[] bytes) {
+			return new Image(bytes);
+		}
+
 		/* 
 		 * Marshall class data members into a single contiguous memory 
 		 * location for the purpose of storing the data in a database.
 		 */
-		public byte[] getBytes() {
+		public byte[] GetBytes() {
 			BinaryFormatter formatter = new BinaryFormatter();
 			MemoryStream memStream = new MemoryStream();
 			try {
@@ -98,6 +102,10 @@ namespace EagleEye.Common {
 				Console.WriteLine("ERRO A SERIALIZAR IMAGEM: " + this.ToString());
 			}
 			return null;
+		}
+
+		public byte[] Key() {
+			return System.Text.Encoding.ASCII.GetBytes(this.id.ToString());
 		}
 
 		#endregion Serialization

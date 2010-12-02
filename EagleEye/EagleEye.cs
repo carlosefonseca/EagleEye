@@ -15,11 +15,12 @@ namespace EagleEye {
 		private static ImageCollection images;
 		private static Persistence persistence;
 		private static PluginManager PlugMan;
+		private static LibraryManager LibMan;
 
 		private static string PluginDir = "plugins/";
+		private static string LibraryDir = "EagleEyeDB";
 
 		static void Main(string[] a) {
-			Console.WriteLine("Yeloow");
 			#region Load Embeded Libs
 			foreach (string ass in Assembly.GetExecutingAssembly().GetManifestResourceNames())
 				Console.WriteLine(ass);
@@ -35,51 +36,33 @@ namespace EagleEye {
 			};
 			#endregion Load Embeded Libs
 
+			Console.Write("Folder for DB? [.\\EagleEyeDB\\] ");
+			string buf = Console.ReadLine();
+			if (buf != "") LibraryDir = buf;
+			LibMan = LibraryManager.Init(LibraryDir);
 
-
-			persistence = Persistence.Get();
-			string tmp = "";
-			if (persistence.DbExists()) {
-				Console.Write("Load from DB? [y/n] ");
-				do {
-					tmp = Console.ReadLine();
-				} while (tmp != "y" && tmp != "n");
-			}
-			if (tmp == "y") {
-				persistence.read();
-				images = persistence.ReadCollection();
-			} else {
-				String dir;
-				if (a.Length == 1) {
-					dir = a[0];
-					Console.WriteLine("Processing " + dir);
-					images = new ImageCollection(ExifToolWrapper.CrawlDir(dir));
-					Console.WriteLine(images.Count() + " images in Mem.");
-					//SaveCollection();
-				} else {
-					Console.WriteLine("Directory needed");
-					return;
-				}
-			}
 			PlugMan = PluginManager.Get();
 			PlugMan.LoadPlugins(PluginDir);
+
 			CommandLine();
+		}
+
+		private static void CreateLib(string LibraryDir) {
+
 		}
 
 		public static void CommandLine() {
 			string command;
-			string cmds = @"Commands: show | list | sort | plugin | save | exit";
+			string cmds = @"Commands: show | list | sort | adddir | plugin | save | exit";
 			Console.WriteLine(cmds);
 			do {
 				command = Console.ReadLine();
-				switch (command) {
-					case "show":
-						Console.Write("Image Id: ");
-						int id = int.Parse(Console.ReadLine());
-						Console.WriteLine(ShowImageInfo(images.Get(id)));
-						break;
+				string[] split = command.Split(' ');
+				switch (split[0]) {
+					case "show": CmdShowImageInfo(split); break;
 					case "list": Console.WriteLine(images.ToStringWithExif("CreateDate")); break;
-					case "sort": Sort(); break;
+					case "sort": CmdSort(split); break;
+					case "adddir": AddDir(split); break;
 					case "plugin": PlugMan.RunPlugin(images); break;
 					case "save": SaveCollection(); break;
 					case "exit": Console.WriteLine("Bye"); break;
@@ -88,9 +71,14 @@ namespace EagleEye {
 			} while (command != "exit");
 		}
 
-		public static void Sort() {
-			Console.WriteLine("Sort by exif tag (Ex: CreateDate, Make, Model):");
-			string key = Console.ReadLine();
+		public static void CmdSort(string[] cmd) {
+			string key;
+			if (cmd.Length < 2) {
+				Console.WriteLine("Sort by exif tag (Ex: CreateDate, Make, Model):");
+				key = Console.ReadLine();
+			} else {
+				key = cmd[1];
+			}
 			SortedImageCollection sortedImages = images.ToSortable().SortByExif(key);
 			Console.WriteLine(sortedImages.ToStringWithExif(key));
 			return;
@@ -109,6 +97,33 @@ namespace EagleEye {
 			Console.Write("Save complete. ");
 			persistence.read();
 		}
+
+		public static void AddDir(string[] cmd) {
+			String dir;
+			if (cmd.Length < 2) {
+				Console.Write("Enter a folder with photos: ");
+				dir = Console.ReadLine();
+			} else {
+				dir = cmd[1];
+			}
+			Console.WriteLine("Processing " + dir);
+			images = new ImageCollection(ExifToolWrapper.CrawlDir(dir));
+			Console.WriteLine(images.Count() + " images in Mem.");
+		}
+
+
+		public static void CmdShowImageInfo(string[] cmd) {
+			string idString;
+			if (cmd.Length < 2) {
+				Console.Write("Enter the Image ID: ");
+				idString = Console.ReadLine();
+			} else {
+				idString = cmd[1];
+			}
+			int id = int.Parse(idString);
+			Console.WriteLine(ShowImageInfo(images.Get(id)));
+		}
+
 
 		public static string ShowImageInfo(Image i) {
 			return i.Details() + "\nPlugins:\n" + PlugMan.PluginsInfoForImage(i);
