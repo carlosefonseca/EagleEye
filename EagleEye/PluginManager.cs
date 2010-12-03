@@ -10,7 +10,7 @@ using System.Reflection;
 
 
 namespace EagleEye {
-	class PluginManager {
+	public class PluginManager {
 		#region Singleton
 		private static PluginManager instance;
 
@@ -25,6 +25,7 @@ namespace EagleEye {
 		}
 		#endregion Singleton
 
+		private string DirToLib;
 		private Dictionary<string, EEPluginInterface> plugins;
 
 		public void LoadPlugins(string pluginDir) {
@@ -80,6 +81,24 @@ namespace EagleEye {
 				output += p + " => " + p.ImageInfo(i)+"\n";
 			}
 			return output;
+		}
+
+		public void LoadAll() {
+			if (DirToLib == null) {
+				DirToLib = LibraryManager.Get().path;
+			}
+			foreach (KeyValuePair<string, EEPluginInterface> kv in plugins) {
+				kv.Value.Load(DirToLib);
+			}
+		}
+
+		public void SaveAll() {
+			if (DirToLib == null) {
+				DirToLib = LibraryManager.Get().path;
+			}
+			foreach (KeyValuePair<string,EEPluginInterface> kv in plugins) {
+				kv.Value.Save(DirToLib);
+			}
 		}
 	}
 }

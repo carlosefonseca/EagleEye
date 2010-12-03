@@ -17,5 +17,8 @@ namespace EagleEye.Plugins.FeatureExtraction {
 		String ImageInfo(Image i);
 
 		String ImageToString(Image i);
+
+		void Load(string dir);
+		void Save(string dir);
 	}
 }

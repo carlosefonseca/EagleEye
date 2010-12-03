@@ -34,36 +34,23 @@ namespace EagleEye.Common {
 			btreeDB.Put(new DatabaseEntry(k), new DatabaseEntry(d));
 		}
 
-		public void Put<T>(EEPersistable<T> obj) {
+		public void Put(string key, string obj) {
+			System.Text.Encoding enc = System.Text.Encoding.ASCII;
+			byte[] k = enc.GetBytes(key);
+			byte[] v = enc.GetBytes(obj);
+			Put(k, v);
 		}
-		//Put(obj.
 
 
-
+		public void Put<T>(string key, EEPersistable<T> obj) {
+			System.Text.Encoding enc = System.Text.Encoding.ASCII;
+			byte[] k = enc.GetBytes(key);
+			byte[] v = obj.GetBytes();
+			Put(k, v);
+		}
 
 		/*
 
-				public void WriteCollection(ImageCollection images) {
-					this.InitDB(root + DBImages, true);
-
-					DatabaseEntry key, data;
-
-					foreach (KeyValuePair<long, Image> kv in images.TheDictionary()) {
-						key = new DatabaseEntry();
-						data = new DatabaseEntry();
-
-						try {
-							key.Data = System.Text.Encoding.ASCII.GetBytes(kv.Key.ToString());
-							data.Data = kv.Value.getBytes();
-
-							btreeDB.Put(key, data);
-						} catch {
-							Console.WriteLine("DB ERROR while saving image: " + kv.Value.ToString());
-						}
-					}
-					btreeDB.Close();
-					btreeDB = null;
-				}
 
 				public ImageCollection ReadCollection() {
 					Console.WriteLine("Loading BDB");
@@ -103,9 +90,9 @@ namespace EagleEye.Common {
 						Console.WriteLine(count + " items in DB");
 					}
 				}*/
-
-		public Dictionary<TK, TV> Read<TK,TV>() {
-			Dictionary<string,string> output = new Dictionary<string,string>();
+		/*
+		public Dictionary<TK, TV> Read<TK, TV>() {
+			Dictionary<TK, TV> output = new Dictionary<TK, TV>();
 
 			if (btreeDB == null)
 				throw new Exception("DB Not Initialized");
@@ -119,25 +106,95 @@ namespace EagleEye.Common {
 				if (dbc.Current.Value.Data == null) {
 					Console.WriteLine("#ERRO a ler entrada da BDB");
 				} else {
-					string k, v;
-					Decoder d = System.Text.Encoding.ASCII.GetDecoder();
-					char chars = new char[dbc.Current.Value.Data.Length];
-					int nBytes,nChars;
-					bool completed;
-					d.Convert(dbc.Current.Value.Data,dbc.Current.Value.Data.Length,chars,dbc.Current.Value.Data.Length,true,nBytes,nChars,completed);
-					k = chars.ToString();
+					TK key = ReadField<TK>(dbc.Current.Key.Data);
+					TV val = ReadField<TV>(dbc.Current.Value.Data);
+					output.Add(key, val);
+				}
+			}
+			return output;
+		}
+
+		private T ReadField<T>(byte[] bytes) {
+			T field;
+			Console.WriteLine("IMPLEMENTED INTERFACES\n" + field.GetType().GetInterfaces().ToString());
+			if (field.GetType().Equals(typeof(long))) {
+				System.Text.Encoding enc = System.Text.Encoding.ASCII;
+			} else if (field.GetType().Equals(typeof(string))) {
+				System.Text.Encoding enc = System.Text.Encoding.ASCII;
+				field = enc.GetString(bytes);
+			} else if (field.GetType().GetInterface("EEPersistable")) {
+				(EEPersistable<TV>)field.Read(bytes);
+			} else
+				throw new NotSupportedException("Only strings, longs and EEPersistable types are supported");
+			return field;
+		}*/
+
+		public Dictionary<TK, TV> Read<TK,TV>(ConvertFromBytes<TK> DK, ConvertFromBytes<TV> DV) {
+			Dictionary<TK, TV> output = new Dictionary<TK, TV>();
+
+			if (btreeDB == null)
+				throw new Exception("DB Not Initialized");
+
+			// Acquire a cursor for the database.
+			BTreeCursor dbc;
+			dbc = btreeDB.Cursor();
+
+			// Walk through the database and print out key/data pairs.
+			while (dbc.MoveNext()) {
+				if (dbc.Current.Value.Data == null) {
+					Console.WriteLine("#ERRO a ler entrada da BDB");
+				} else {
+					TK key = DK(dbc.Current.Key.Data);
+					TV val = DV(dbc.Current.Value.Data);
+					output.Add(key, val);
+				}
+			}
+			return output;
+		}
+
+
+
+		public Dictionary<string, string> ReadStrings() {
+			Dictionary<string, string> output = new Dictionary<string, string>();
+
+			if (btreeDB == null)
+				throw new Exception("DB Not Initialized");
+
+			// Acquire a cursor for the database.
+			BTreeCursor dbc;
+			dbc = btreeDB.Cursor();
+
+			// Walk through the database and print out key/data pairs.
+			while (dbc.MoveNext()) {
+				if (dbc.Current.Value.Data == null) {
+					Console.WriteLine("#ERRO a ler entrada da BDB");
+				} else {
+					System.Text.Encoding enc = System.Text.Encoding.ASCII;
+					//byte[] myByteArray = enc.GetBytes("a text string);
+					string k = enc.GetString(dbc.Current.Key.Data);
+					string v = enc.GetString(dbc.Current.Value.Data);
+					output.Add(k, v);
 				}
 			}
 
 			Console.WriteLine("BDB loaded");
-			return collection;
+			return output;
+		}
+
+		public void Put(Image i) {
+			System.Text.Encoding enc = System.Text.Encoding.ASCII;
+			byte[] id = enc.GetBytes(i.id.ToString());
+			Put(id, i.GetBytes());
 		}
 	}
 
 	public interface EEPersistable<T> {
-		byte[] Key();
 		byte[] GetBytes();
 
 		T Set(byte[] bytes);
 	}
+
+	public delegate byte[] ConvertToBytes(Object o);
+
+	public delegate T ConvertFromBytes<T>(byte[] b);
 }

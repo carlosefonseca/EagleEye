@@ -64,7 +64,7 @@ namespace EagleEye {
 					case "sort": CmdSort(split); break;
 					case "adddir": AddDir(split); break;
 					case "plugin": PlugMan.RunPlugin(images); break;
-					case "save": SaveCollection(); break;
+					case "save": LibMan.Save(); break;
 					case "exit": Console.WriteLine("Bye"); break;
 					default: Console.WriteLine("Unkown cmd. " + cmds); break;
 				}
@@ -86,7 +86,7 @@ namespace EagleEye {
 
 
 		public static void SaveCollection() {
-			Console.WriteLine("Saving collection to BerkeleyDB");
+			/*Console.WriteLine("Saving collection to BerkeleyDB");
 			persistence.InitDB("db\\images.db");
 			try {
 				persistence.WriteCollection(images);
@@ -95,7 +95,7 @@ namespace EagleEye {
 				return;
 			}
 			Console.Write("Save complete. ");
-			persistence.read();
+			persistence.read();*/
 		}
 
 		public static void AddDir(string[] cmd) {

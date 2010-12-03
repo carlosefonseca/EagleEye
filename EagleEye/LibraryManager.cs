@@ -12,7 +12,7 @@ namespace EagleEye {
 
 		private LibraryManager() { }
 
-		public LibraryManager Get() {
+		public  static LibraryManager Get() {
 			if (_lib == null) {
 				_lib = new LibraryManager();
 			}
@@ -47,16 +47,17 @@ namespace EagleEye {
 
 		#region Instance Methods
 
-		private string path;
+		public readonly string path;
 		private Dictionary<string, string> settings;
 		public PersistedImageCollection collection;
+		public PluginManager PlugMan;
 		private string LibraryDir = "EagleEyeDB";
 
 
-		private LibraryManager(string dir) { LibraryManager(dir, false); }
+		private LibraryManager(string dir) : this(dir, false) {}
 
 		private LibraryManager(string dir, bool create) {
-			dir = Path.GetDirectoryName(dir);
+			dir = Path.GetFullPath(dir);
 			if (!Directory.Exists(dir)) {
 				Directory.CreateDirectory(dir);
 			}
@@ -71,13 +72,14 @@ namespace EagleEye {
 
 				settings = new Dictionary<string, string>();
 				collection = new PersistedImageCollection(dir + "Images.db");
+				PlugMan = PluginManager.Get();
 
 				Setting("CreateDate", DateTime.Now.ToString());
 			} else {
 				Persistence p = new Persistence(libraryName);
 				p.OpenOrCreate();
-				settings = p.Read<string,string>();
-
+				settings = p.ReadStrings();
+			}
 		}
 
 
@@ -93,5 +95,9 @@ namespace EagleEye {
 
 		#endregion Instance Methods
 
+
+		internal void Save() {
+			throw new NotImplementedException();
+		}
 	}
 }

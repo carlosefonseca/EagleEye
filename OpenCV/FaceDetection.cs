@@ -16,6 +16,7 @@ namespace EEPlugin {
 	public class FaceDetection : EEPluginInterface {
 		//ATENCAO: Valores dos Rectangulos referem-se a uma imagem redimensionada para 1500px de largura
 		private Dictionary<long, Rectangle[]> PluginIndex;
+		private Persistence persistence;
 		#region EEPluginInterface Members
 
 		public void Init() {
@@ -70,6 +71,28 @@ namespace EEPlugin {
 			return "Not analyzed";
 		}
 
+		public void Load(string dir) {
+			persistence = new Persistence(dir);
+			Dictionary<string, string> tmp = persistence.ReadStrings();
+			foreach (KeyValuePair<string, string> kv in tmp) {
+				PluginIndex.Add(long.Parse(kv.Key), ParseRectangles(kv.Value));
+			}
+		}
+
+		public void Save(string dir) {
+			if (persistence == null)
+				persistence = new Persistence(this.Id() + ".eep.db");
+
+			foreach (KeyValuePair<long, Rectangle[]> kv in PluginIndex) {
+				string id = kv.Key.ToString();
+				string facestxt = "";
+				foreach (Rectangle r in kv.Value) {
+					facestxt += r.ToString() + ";";
+				}
+				persistence.Put(id, facestxt);
+			}
+		}
+
 		#endregion EEPluginInterface Members
 
 
@@ -102,8 +125,13 @@ namespace EEPlugin {
 			if (txt == "none") {
 				return null;
 			}
+			Rectangle[] faces = ParseRectangles(txt);
+			return faces;
+		}
+
+		private static Rectangle[] ParseRectangles(string txt) {
 			char[] chars = new char[1];
-			chars[0]=';';
+			chars[0] = ';';
 			string[] txts = txt.Split(chars, StringSplitOptions.RemoveEmptyEntries);
 			Rectangle[] faces = new Rectangle[txts.Length];
 			int i = 0;
