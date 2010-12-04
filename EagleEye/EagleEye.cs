@@ -12,7 +12,7 @@ using System.Diagnostics;
 
 namespace EagleEye {
 	class EagleEye {
-		private static ImageCollection images;
+		private static PersistedImageCollection images;
 		private static Persistence persistence;
 		private static PluginManager PlugMan;
 		private static LibraryManager LibMan;
@@ -41,6 +41,8 @@ namespace EagleEye {
 			if (buf != "") LibraryDir = buf;
 			LibMan = LibraryManager.Init(LibraryDir);
 
+			images = LibMan.collection;
+			
 			PlugMan = PluginManager.Get();
 			PlugMan.LoadPlugins(PluginDir);
 
@@ -107,7 +109,7 @@ namespace EagleEye {
 				dir = cmd[1];
 			}
 			Console.WriteLine("Processing " + dir);
-			images = new ImageCollection(ExifToolWrapper.CrawlDir(dir));
+			images.Add(ExifToolWrapper.CrawlDir(dir));
 			Console.WriteLine(images.Count() + " images in Mem.");
 		}
 

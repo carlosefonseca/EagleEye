@@ -2,14 +2,18 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using BerkeleyDB;
 using System.IO;
+using BerkeleyDB;
+using System.Diagnostics;
+using System.Timers;
 
 namespace EagleEye.Common {
 	public class Persistence {
 		string filename;
 		BTreeDatabase btreeDB;
 		BTreeDatabaseConfig btreeConfig;
+		Timer timer;
+		const double timeout = 1000;
 
 
 		public Persistence(string filename) {
@@ -17,21 +21,42 @@ namespace EagleEye.Common {
 
 			// Configure the database.
 			btreeConfig = new BTreeDatabaseConfig();
-			btreeConfig.Duplicates = DuplicatesPolicy.SORTED;
+			btreeConfig.Duplicates = DuplicatesPolicy.NONE;
 			btreeConfig.ErrorPrefix = filename;
 			btreeConfig.Creation = CreatePolicy.IF_NEEDED;
 			btreeConfig.CacheSize = new CacheInfo(0, 64 * 1024, 1);
 			btreeConfig.PageSize = 8 * 1024;
 		}
 
-		public void OpenOrCreate() {
+		public bool OpenOrCreate() {
+			bool exists = System.IO.File.Exists(filename);
 			btreeDB = BTreeDatabase.Open(filename, btreeConfig);
-			return;
+
+			return exists;
+		}
+
+		private void SetTimer() {
+			Console.WriteLine("Setting timer");
+			timer = new Timer(timeout);
+			timer.Elapsed += new ElapsedEventHandler(timer_Elapsed);
+			timer.AutoReset = false;
+			timer.Start();
+		}
+
+		public void timer_Elapsed(object sender, ElapsedEventArgs e) {
+			timer = null;
+			btreeDB.Sync();
+			//Save();
+			Console.WriteLine("Flushing");
 		}
 
 
-		public void Put(byte[] k, byte[] d) {
+		void Put(byte[] k, byte[] d) {
 			btreeDB.Put(new DatabaseEntry(k), new DatabaseEntry(d));
+			if (timer != null)
+				timer.Interval = timeout;
+			else
+				SetTimer();
 		}
 
 		public void Put(string key, string obj) {
@@ -129,7 +154,7 @@ namespace EagleEye.Common {
 			return field;
 		}*/
 
-		public Dictionary<TK, TV> Read<TK,TV>(ConvertFromBytes<TK> DK, ConvertFromBytes<TV> DV) {
+		public Dictionary<TK, TV> Read<TK, TV>(ConvertFromBytes<TK> DK, ConvertFromBytes<TV> DV) {
 			Dictionary<TK, TV> output = new Dictionary<TK, TV>();
 
 			if (btreeDB == null)
@@ -194,7 +219,7 @@ namespace EagleEye.Common {
 		T Set(byte[] bytes);
 	}
 
-	public delegate byte[] ConvertToBytes(Object o);
+	//public delegate byte[] ConvertToBytes(Object o);
 
-	public delegate T ConvertFromBytes<T>(byte[] b);
+	//public delegate T ConvertFromBytes<T>(byte[] b);
 }

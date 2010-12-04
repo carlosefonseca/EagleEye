@@ -8,7 +8,7 @@ namespace EagleEye.Common {
 	public delegate string ImageToStringDelegate(Image i);
 
 	public class ImageCollection {
-		private Dictionary<long, Image> collection;
+		internal Dictionary<long, Image> collection;
 		private long currId = 0;
 		private SortedImageCollection cachedSortedImageCollection;
 

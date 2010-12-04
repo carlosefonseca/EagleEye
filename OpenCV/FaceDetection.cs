@@ -51,7 +51,7 @@ namespace EEPlugin {
 
 		public String Id() {
 			return "faces";
-		}
+	}	
 
 		public override String ToString() {
 			return "Face Detection";
