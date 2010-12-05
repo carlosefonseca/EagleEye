@@ -6,18 +6,50 @@ using System.IO;
 using BerkeleyDB;
 using System.Diagnostics;
 using System.Timers;
+using System.Drawing;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace EagleEye.Common {
 	public class Persistence {
+		private static string dir;
 		string filename;
 		BTreeDatabase btreeDB;
 		BTreeDatabaseConfig btreeConfig;
 		Timer timer;
 		const double timeout = 1000;
+		public readonly bool existed;
 
+		public static string SetRootFolder(string f) {
+			f = Path.GetFullPath(f);
+			if (!Directory.Exists(f)) {
+				Directory.CreateDirectory(f);
+			}
+			if (!f.EndsWith("\\"))
+				f += "\\";
+			dir = f;
+			return dir;
+		}
 
-		public Persistence(string filename) {
-			this.filename = filename;
+		/// <summary>
+		/// Transforms a filename into a full path and adds the .db extension, if needed
+		/// </summary>
+		/// <param name="filename"></param>
+		/// <returns></returns>
+		public string FullFilename(string filename) {
+			if (dir == null) {
+				throw new Exception("Class var 'dir' must be set first");
+			}
+			if (Path.GetPathRoot(filename) == "") {
+				filename = dir + filename;
+			}
+			if (!filename.EndsWith(".db")) {
+				filename += ".db";
+			}
+			return filename;
+		}
+
+		public Persistence(string fn) {
+			filename = FullFilename(fn);
 
 			// Configure the database.
 			btreeConfig = new BTreeDatabaseConfig();
@@ -26,13 +58,9 @@ namespace EagleEye.Common {
 			btreeConfig.Creation = CreatePolicy.IF_NEEDED;
 			btreeConfig.CacheSize = new CacheInfo(0, 64 * 1024, 1);
 			btreeConfig.PageSize = 8 * 1024;
-		}
 
-		public bool OpenOrCreate() {
-			bool exists = System.IO.File.Exists(filename);
+			existed = System.IO.File.Exists(filename);
 			btreeDB = BTreeDatabase.Open(filename, btreeConfig);
-
-			return exists;
 		}
 
 		private void SetTimer() {
@@ -72,6 +100,12 @@ namespace EagleEye.Common {
 			byte[] k = enc.GetBytes(key);
 			byte[] v = obj.GetBytes();
 			Put(k, v);
+		}
+
+		public void Put(string key, byte[] bytes) {
+			System.Text.Encoding enc = System.Text.Encoding.ASCII;
+			byte[] k = enc.GetBytes(key);
+			Put(k, bytes);
 		}
 
 		/*
@@ -219,7 +253,27 @@ namespace EagleEye.Common {
 		T Set(byte[] bytes);
 	}
 
-	//public delegate byte[] ConvertToBytes(Object o);
+	
+	
+	public delegate T ConvertFromBytes<T>(byte[] bytes);
+	
+	public class Converters {
+		public static ConvertFromBytes<long> ReadLong = delegate(byte[] bytes) {
+			System.Text.Encoding enc = System.Text.Encoding.ASCII;
+			string k = enc.GetString(bytes);
+			return long.Parse(k);
+		};
+		
+		public static ConvertFromBytes<Image> ReadImage = delegate(byte[] bytes) {
+			return new Image(bytes);
+		};
 
-	//public delegate T ConvertFromBytes<T>(byte[] b);
+		public static ConvertFromBytes<Rectangle[]> ReadRectangleArray = delegate(byte[] bytes) {
+			BinaryFormatter formatter = new BinaryFormatter();
+			MemoryStream memStream = new MemoryStream(bytes);
+			Rectangle[] tmp = (Rectangle[])formatter.Deserialize(memStream);
+			memStream.Close();
+			return tmp;
+		};
+	}
 }

@@ -11,6 +11,7 @@ using System.Drawing;
 using System.IO;
 using System.Reflection;
 using System.Diagnostics;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace EEPlugin {
 	public class FaceDetection : EEPluginInterface {
@@ -20,19 +21,26 @@ namespace EEPlugin {
 		#region EEPluginInterface Members
 
 		public void Init() {
-			if (PluginIndex == null) {
+			persistence = new Persistence(Id() + ".eep");
+			if (persistence.existed) {
+				Load();
+			} else {
 				PluginIndex = new Dictionary<long, Rectangle[]>();
 			}
 		}
 
 		public ImageCollection processImageCollection(ImageCollection ic) {
+			if (PluginIndex == null) {
+				PluginIndex = new Dictionary<long, Rectangle[]>();
+			}
+			if (p == null) {
+				Prepare();
+			}
+			if (persistence == null) {
+				persistence = new Persistence(Id() + ".eep");
+			}
 			try {
-				if (PluginIndex == null) {
-					PluginIndex = new Dictionary<long, Rectangle[]>();
-				}
-				if (p == null) {
-					Prepare();
-				}
+
 				foreach (EagleEye.Common.Image i in ic.ToList()) {
 					if (PluginIndex.ContainsKey(i.id)) {
 						Console.WriteLine("Skipping " + i.path);
@@ -41,6 +49,7 @@ namespace EEPlugin {
 					Console.Write("Face Detecting " + i.path + "... ");
 					Rectangle[] result = RunDetection(i.path);
 					PluginIndex.Add(i.id, result);
+					persistence.Put(i.id.ToString(), RectanglesToBytes(result));
 					Console.WriteLine(result != null ? result.Length : 0);
 				}
 			} finally {
@@ -51,7 +60,7 @@ namespace EEPlugin {
 
 		public String Id() {
 			return "faces";
-	}	
+		}
 
 		public override String ToString() {
 			return "Face Detection";
@@ -71,15 +80,12 @@ namespace EEPlugin {
 			return "Not analyzed";
 		}
 
-		public void Load(string dir) {
-			persistence = new Persistence(dir);
-			Dictionary<string, string> tmp = persistence.ReadStrings();
-			foreach (KeyValuePair<string, string> kv in tmp) {
-				PluginIndex.Add(long.Parse(kv.Key), ParseRectangles(kv.Value));
-			}
+		public void Load() {
+			Dictionary<long, Rectangle[]> tmp = persistence.Read<long, Rectangle[]>(Converters.ReadLong, Converters.ReadRectangleArray);
+			PluginIndex = tmp;
 		}
 
-		public void Save(string dir) {
+		public void Save() {
 			if (persistence == null)
 				persistence = new Persistence(this.Id() + ".eep.db");
 
@@ -123,13 +129,13 @@ namespace EEPlugin {
 
 			string txt = reader.ReadLine();
 			if (txt == "none") {
-				return null;
+				return new Rectangle[0];
 			}
 			Rectangle[] faces = ParseRectangles(txt);
 			return faces;
 		}
 
-		private static Rectangle[] ParseRectangles(string txt) {
+		private Rectangle[] ParseRectangles(string txt) {
 			char[] chars = new char[1];
 			chars[0] = ';';
 			string[] txts = txt.Split(chars, StringSplitOptions.RemoveEmptyEntries);
@@ -147,6 +153,25 @@ namespace EEPlugin {
 			}
 			return faces;
 		}
+
+		private byte[] RectanglesToBytes(Rectangle[] rectangles) {
+			BinaryFormatter formatter = new BinaryFormatter();
+			MemoryStream memStream = new MemoryStream();
+			formatter.Serialize(memStream, rectangles);
+			byte[] bytes = memStream.GetBuffer();
+			memStream.Close();
+			return bytes;
+		}
+
+		private Rectangle[] BytesToRectangles(byte[] bytes) {
+			BinaryFormatter formatter = new BinaryFormatter();
+			MemoryStream memStream = new MemoryStream(bytes);
+			Rectangle[] tmp = (Rectangle[])formatter.Deserialize(memStream);
+			memStream.Close();
+			return tmp;
+		}
+
+
 
 		private void Kill() {
 			if (p != null) {

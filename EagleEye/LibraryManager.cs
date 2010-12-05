@@ -32,13 +32,7 @@ namespace EagleEye {
 		/// <param name="LibraryDir">Directory of the Library</param>
 		/// <returns>The library</returns>
 		public static LibraryManager Init(string LibraryDir) {
-			if (Directory.Exists(LibraryDir) && File.Exists(LibraryDir + "\\" + libraryName)) {
-				//LOAD
-				_lib = new LibraryManager(LibraryDir);
-			} else {
-				//CREATE
-				_lib = new LibraryManager(LibraryDir, true);
-			}
+			_lib = new LibraryManager(LibraryDir);
 			return _lib;
 		}
 		#endregion Class Methods
@@ -57,34 +51,15 @@ namespace EagleEye {
 		private LibraryManager(string dir) : this(dir, false) { }
 
 		private LibraryManager(string dir, bool create) {
-			dir = Path.GetFullPath(dir);
-			if (!Directory.Exists(dir)) {
-				Directory.CreateDirectory(dir);
-			}
+			dir = Persistence.SetRootFolder(dir);
 
-			if (!dir.EndsWith("\\"))
-				dir += "\\";
-			path = dir;
-
-			Persistence setts;
-			if (create) {
-				File.Delete(dir + "EagleEye.db");
-				File.Delete(dir + "Images.db");
-
-				//settings = new Dictionary<string, string>();
-				setts = new Persistence(dir + libraryName);
-				setts.OpenOrCreate();
-
-				//Setting("CreateDate", DateTime.Now.ToString());
+			Persistence setts = new Persistence("EagleEye");
+			if (!setts.existed) {
 				setts.Put("CreateDate", DateTime.Now.ToString());
 			} else {
-				setts = new Persistence(dir + libraryName);
-				setts.OpenOrCreate();
 				setts.ReadStrings();
-
-
 			}
-			collection = new PersistedImageCollection(dir + "Images.db");
+			collection = new PersistedImageCollection("Images");
 			PlugMan = PluginManager.Get();
 		}
 

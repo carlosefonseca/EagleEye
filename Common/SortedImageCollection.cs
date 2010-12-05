@@ -20,19 +20,22 @@ namespace EagleEye.Common {
 
 		public string ToStringWithExif(string key) {
 			string txt = "";
-			int max = 50;
-			if (collection.Count < max) {
-				max = collection.Count;
-				for (int i = 0; i < max; i++)
-					txt += collection[i].path + " > " + collection[i].Exif(key).ToString() + "\n";
-			} else {
-				for (int i = 0; i < max / 2; i++)
-					txt += collection[i].path + " > " + collection[i].Exif(key).ToString() + "\n";
-				txt += "...\n";
-				for (int i = collection.Count - max / 2; i < collection.Count; i++)
-					txt += collection[i].path + " > " + collection[i].Exif(key).ToString() + "\n";
+
+			foreach (Image i in collection) {
+				txt += i.id + "\t" + i.path + "\t>  ";
+				if (i.ContainsExif(key)) {
+					txt += i.Exif(key).ToString() + "\n";
+				} else {
+					txt += "[no " + key + "]\n";
+				}
 			}
 			return txt;
+		}
+
+		public SortedImageCollection SortById() {
+			ImageIdComparer c = new ImageIdComparer();
+			collection.Sort(c);
+			return this;
 		}
 
 

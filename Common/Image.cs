@@ -140,9 +140,13 @@ namespace EagleEye.Common {
 
 	public class ImageDateComparer : IComparer<Image> {
 		public int Compare(Image x, Image y) {
-			//return x.Date().CompareTo(y.Date());
 			return x.Exif("CreateDate").ToString().CompareTo(y.Exif("CreateDate").ToString());
+		}
+	}
 
+	public class ImageIdComparer : IComparer<Image> {
+		public int Compare(Image x, Image y) {
+			return x.id.CompareTo(y.id);
 		}
 	}
 }

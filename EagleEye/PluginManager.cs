@@ -88,7 +88,7 @@ namespace EagleEye {
 				DirToLib = LibraryManager.Get().path;
 			}
 			foreach (KeyValuePair<string, EEPluginInterface> kv in plugins) {
-				kv.Value.Load(DirToLib);
+				kv.Value.Load();
 			}
 		}
 
@@ -97,7 +97,7 @@ namespace EagleEye {
 				DirToLib = LibraryManager.Get().path;
 			}
 			foreach (KeyValuePair<string,EEPluginInterface> kv in plugins) {
-				kv.Value.Save(DirToLib);
+				kv.Value.Save();
 			}
 		}
 	}

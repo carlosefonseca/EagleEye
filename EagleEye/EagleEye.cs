@@ -62,7 +62,7 @@ namespace EagleEye {
 				string[] split = command.Split(' ');
 				switch (split[0]) {
 					case "show": CmdShowImageInfo(split); break;
-					case "list": Console.WriteLine(images.ToStringWithExif("CreateDate")); break;
+					case "list": Console.WriteLine(images.ToSortable().SortById().ToStringWithExif("CreateDate")); break;
 					case "sort": CmdSort(split); break;
 					case "adddir": AddDir(split); break;
 					case "plugin": PlugMan.RunPlugin(images); break;
@@ -122,8 +122,18 @@ namespace EagleEye {
 			} else {
 				idString = cmd[1];
 			}
-			int id = int.Parse(idString);
-			Console.WriteLine(ShowImageInfo(images.Get(id)));
+			int id;
+			try {
+				id = int.Parse(idString);
+			} catch {
+				Console.WriteLine("A number please...");
+				return;
+			}
+			try {
+				Console.WriteLine(ShowImageInfo(images.Get(id)));
+			} catch {
+				Console.WriteLine("Image not found");
+			}
 		}
 
 

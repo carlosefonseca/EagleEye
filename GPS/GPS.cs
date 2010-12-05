@@ -11,13 +11,24 @@ using System.IO;
 namespace EEPlugin {
 	public class GPS : EEPluginInterface {
 		private Persistence persistence;
-		private Dictionary<long, Coord> PluginData = new Dictionary<long, Coord>();
+		private Dictionary<long, Coord> PluginData;
 		#region EEPluginInterface Members
 
-		public void Init() { }
+		public void Init() {
+			persistence = new Persistence(this.Id() + ".eep.db");
+			if (persistence.existed) {
+				Load();
+			} else {
+				PluginData = new Dictionary<long, Coord>();
+			}
+		}
 
 		public ImageCollection processImageCollection(ImageCollection ic) {
-			return ic.ImagesWithExifKey("GPSPosition");
+			ImageCollection result = ic.ImagesWithExifKey("GPSPosition");
+			foreach (Image i in ic.ToList()) {
+				persistence.Put<Coord>(i.id.ToString(), new Coord((string)i.Exif("GPSLatitude"), (string)i.Exif("GPSLongitude")));
+			}
+			return result;
 		}
 
 		public String Id() {
@@ -36,12 +47,14 @@ namespace EEPlugin {
 			return i.ToStringWithExif("GPSPosition");
 		}
 
-		public void Load(string dir) {
+		public void Load() {
+			ConvertFromBytes<Coord> ReadCoord = delegate(byte[] bytes) {
+				return new Coord(bytes);
+			};
+			PluginData = persistence.Read<long, Coord>(Converters.ReadLong, ReadCoord);
 		}
 
-		public void Save(string dir) {
-			if (persistence == null)
-				persistence = new Persistence(this.Id() + ".eep.db");
+		public void Save() {
 			foreach (KeyValuePair<long, Coord> kv in PluginData) {
 				persistence.Put<Coord>(kv.Key.ToString(), kv.Value);
 			}
