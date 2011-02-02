@@ -21,6 +21,10 @@ namespace EagleEye.Common {
 			return "IMG ID " + this.id + " @ " + this.path + " - " + exif.Count + " EXIF items";
 		}
 
+		public string Path() {
+			return System.IO.Path.GetFullPath(this.path);
+		}
+
 		public void Exif(string k, string v) {
 			try {
 				exif.Add(k, v);

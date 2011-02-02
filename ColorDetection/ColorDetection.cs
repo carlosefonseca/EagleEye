@@ -79,6 +79,7 @@ namespace EEPlugin {
 		/// <param name="ic">The colection of images</param>
 		/// <returns></returns>
 		public ImageCollection processImageCollection(ImageCollection ic) {
+			// Obtem a cor mediana da imagem * Histograma RGB
 			foreach (EagleEye.Common.Image i in ic.ToList()) {
 				if (PluginData.ContainsKey(i.id)) {
 					Console.WriteLine("Skipping " + i.path);
@@ -90,8 +91,11 @@ namespace EEPlugin {
 				Console.WriteLine(result.ToString());
 			}
 			Save();
+			
 			Console.WriteLine("\n-- Color detection completed. Now sorting.");
 
+
+			// calcula a Saturaçao e a luminancia e ordena na árvore de cores * Histograma HSL
 			if (ColorMap == null) ColorMap = new SortedDictionary<double, SortedDictionary<double, List<long>>>();
 
 			foreach (EagleEye.Common.Image i in ic.ToList()) {
@@ -115,9 +119,9 @@ namespace EEPlugin {
 
 			SaveColorMap();
 
-			//IndexedImages.OrderBy<
+			
 
-
+			// Percorre a árvore e imprime as imagens 
 			foreach (KeyValuePair<double, SortedDictionary<double, List<long>>> row in ColorMap) {
 				Console.WriteLine(row.Key.ToString());
 				foreach (KeyValuePair<double, List<long>> col in row.Value) {
@@ -128,6 +132,38 @@ namespace EEPlugin {
 					Console.WriteLine();
 				}
 			}
+
+
+
+			// Cria um png com as imagens lá colocadas nas suas posições de acordo com a árvore
+			// Altura > luminancia ; Largura > saturação
+			System.Drawing.Bitmap pg = new System.Drawing.Bitmap(1050,1050);
+			Graphics gr = Graphics.FromImage(pg);
+
+			// clear the canvas to color
+			Rectangle pgRect = new Rectangle(0, 0, pg.Width, pg.Height);
+			SolidBrush solidWhite = new SolidBrush(Color.Black);
+			gr.FillRectangle(solidWhite, pgRect);
+
+			int x,y;
+			Rectangle rect = new Rectangle(0,0,50,50);
+			foreach (KeyValuePair<double, SortedDictionary<double, List<long>>> col in ColorMap) {
+				x = Convert.ToInt16(col.Key*1000);
+				foreach (KeyValuePair<double, List<long>> row in col.Value) {
+					y = Convert.ToInt16(row.Key * 1000);
+					foreach (long item in row.Value) {
+						EagleEye.Common.Image i = ic.Get(item);
+						rect.X = x+25;
+						rect.Y = y+25;
+						gr.DrawImage(new System.Drawing.Bitmap(i.Path()), rect);
+					}
+				}
+			}
+
+			pg.Save("colormap.png");
+
+
+
 
 			return null;
 		}

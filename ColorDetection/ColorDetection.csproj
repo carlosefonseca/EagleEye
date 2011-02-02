@@ -55,11 +55,11 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\..\..\..\Dropbox\tese2\Common\Common.csproj">
+    <ProjectReference Include="..\Common\Common.csproj">
       <Project>{47B8BF32-A83D-419E-9ACA-8D5857808B74}</Project>
       <Name>Common</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\..\..\..\..\..\Dropbox\tese2\EagleEye.Plugins.FeatureExtraction\EagleEye.Plugins.FeatureExtraction.csproj">
+    <ProjectReference Include="..\EagleEye.Plugins.FeatureExtraction\EagleEye.Plugins.FeatureExtraction.csproj">
       <Project>{684FE77A-C318-4325-964E-85B16C6E94B2}</Project>
       <Name>EagleEye.Plugins.FeatureExtraction</Name>
     </ProjectReference>

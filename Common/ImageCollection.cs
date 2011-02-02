@@ -148,5 +148,9 @@ namespace EagleEye.Common {
 
 		#endregion Output
 
+
+		public Image Get(long item) {
+			return Get(Convert.ToInt32(item));
+		}
 	}
 }
