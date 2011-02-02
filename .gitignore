@@ -26,3 +26,5 @@
 /OpenCVTest/.DS_Store
 /OpenCV/obj
 /GPS/obj
+/ColorDetection/bin/
+/ColorDetection/obj/

@@ -8,7 +8,7 @@ namespace EagleEye.Common {
 	public delegate string ImageToStringDelegate(Image i);
 
 	public class ImageCollection {
-		private Dictionary<long, Image> collection;
+		internal Dictionary<long, Image> collection;
 		private long currId = 0;
 		private SortedImageCollection cachedSortedImageCollection;
 
@@ -23,6 +23,14 @@ namespace EagleEye.Common {
 
 		public ImageCollection(Dictionary<long, Image> c) {
 			collection = c;
+			currId = collection.Keys.Max() + 1;
+		}
+
+		internal void Replace(Dictionary<long, Image> c) {
+			if (c.Count > 0) {
+				collection = c;
+				currId = collection.Keys.Max() + 1;
+			}
 		}
 
 		public long Add(Image i) {
@@ -69,7 +77,11 @@ namespace EagleEye.Common {
 			return collection.Count;
 		}
 
-
+		/// <summary>
+		/// Images that contain the specified Exif key
+		/// </summary>
+		/// <param name="key"></param>
+		/// <returns></returns>
 		public ImageCollection ImagesWithExifKey(string key) {
 			ImageCollection newIC = new ImageCollection();
 			foreach (Image i in collection.Values) {
@@ -98,11 +110,14 @@ namespace EagleEye.Common {
 
 		public virtual string ToStringWithExif(string key) {
 			string txt = "";
-			int max = 50;
-			if (collection.Count < max)
-				max = collection.Count;
-			for (int i = 0; i < max; i++) {
-				txt += collection[i].id + "\t" + collection[i].path + " > " + collection[i].Exif(key).ToString() + "\n";
+
+			foreach (KeyValuePair<long, Image> kv in collection) {
+				txt += kv.Key.ToString() + "\t" + kv.Value.path + " > ";
+				if (kv.Value.ContainsExif(key)) {
+					txt += kv.Value.Exif(key).ToString() + "\n";
+				} else {
+					txt += "[no " + key + "]\n";
+				}
 			}
 			return txt;
 		}

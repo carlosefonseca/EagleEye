@@ -11,27 +11,36 @@ using System.Drawing;
 using System.IO;
 using System.Reflection;
 using System.Diagnostics;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace EEPlugin {
 	public class FaceDetection : EEPluginInterface {
 		//ATENCAO: Valores dos Rectangulos referem-se a uma imagem redimensionada para 1500px de largura
 		private Dictionary<long, Rectangle[]> PluginIndex;
+		private Persistence persistence;
 		#region EEPluginInterface Members
 
 		public void Init() {
-			if (PluginIndex == null) {
+			persistence = new Persistence(Id() + ".eep");
+			if (persistence.existed) {
+				Load();
+			} else {
 				PluginIndex = new Dictionary<long, Rectangle[]>();
 			}
 		}
 
 		public ImageCollection processImageCollection(ImageCollection ic) {
+			if (PluginIndex == null) {
+				PluginIndex = new Dictionary<long, Rectangle[]>();
+			}
+			if (p == null) {
+				Prepare();
+			}
+			if (persistence == null) {
+				persistence = new Persistence(Id() + ".eep");
+			}
 			try {
-				if (PluginIndex == null) {
-					PluginIndex = new Dictionary<long, Rectangle[]>();
-				}
-				if (p == null) {
-					Prepare();
-				}
+
 				foreach (EagleEye.Common.Image i in ic.ToList()) {
 					if (PluginIndex.ContainsKey(i.id)) {
 						Console.WriteLine("Skipping " + i.path);
@@ -40,6 +49,7 @@ namespace EEPlugin {
 					Console.Write("Face Detecting " + i.path + "... ");
 					Rectangle[] result = RunDetection(i.path);
 					PluginIndex.Add(i.id, result);
+					persistence.Put(i.id.ToString(), RectanglesToBytes(result));
 					Console.WriteLine(result != null ? result.Length : 0);
 				}
 			} finally {
@@ -68,6 +78,25 @@ namespace EEPlugin {
 				return n + " face" + (n == 1 ? "" : "s");
 			}
 			return "Not analyzed";
+		}
+
+		public void Load() {
+			Dictionary<long, Rectangle[]> tmp = persistence.Read<long, Rectangle[]>(Converters.ReadLong, Converters.ReadRectangleArray);
+			PluginIndex = tmp;
+		}
+
+		public void Save() {
+			if (persistence == null)
+				persistence = new Persistence(this.Id() + ".eep.db");
+
+			foreach (KeyValuePair<long, Rectangle[]> kv in PluginIndex) {
+				string id = kv.Key.ToString();
+				string facestxt = "";
+				foreach (Rectangle r in kv.Value) {
+					facestxt += r.ToString() + ";";
+				}
+				persistence.Put(id, facestxt);
+			}
 		}
 
 		#endregion EEPluginInterface Members
@@ -100,10 +129,15 @@ namespace EEPlugin {
 
 			string txt = reader.ReadLine();
 			if (txt == "none") {
-				return null;
+				return new Rectangle[0];
 			}
+			Rectangle[] faces = ParseRectangles(txt);
+			return faces;
+		}
+
+		private Rectangle[] ParseRectangles(string txt) {
 			char[] chars = new char[1];
-			chars[0]=';';
+			chars[0] = ';';
 			string[] txts = txt.Split(chars, StringSplitOptions.RemoveEmptyEntries);
 			Rectangle[] faces = new Rectangle[txts.Length];
 			int i = 0;
@@ -119,6 +153,25 @@ namespace EEPlugin {
 			}
 			return faces;
 		}
+
+		private byte[] RectanglesToBytes(Rectangle[] rectangles) {
+			BinaryFormatter formatter = new BinaryFormatter();
+			MemoryStream memStream = new MemoryStream();
+			formatter.Serialize(memStream, rectangles);
+			byte[] bytes = memStream.GetBuffer();
+			memStream.Close();
+			return bytes;
+		}
+
+		private Rectangle[] BytesToRectangles(byte[] bytes) {
+			BinaryFormatter formatter = new BinaryFormatter();
+			MemoryStream memStream = new MemoryStream(bytes);
+			Rectangle[] tmp = (Rectangle[])formatter.Deserialize(memStream);
+			memStream.Close();
+			return tmp;
+		}
+
+
 
 		private void Kill() {
 			if (p != null) {

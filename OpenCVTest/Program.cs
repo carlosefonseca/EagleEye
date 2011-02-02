@@ -15,7 +15,7 @@ namespace OpenCVTest {
 		const string fdfile = "haarcascade_frontalface_alt_tree.xml";
 		const string asmName = "OpenCVTest.EmguCV";
 		const int smallSize = 1500;
-		const bool DEBUG = false;
+		const bool DEBUG = true;
 
 		private static string fullfdf, fdfres;
 		private static HaarCascade face;
@@ -51,24 +51,40 @@ namespace OpenCVTest {
 				fd.Close();
 			}
 
+			//Read the HaarCascade objects
+			if (face == null)
+				face = new HaarCascade(fullfdf);
+
 
 			if (DEBUG) {
 				Stopwatch s = new Stopwatch();
-				string log = "";
-				int i = 0;
-				s.Reset();
-				s.Start();
-				Console.WriteLine(i + ": " + RunFD("C:\\Fotos\\smallset\\zy.jpg", i));
-				s.Stop();
-				log += i + ": " + RunFD("C:\\Fotos\\smallset\\zy.jpg", i).Split(';').Length + " > " + s.ElapsedMilliseconds+"\n";
-				for (i = 1700; i > 1000; i -= 100) {
-					s.Reset();
-					s.Start();
-					Console.WriteLine(i + ": " + RunFD("C:\\Fotos\\smallset\\zy.jpg", i));
-					s.Stop();
-					log += i + ": " + RunFD("C:\\Fotos\\smallset\\zy.jpg", i).Split(';').Length + " > " + s.ElapsedMilliseconds+"\n";
+				string log = "", o;
+				int i = 0, n;
+
+				foreach (string filename in Directory.GetFiles("C:\\Fotos\\faces","*.jpg")) {
+					Console.WriteLine(filename);
+					i = 0;
+					log = filename+"\n";
+					do {
+						s.Reset();
+						Console.Write(i + ": ");
+						s.Start();
+						o = RunFD(filename, i);
+						s.Stop();
+						if (i == 0) Console.WriteLine(o);
+						if (o.Contains("none")) n = 0;
+						else n = o.Split(";".ToCharArray(),StringSplitOptions.RemoveEmptyEntries).Length;
+						Console.WriteLine(n + " > " + s.ElapsedMilliseconds);
+						log += i + ": " + n + " > " + s.ElapsedMilliseconds + "\n";
+						drawRects(filename,i, o);
+						if (i == 0)
+							i = 2000;
+						else
+							i -= 100;
+						File.WriteAllText(filename+".out", log);
+					} while (n > 0 && i>100);
 				}
-				Console.WriteLine(log);
+				//File.WriteAllText("out", log);
 			} else {
 				string cmd;
 				while ((cmd = Console.ReadLine()) != "exit") {
@@ -131,6 +147,29 @@ namespace OpenCVTest {
 #endregion NIU
 			}
 			return (o == "" ? "none" : o);
+		}
+
+		public static void drawRects(string path, int size, string rects) {
+			if (rects == "none") return;
+			
+			Image<Bgr, Byte> image = new Image<Bgr, byte>(path); //Read the files as an 8-bit Gray image  
+
+			if (size > 0)
+				image = image.Resize(size, size, Emgu.CV.CvEnum.INTER.CV_INTER_CUBIC, true);
+
+			string[] rectsarr = rects.Split(";".ToCharArray(),StringSplitOptions.RemoveEmptyEntries);
+			foreach (string recttxt in rectsarr) {
+				string[] ts = recttxt.Split(@"{}:=,".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+				int x = int.Parse(ts[1]);
+				int y = int.Parse(ts[3]);
+				int w = int.Parse(ts[5]);
+				int h = int.Parse(ts[7]);
+				Rectangle r = new Rectangle(x, y, w, h);
+
+				//draw the face detected in the 0th (gray) channel with blue color
+				image.Draw(r, new Bgr(Color.Red), 2);
+			}
+			image.Save(path + "-" + size + ".jpg");
 		}
 	}
 }

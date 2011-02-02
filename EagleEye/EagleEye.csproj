@@ -54,7 +54,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ExifToolWrapper.cs" />
-    <Compile Include="Persistence.cs" />
+    <Compile Include="LibraryManager.cs" />
     <Compile Include="PluginManager.cs" />
     <Compile Include="EagleEye.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
