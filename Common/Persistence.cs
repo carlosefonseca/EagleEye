@@ -188,6 +188,8 @@ namespace EagleEye.Common {
 			return field;
 		}*/
 
+
+
 		public Dictionary<TK, TV> Read<TK, TV>(ConvertFromBytes<TK> DK, ConvertFromBytes<TV> DV) {
 			Dictionary<TK, TV> output = new Dictionary<TK, TV>();
 
@@ -203,9 +205,12 @@ namespace EagleEye.Common {
 				if (dbc.Current.Value.Data == null) {
 					Console.WriteLine("#ERRO a ler entrada da BDB");
 				} else {
-					TK key = DK(dbc.Current.Key.Data);
-					TV val = DV(dbc.Current.Value.Data);
-					output.Add(key, val);
+					try {
+						TK key = DK(dbc.Current.Key.Data);
+						TV val = DV(dbc.Current.Value.Data);
+						output.Add(key, val);
+					} catch { 
+						Console.WriteLine("Error loading data..."); }
 				}
 			}
 			return output;
@@ -258,10 +263,22 @@ namespace EagleEye.Common {
 	public delegate T ConvertFromBytes<T>(byte[] bytes);
 	
 	public class Converters {
+		public static ConvertFromBytes<Int32> ReadInt32 = delegate(byte[] bytes) {
+			System.Text.Encoding enc = System.Text.Encoding.ASCII;
+			string k = enc.GetString(bytes);
+			return Int32.Parse(k);
+		};
+
 		public static ConvertFromBytes<long> ReadLong = delegate(byte[] bytes) {
 			System.Text.Encoding enc = System.Text.Encoding.ASCII;
 			string k = enc.GetString(bytes);
 			return long.Parse(k);
+		};
+
+		public static ConvertFromBytes<double> ReadDouble = delegate(byte[] bytes) {
+			System.Text.Encoding enc = System.Text.Encoding.ASCII;
+			string k = enc.GetString(bytes);
+			return double.Parse(k);
 		};
 		
 		public static ConvertFromBytes<Image> ReadImage = delegate(byte[] bytes) {
@@ -275,5 +292,20 @@ namespace EagleEye.Common {
 			memStream.Close();
 			return tmp;
 		};
+
+		public static ConvertFromBytes<Color> ReadColor = delegate(byte[] bytes) {
+			System.Text.Encoding enc = System.Text.Encoding.ASCII;
+			string k = enc.GetString(bytes);
+			return Color.FromArgb(Int32.Parse(k));
+		};
+
+		public static ConvertFromBytes<SortedDictionary<double, List<long>>> ReadSortedDicDoubleListlong = delegate(byte[] bytes) {
+			BinaryFormatter formatter = new BinaryFormatter();
+			MemoryStream memStream = new MemoryStream(bytes);
+			SortedDictionary<double, List<long>> tmp = (SortedDictionary<double, List<long>>)formatter.Deserialize(memStream);
+			memStream.Close();
+			return tmp;
+		};
+
 	}
 }

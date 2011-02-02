@@ -26,13 +26,36 @@ namespace EagleEye {
 				Console.WriteLine(ass);
 
 			AppDomain.CurrentDomain.AssemblyResolve += (sender, args) => {
-				String resourceName = "EagleEye" + "." + new AssemblyName(args.Name).Name + ".dll";
-				Console.WriteLine("Trying to find " + resourceName);
-				using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resourceName)) {
-					Byte[] assemblyData = new Byte[stream.Length];
-					stream.Read(assemblyData, 0, assemblyData.Length);
-					return Assembly.Load(assemblyData);
+				String resourceName = new AssemblyName(args.Name).Name + ".dll";
+				Stream stream = null;
+
+				Console.Write("\nTrying to find " + resourceName + ". ");
+
+				foreach (String dllname in Assembly.GetExecutingAssembly().GetManifestResourceNames()) {
+					if (dllname.EndsWith(resourceName)) {
+						stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(dllname);
+						Console.WriteLine("Found on Core");
+						break;
+					}
 				}
+
+				if (stream == null) {
+					foreach (string Filename in Directory.GetFiles(PluginDir, "*.eep.dll", SearchOption.AllDirectories)) {
+						Assembly Asm = Assembly.LoadFile(Path.GetFullPath(Filename));
+						foreach (string dllname in Asm.GetManifestResourceNames()) {
+							if (dllname.EndsWith(new AssemblyName(args.Name).Name + ".dll")) {
+								stream = Asm.GetManifestResourceStream(dllname);
+								Console.WriteLine("Found on plugin " + Path.GetFileName(Filename));
+								break;
+							}
+						}
+						if (stream != null) break;
+					}
+				}
+				
+				Byte[] assemblyData = new Byte[stream.Length];
+				stream.Read(assemblyData, 0, assemblyData.Length);
+				return Assembly.Load(assemblyData);
 			};
 			#endregion Load Embeded Libs
 
@@ -42,7 +65,7 @@ namespace EagleEye {
 			LibMan = LibraryManager.Init(LibraryDir);
 
 			images = LibMan.collection;
-			
+
 			PlugMan = PluginManager.Get();
 			PlugMan.LoadPlugins(PluginDir);
 

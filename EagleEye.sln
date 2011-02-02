@@ -24,6 +24,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenCV", "OpenCV\OpenCV.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenCVTest", "OpenCVTest\OpenCVTest.csproj", "{1D3D2FD4-C146-40C9-A671-52AFD3FB0DBD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ColorDetection", "ColorDetection\ColorDetection.csproj", "{3572AC20-71BA-4558-9B82-24D0B9E1728A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -54,6 +56,10 @@ Global
 		{1D3D2FD4-C146-40C9-A671-52AFD3FB0DBD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1D3D2FD4-C146-40C9-A671-52AFD3FB0DBD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1D3D2FD4-C146-40C9-A671-52AFD3FB0DBD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3572AC20-71BA-4558-9B82-24D0B9E1728A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3572AC20-71BA-4558-9B82-24D0B9E1728A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3572AC20-71BA-4558-9B82-24D0B9E1728A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3572AC20-71BA-4558-9B82-24D0B9E1728A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
