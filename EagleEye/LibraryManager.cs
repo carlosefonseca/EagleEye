@@ -40,7 +40,9 @@ namespace EagleEye {
 
 
 		#region Instance Methods
-
+		/// <summary>
+		/// The Folder where everything about this library will be saved
+		/// </summary>
 		public readonly string path;
 		private Dictionary<string, string> settings;
 		public PersistedImageCollection collection;
@@ -51,7 +53,7 @@ namespace EagleEye {
 		private LibraryManager(string dir) : this(dir, false) { }
 
 		private LibraryManager(string dir, bool create) {
-			dir = Persistence.SetRootFolder(dir);
+			path = Persistence.SetRootFolder(dir);
 
 			Persistence setts = new Persistence("EagleEye");
 			if (!setts.existed) {
@@ -79,6 +81,18 @@ namespace EagleEye {
 
 		internal void Save() {
 			throw new NotImplementedException();
+		}
+
+		public void GenerateThumbnails() {
+			string thumbnailpath = Path.GetFullPath(path+"\\thumbnails\\");
+			if (!Directory.Exists(thumbnailpath)) {
+				Directory.CreateDirectory(thumbnailpath);
+			}
+			foreach (Image i in collection.ToList()) {
+				if (i.HasThumbnail() == null) {
+					i.GenerateThumbnail(thumbnailpath);
+				}
+			}
 		}
 	}
 }

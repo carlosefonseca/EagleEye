@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Drawing;
 
 namespace EagleEye.Common {
 	[Serializable]
@@ -11,18 +12,15 @@ namespace EagleEye.Common {
 		public string path;
 		public bool exifImported = false;
 		public Dictionary<string, object> exif;
+		private string thumbnail;
 
 		public Image(string path) {
-			this.path = path;
+			this.path = Path.GetFullPath(path);
 			exif = new Dictionary<string, object>();
 		}
 
 		public override string ToString() {
 			return "IMG ID " + this.id + " @ " + this.path + " - " + exif.Count + " EXIF items";
-		}
-
-		public string Path() {
-			return System.IO.Path.GetFullPath(this.path);
 		}
 
 		public void Exif(string k, string v) {
@@ -69,6 +67,47 @@ namespace EagleEye.Common {
 		}
 		public bool ContainsExif(string key) {
 			return exif.ContainsKey(key);
+		}
+
+
+		/// <summary>
+		/// Tests if the Image has a thumbnail saved on disk.
+		/// </summary>
+		/// <returns>Path to thumbnail or null</returns>
+		public string HasThumbnail() {
+			if ((thumbnail != null) && (File.Exists(thumbnail))) {
+				return thumbnail;
+			}
+			return null;
+		}
+
+		/// <summary>
+		/// Generates a thumbnail on the filesystem. Sets the i.v. thumbnail
+		/// </summary>
+		/// <param name="path">The FOLDER where the thumbnail will be created</param>
+		/// <returns>Full path</returns>
+		public string GenerateThumbnail(string path) {
+			int smallside = 200, newWidth, newHeight;
+
+			System.Drawing.Image.GetThumbnailImageAbort abort = delegate{
+				Console.WriteLine("THUMBNAIL ABORTED!");
+				return false;
+			};
+			IntPtr intptr = IntPtr.Zero;
+
+			if (!File.Exists(this.path)) return null;
+			Bitmap orig = new Bitmap(this.path);
+			if (orig.Size.Height < orig.Size.Width) {
+				newHeight = smallside;
+				newWidth = orig.Size.Width * smallside / orig.Size.Height;
+			} else {
+				newWidth = smallside;
+				newHeight = orig.Size.Height * smallside / orig.Size.Width;
+			}
+			System.Drawing.Image thumb = orig.GetThumbnailImage(newWidth,newHeight, abort, intptr);
+			thumbnail = Path.GetFullPath(path + id + ".jpg");
+			thumb.Save(thumbnail);
+			return thumbnail;
 		}
 
 

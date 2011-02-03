@@ -18,6 +18,10 @@ namespace EagleEye.Common {
 			collection = ic.ToList();
 		}
 
+		public int Count() {
+			return collection.Count;
+		}
+
 		public string ToStringWithExif(string key) {
 			string txt = "";
 

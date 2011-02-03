@@ -203,7 +203,7 @@ namespace EagleEye.Common {
 			// Walk through the database and print out key/data pairs.
 			while (dbc.MoveNext()) {
 				if (dbc.Current.Value.Data == null) {
-					Console.WriteLine("#ERRO a ler entrada da BDB");
+					Console.WriteLine("#ERRO a ler entrada " + DK(dbc.Current.Key.Data).ToString() + " da BDB");
 				} else {
 					try {
 						TK key = DK(dbc.Current.Key.Data);

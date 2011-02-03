@@ -78,22 +78,39 @@ namespace EagleEye {
 
 		public static void CommandLine() {
 			string command;
-			string cmds = @"Commands: show | list | sort | adddir | plugin | save | exit";
+			string cmds = "Commands: show | list | sort | adddir | plugin | thumbs | save | exit";
 			Console.WriteLine(cmds);
 			do {
 				command = Console.ReadLine();
 				string[] split = command.Split(' ');
 				switch (split[0]) {
 					case "show": CmdShowImageInfo(split); break;
-					case "list": Console.WriteLine(images.ToSortable().SortById().ToStringWithExif("CreateDate")); break;
+					case "list": ListImages(); break;
 					case "sort": CmdSort(split); break;
 					case "adddir": AddDir(split); break;
 					case "plugin": PlugMan.RunPlugin(images); break;
+					case "thumbs": LibMan.GenerateThumbnails(); break;
 					case "save": LibMan.Save(); break;
 					case "exit": Console.WriteLine("Bye"); break;
+					case "": Console.WriteLine(cmds); break;
 					default: Console.WriteLine("Unkown cmd. " + cmds); break;
 				}
 			} while (command != "exit");
+		}
+
+		private static void ListImages() {
+			Stopwatch SWCopy = Stopwatch.StartNew();
+			SortedImageCollection sorted = images.ToSortable();
+			SWCopy.Stop();
+			Stopwatch SWSort = Stopwatch.StartNew();
+			sorted.SortById();
+			SWSort.Stop();
+			Stopwatch SWString = Stopwatch.StartNew();
+			string output = sorted.ToStringWithExif("CreateDate");
+			SWString.Stop();
+			Console.WriteLine(output);
+			Console.WriteLine("Colection size: {0}", sorted.Count());
+			Console.WriteLine("Times | Copy: {0}ms | Sort: {1}ms | Generate Output: {2}ms", SWCopy.ElapsedMilliseconds, SWSort.ElapsedMilliseconds,SWString.ElapsedMilliseconds);
 		}
 
 		public static void CmdSort(string[] cmd) {

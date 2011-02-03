@@ -103,7 +103,9 @@ namespace EEPlugin {
 					Console.WriteLine("Skipping " + i.path);
 					continue;
 				}
-				Bitmap img = new Bitmap(System.IO.Path.GetFullPath(i.path));
+				string imgpath = i.HasThumbnail();
+				if (imgpath == null) { continue; } 
+				Bitmap img = new Bitmap(imgpath);
 				AForge.Imaging.ImageStatisticsHSL histogram = new AForge.Imaging.ImageStatisticsHSL(img);
 				double saturation = histogram.Saturation.Median;
 				double luminance = histogram.Luminance.Median;
@@ -115,8 +117,9 @@ namespace EEPlugin {
 				}
 				ColorMap[saturation][luminance].Add(i.id);
 				MappedImages.Add(i.id);
+				Console.Write(".");
 			}
-
+			Console.WriteLine();
 			SaveColorMap();
 
 			
@@ -155,7 +158,7 @@ namespace EEPlugin {
 						EagleEye.Common.Image i = ic.Get(item);
 						rect.X = x+25;
 						rect.Y = y+25;
-						gr.DrawImage(new System.Drawing.Bitmap(i.Path()), rect);
+						gr.DrawImage(new System.Drawing.Bitmap(i.path), rect);
 					}
 				}
 			}
@@ -193,9 +196,6 @@ namespace EEPlugin {
 		private void PutData(EagleEye.Common.Image i, Color result) {
 			PluginData.Add(i.id, result);
 		}
-
-
-
 
 		public String ImageInfo(EagleEye.Common.Image i) {
 			return PluginData.ContainsKey(i.id) ? PluginData[i.id].ToString() : "Not Processed";
