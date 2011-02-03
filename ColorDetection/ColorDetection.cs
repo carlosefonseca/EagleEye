@@ -86,16 +86,17 @@ namespace EEPlugin {
 					Console.WriteLine("Skipping " + i.path);
 					continue;
 				}
-				Console.Write("Color Detecting " + i.path + "... ");
-				Color result = RunDetection(i.path);
-				PutData(i, result);
-				Console.WriteLine(result.ToString());
+				if (File.Exists(i.path)) {
+					Console.Write("Color Detecting " + i.path + "... ");
+					Color result = RunDetection(i.path);
+					PutData(i, result);
+					Console.WriteLine(result.ToString());
+				}
+				Save();
 			}
-			Save();
-			
 			Console.WriteLine("\n-- Color detection completed. Now sorting.");
 
-
+			// COLOR MAP
 			// calcula a Saturaçao e a luminancia e ordena na árvore de cores * Histograma HSL
 			if (ColorMap == null) ColorMap = new SortedDictionary<double, SortedDictionary<double, List<long>>>();
 
@@ -107,7 +108,7 @@ namespace EEPlugin {
 
 				System.Drawing.Bitmap img;
 				try {
-					img  = thumbs.GetThumbnail(i.id);
+					img = thumbs.GetThumbnail(i.id);
 				} catch {
 					continue;
 				}
@@ -128,8 +129,7 @@ namespace EEPlugin {
 			SaveColorMap();
 
 
-			if (false) {
-				// Percorre a árvore e imprime as imagens 
+/*				// Percorre a árvore e imprime as imagens 
 				foreach (KeyValuePair<double, SortedDictionary<double, List<long>>> row in ColorMap) {
 					Console.WriteLine(row.Key.ToString());
 					foreach (KeyValuePair<double, List<long>> col in row.Value) {
@@ -140,11 +140,11 @@ namespace EEPlugin {
 						Console.WriteLine();
 					}
 				}
-			}
+			}*/
 
-			Size canvas = new Size(3000,1000);
-			Size thumb  = new Size(25,25);
-			
+			Size canvas = new Size(3000, 1000);
+			Size thumb = new Size(25, 25);
+
 
 			// Cria um png com as imagens lá colocadas nas suas posições de acordo com a árvore
 			// Altura > luminancia ; Largura > saturação
@@ -156,21 +156,21 @@ namespace EEPlugin {
 			SolidBrush solidWhite = new SolidBrush(Color.Black);
 			gr.FillRectangle(solidWhite, pgRect);
 
-			int x,y;
-			int marginX = thumb.Width/2, marginY = thumb.Height/2;
+			int x, y;
+			int marginX = thumb.Width / 2, marginY = thumb.Height / 2;
 			Rectangle rect = new Rectangle();
 			double totalItems = MappedImages.Count;
 			double itemCount = 0;
 			foreach (KeyValuePair<double, SortedDictionary<double, List<long>>> col in ColorMap) {
-				x = Convert.ToInt16(col.Key*canvas.Width);
+				x = Convert.ToInt16(col.Key * canvas.Width);
 				foreach (KeyValuePair<double, List<long>> row in col.Value) {
 					y = Convert.ToInt16(row.Key * canvas.Height);
 					foreach (long item in row.Value) {
 						System.Drawing.Bitmap img = thumbs.GetThumbnail(item);
-						rect.X = x-marginX;
-						rect.Y = y-marginY;
+						rect.X = x - marginX;
+						rect.Y = y - marginY;
 						rect.Size = thumb;
-						rect.Height = img.Height*thumb.Width/img.Width;
+						rect.Height = img.Height * thumb.Width / img.Width;
 						gr.DrawImage(img, rect);
 						itemCount++;
 						Console.Write("\r{0:0%}    ", itemCount / totalItems);
