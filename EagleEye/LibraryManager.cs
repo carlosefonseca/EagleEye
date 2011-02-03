@@ -48,6 +48,8 @@ namespace EagleEye {
 		public PersistedImageCollection collection;
 		public PluginManager PlugMan;
 		private string LibraryDir = "EagleEyeDB";
+		private Thumbnails Thumbs;
+
 
 
 		private LibraryManager(string dir) : this(dir, false) { }
@@ -63,6 +65,7 @@ namespace EagleEye {
 			}
 			collection = new PersistedImageCollection("Images");
 			PlugMan = PluginManager.Get();
+			Thumbs = Thumbnails.Get();
 		}
 
 
@@ -84,13 +87,13 @@ namespace EagleEye {
 		}
 
 		public void GenerateThumbnails() {
-			string thumbnailpath = Path.GetFullPath(path+"\\thumbnails\\");
+			/*string thumbnailpath = Path.GetFullPath(path+"\\thumbnails\\");
 			if (!Directory.Exists(thumbnailpath)) {
 				Directory.CreateDirectory(thumbnailpath);
-			}
+			}*/
 			foreach (Image i in collection.ToList()) {
-				if (i.HasThumbnail() == null) {
-					i.GenerateThumbnail(thumbnailpath);
+				if (!Thumbs.ThumbnailExists(i)) {
+					Thumbs.GenerateAndSaveThumbnail(i);
 				}
 			}
 		}

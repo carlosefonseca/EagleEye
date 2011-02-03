@@ -50,6 +50,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Thumbnails.cs" />
     <Compile Include="Image.cs" />
     <Compile Include="ImageCollection.cs" />
     <Compile Include="PersistedImageCollection.cs" />

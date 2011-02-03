@@ -18,6 +18,7 @@ namespace EEPlugin {
 		private Dictionary<long, Color> PluginData;
 		private SortedDictionary<double, SortedDictionary<double, List<long>>> ColorMap;
 		private HashSet<long> MappedImages;
+		private Thumbnails thumbs;
 
 		#region EEPluginInterface Members
 
@@ -58,7 +59,7 @@ namespace EEPlugin {
 			} else {
 				MappedImages = new HashSet<long>();
 			}
-
+			thumbs = Thumbnails.Get();
 		}
 
 
@@ -103,9 +104,13 @@ namespace EEPlugin {
 					Console.WriteLine("Skipping " + i.path);
 					continue;
 				}
-				string imgpath = i.HasThumbnail();
-				if (imgpath == null) { continue; } 
-				Bitmap img = new Bitmap(imgpath);
+
+				System.Drawing.Bitmap img;
+				try {
+					img  = thumbs.GetThumbnail(i.id);
+				} catch {
+					continue;
+				}
 				AForge.Imaging.ImageStatisticsHSL histogram = new AForge.Imaging.ImageStatisticsHSL(img);
 				double saturation = histogram.Saturation.Median;
 				double luminance = histogram.Luminance.Median;
@@ -122,48 +127,58 @@ namespace EEPlugin {
 			Console.WriteLine();
 			SaveColorMap();
 
-			
 
-			// Percorre a árvore e imprime as imagens 
-			foreach (KeyValuePair<double, SortedDictionary<double, List<long>>> row in ColorMap) {
-				Console.WriteLine(row.Key.ToString());
-				foreach (KeyValuePair<double, List<long>> col in row.Value) {
-					Console.Write("   {0}: ", col.Key);
-					foreach (long item in col.Value) {
-						Console.Write("{0} ", item);
+			if (false) {
+				// Percorre a árvore e imprime as imagens 
+				foreach (KeyValuePair<double, SortedDictionary<double, List<long>>> row in ColorMap) {
+					Console.WriteLine(row.Key.ToString());
+					foreach (KeyValuePair<double, List<long>> col in row.Value) {
+						Console.Write("   {0}: ", col.Key);
+						foreach (long item in col.Value) {
+							Console.Write("{0} ", item);
+						}
+						Console.WriteLine();
 					}
-					Console.WriteLine();
 				}
 			}
 
-
+			Size canvas = new Size(3000,1000);
+			Size thumb  = new Size(25,25);
+			
 
 			// Cria um png com as imagens lá colocadas nas suas posições de acordo com a árvore
 			// Altura > luminancia ; Largura > saturação
-			System.Drawing.Bitmap pg = new System.Drawing.Bitmap(1050,1050);
+			System.Drawing.Bitmap pg = new System.Drawing.Bitmap(canvas.Width, canvas.Height);
 			Graphics gr = Graphics.FromImage(pg);
 
-			// clear the canvas to color
+			// paint the canvas black
 			Rectangle pgRect = new Rectangle(0, 0, pg.Width, pg.Height);
 			SolidBrush solidWhite = new SolidBrush(Color.Black);
 			gr.FillRectangle(solidWhite, pgRect);
 
 			int x,y;
-			Rectangle rect = new Rectangle(0,0,50,50);
+			int marginX = thumb.Width/2, marginY = thumb.Height/2;
+			Rectangle rect = new Rectangle();
+			double totalItems = MappedImages.Count;
+			double itemCount = 0;
 			foreach (KeyValuePair<double, SortedDictionary<double, List<long>>> col in ColorMap) {
-				x = Convert.ToInt16(col.Key*1000);
+				x = Convert.ToInt16(col.Key*canvas.Width);
 				foreach (KeyValuePair<double, List<long>> row in col.Value) {
-					y = Convert.ToInt16(row.Key * 1000);
+					y = Convert.ToInt16(row.Key * canvas.Height);
 					foreach (long item in row.Value) {
-						EagleEye.Common.Image i = ic.Get(item);
-						rect.X = x+25;
-						rect.Y = y+25;
-						gr.DrawImage(new System.Drawing.Bitmap(i.path), rect);
+						System.Drawing.Bitmap img = thumbs.GetThumbnail(item);
+						rect.X = x-marginX;
+						rect.Y = y-marginY;
+						rect.Size = thumb;
+						rect.Height = img.Height*thumb.Width/img.Width;
+						gr.DrawImage(img, rect);
+						itemCount++;
+						Console.Write("\r{0:0%}    ", itemCount / totalItems);
 					}
 				}
 			}
-
-			pg.Save("colormap.png");
+			Console.WriteLine();
+			pg.Save(Path.GetFullPath("colormap.png"));
 
 
 

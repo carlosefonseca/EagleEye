@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Drawing;
+using System.Drawing.Imaging;
 
 namespace EagleEye.Common {
 	[Serializable]
@@ -86,7 +87,7 @@ namespace EagleEye.Common {
 		/// </summary>
 		/// <param name="path">The FOLDER where the thumbnail will be created</param>
 		/// <returns>Full path</returns>
-		public string GenerateThumbnail(string path) {
+		public System.Drawing.Image GenerateThumbnail(string path) {
 			int smallside = 200, newWidth, newHeight;
 
 			System.Drawing.Image.GetThumbnailImageAbort abort = delegate{
@@ -105,10 +106,11 @@ namespace EagleEye.Common {
 				newHeight = orig.Size.Height * smallside / orig.Size.Width;
 			}
 			System.Drawing.Image thumb = orig.GetThumbnailImage(newWidth,newHeight, abort, intptr);
-			thumbnail = Path.GetFullPath(path + id + ".jpg");
-			thumb.Save(thumbnail);
-			return thumbnail;
+			if (thumb == null) { throw new Exception("The thumbnail is null :S "); }
+			return thumb;
 		}
+
+
 
 
 		#region Serialization
