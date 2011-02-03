@@ -33,7 +33,7 @@ namespace EEPlugin {
 		/// </summary>
 		public void Init() {
 			if (persistence == null) {
-				persistence = new Persistence(Id() + ".eep");
+				persistence = new Persistence(Id() + ".MainColor.eep");
 			}
 			if (persistence.existed) {
 				Load();
@@ -42,7 +42,7 @@ namespace EEPlugin {
 			}
 			///////////////////////////////////
 			if (persistence2 == null) {
-				persistence2 = new Persistence(Id() + "2.eep");
+				persistence2 = new Persistence(Id() + ".ColorMap.eep");
 			}
 			if (persistence2.existed) {
 				Load2();
@@ -51,7 +51,7 @@ namespace EEPlugin {
 			}
 			////////////////////////////////////
 			if (persistence3 == null) {
-				persistence3 = new Persistence(Id() + "3.eep");
+				persistence3 = new Persistence(Id() + ".MappedImages.eep");
 			}
 			if (persistence3.existed) {
 				Load3();
