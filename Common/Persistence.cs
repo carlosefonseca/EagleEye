@@ -250,6 +250,38 @@ namespace EagleEye.Common {
 			byte[] id = enc.GetBytes(i.id.ToString());
 			Put(id, i.GetBytes());
 		}
+
+
+		/// <summary>
+		/// Obtains the value of a key in a DB
+		/// </summary>
+		/// <typeparam name="TV">Type of the return object</typeparam>
+		/// <param name="id">id of the object</param>
+		/// <param name="DV">Delegate to convert the value to TV</param>
+		/// <returns>Value as TV</returns>
+		public TV Get<TV>(long id, ConvertFromBytes<TV> DV) {
+			if (btreeDB == null)
+				throw new Exception("DB Not Initialized");
+
+			System.Text.Encoding enc = System.Text.Encoding.ASCII;
+			byte[] key = enc.GetBytes(id.ToString());
+			DatabaseEntry DbKey = new DatabaseEntry(key);
+
+			KeyValuePair<DatabaseEntry, DatabaseEntry> kv;
+			kv = btreeDB.Get(DbKey);
+			return DV(kv.Value.Data);
+		}
+
+		public bool ExistsKey(string p) {
+			if (btreeDB == null)
+				throw new Exception("DB Not Initialized");
+
+			System.Text.Encoding enc = System.Text.Encoding.ASCII;
+			byte[] key = enc.GetBytes(p);
+			DatabaseEntry DbKey = new DatabaseEntry(key);
+
+			return btreeDB.Exists(DbKey);
+		}
 	}
 
 	public interface EEPersistable<T> {
