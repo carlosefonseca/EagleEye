@@ -209,8 +209,9 @@ namespace EagleEye.Common {
 						TK key = DK(dbc.Current.Key.Data);
 						TV val = DV(dbc.Current.Value.Data);
 						output.Add(key, val);
-					} catch { 
-						Console.WriteLine("Error loading data..."); }
+					} catch {
+						Console.WriteLine("Error loading data...");
+					}
 				}
 			}
 			return output;
@@ -290,10 +291,10 @@ namespace EagleEye.Common {
 		T Set(byte[] bytes);
 	}
 
-	
-	
+
+
 	public delegate T ConvertFromBytes<T>(byte[] bytes);
-	
+
 	public class Converters {
 		public static ConvertFromBytes<Int32> ReadInt32 = delegate(byte[] bytes) {
 			System.Text.Encoding enc = System.Text.Encoding.ASCII;
@@ -312,9 +313,14 @@ namespace EagleEye.Common {
 			string k = enc.GetString(bytes);
 			return double.Parse(k);
 		};
-		
+
 		public static ConvertFromBytes<Image> ReadImage = delegate(byte[] bytes) {
 			return new Image(bytes);
+		};
+
+		public static ConvertFromBytes<System.Drawing.Bitmap> ReadBitmap = delegate(byte[] bytes) {
+			MemoryStream memStream = new MemoryStream(bytes);
+			return new System.Drawing.Bitmap(memStream);
 		};
 
 		public static ConvertFromBytes<Rectangle[]> ReadRectangleArray = delegate(byte[] bytes) {
