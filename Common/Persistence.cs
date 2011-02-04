@@ -37,7 +37,7 @@ namespace EagleEye.Common {
 		/// <returns></returns>
 		public string FullFilename(string filename) {
 			if (dir == null) {
-				throw new Exception("Class var 'dir' must be set first");
+				throw new Exception("DB: Class var 'dir' must be set first");
 			}
 			if (Path.GetPathRoot(filename) == "") {
 				filename = dir + filename;
@@ -64,7 +64,7 @@ namespace EagleEye.Common {
 		}
 
 		private void SetTimer() {
-			Console.WriteLine("Setting timer");
+			//Console.WriteLine("DB: Setting timer");
 			timer = new Timer(timeout);
 			timer.Elapsed += new ElapsedEventHandler(timer_Elapsed);
 			timer.AutoReset = false;
@@ -75,16 +75,21 @@ namespace EagleEye.Common {
 			timer = null;
 			btreeDB.Sync();
 			//Save();
-			Console.WriteLine("Flushing");
+			Console.WriteLine("DB: Flushing");
 		}
 
 
 		void Put(byte[] k, byte[] d) {
 			btreeDB.Put(new DatabaseEntry(k), new DatabaseEntry(d));
-			if (timer != null)
-				timer.Interval = timeout;
-			else
+			Snooze();
+		}
+
+		private void Snooze() {
+			if (timer == null) {
 				SetTimer();
+			} else {
+				//timer.Interval = timeout;
+			}
 		}
 
 		public void Put(string key, string obj) {
@@ -108,87 +113,6 @@ namespace EagleEye.Common {
 			Put(k, bytes);
 		}
 
-		/*
-
-
-				public ImageCollection ReadCollection() {
-					Console.WriteLine("Loading BDB");
-					if (btreeDB == null)
-						this.InitDB(root + DBImages);
-					ImageCollection collection = new ImageCollection();
-					// Acquire a cursor for the database.
-					BTreeCursor dbc;
-					dbc = btreeDB.Cursor();
-					// Walk through the database and print out key/data pairs.
-					Image i;
-					while (dbc.MoveNext()) {
-						if (dbc.Current.Value.Data == null) {
-							Console.WriteLine("#ERRO a ler entrada da BDB");
-						} else {
-							i = new Image(dbc.Current.Value.Data);
-							collection.Add(i);
-							Console.WriteLine(i);
-						}
-					}
-
-					Console.WriteLine("BDB loaded");
-					return collection;
-				}
-
-
-				public void read() {
-					if (btreeDB == null)
-						this.InitDB(root + DBImages);
-					// Acquire a cursor for the database.
-					Cursor dbc;
-					using (dbc = btreeDB.Cursor()) {
-						// Walk through the database and print out key/data pairs.
-						int count = 0;
-						foreach (KeyValuePair<DatabaseEntry, DatabaseEntry> p in dbc)
-							count++;
-						Console.WriteLine(count + " items in DB");
-					}
-				}*/
-		/*
-		public Dictionary<TK, TV> Read<TK, TV>() {
-			Dictionary<TK, TV> output = new Dictionary<TK, TV>();
-
-			if (btreeDB == null)
-				throw new Exception("DB Not Initialized");
-
-			// Acquire a cursor for the database.
-			BTreeCursor dbc;
-			dbc = btreeDB.Cursor();
-
-			// Walk through the database and print out key/data pairs.
-			while (dbc.MoveNext()) {
-				if (dbc.Current.Value.Data == null) {
-					Console.WriteLine("#ERRO a ler entrada da BDB");
-				} else {
-					TK key = ReadField<TK>(dbc.Current.Key.Data);
-					TV val = ReadField<TV>(dbc.Current.Value.Data);
-					output.Add(key, val);
-				}
-			}
-			return output;
-		}
-
-		private T ReadField<T>(byte[] bytes) {
-			T field;
-			Console.WriteLine("IMPLEMENTED INTERFACES\n" + field.GetType().GetInterfaces().ToString());
-			if (field.GetType().Equals(typeof(long))) {
-				System.Text.Encoding enc = System.Text.Encoding.ASCII;
-			} else if (field.GetType().Equals(typeof(string))) {
-				System.Text.Encoding enc = System.Text.Encoding.ASCII;
-				field = enc.GetString(bytes);
-			} else if (field.GetType().GetInterface("EEPersistable")) {
-				(EEPersistable<TV>)field.Read(bytes);
-			} else
-				throw new NotSupportedException("Only strings, longs and EEPersistable types are supported");
-			return field;
-		}*/
-
-
 
 		public Dictionary<TK, TV> Read<TK, TV>(ConvertFromBytes<TK> DK, ConvertFromBytes<TV> DV) {
 			Dictionary<TK, TV> output = new Dictionary<TK, TV>();
@@ -203,7 +127,8 @@ namespace EagleEye.Common {
 			// Walk through the database and print out key/data pairs.
 			while (dbc.MoveNext()) {
 				if (dbc.Current.Value.Data == null) {
-					Console.WriteLine("#ERRO a ler entrada " + DK(dbc.Current.Key.Data).ToString() + " da BDB");
+					Console.WriteLine("#ERRO a ler entrada " + DK(dbc.Current.Key.Data).ToString() + " da BDB. Deleting");
+					dbc.Delete();
 				} else {
 					try {
 						TK key = DK(dbc.Current.Key.Data);
