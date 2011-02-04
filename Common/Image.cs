@@ -82,36 +82,6 @@ namespace EagleEye.Common {
 			return null;
 		}
 
-		/// <summary>
-		/// Generates a thumbnail on the filesystem. Sets the i.v. thumbnail
-		/// </summary>
-		/// <param name="path">The FOLDER where the thumbnail will be created</param>
-		/// <returns>Full path</returns>
-		public System.Drawing.Image GenerateThumbnail(string path) {
-			int smallside = 200, newWidth, newHeight;
-
-			System.Drawing.Image.GetThumbnailImageAbort abort = delegate{
-				Console.WriteLine("THUMBNAIL ABORTED!");
-				return false;
-			};
-			IntPtr intptr = IntPtr.Zero;
-
-			if (!File.Exists(this.path)) return null;
-			Bitmap orig = new Bitmap(this.path);
-			if (orig.Size.Height < orig.Size.Width) {
-				newHeight = smallside;
-				newWidth = orig.Size.Width * smallside / orig.Size.Height;
-			} else {
-				newWidth = smallside;
-				newHeight = orig.Size.Height * smallside / orig.Size.Width;
-			}
-			System.Drawing.Image thumb = orig.GetThumbnailImage(newWidth,newHeight, abort, intptr);
-			if (thumb == null) { throw new Exception("The thumbnail is null :S "); }
-			return thumb;
-		}
-
-
-
 
 		#region Serialization
 		/* Constructor for use with data returned from a BDB get. */

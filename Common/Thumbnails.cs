@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.IO;
 using System.Drawing.Imaging;
+using System.Drawing;
 
 namespace EagleEye.Common {
 	public class Thumbnails {
@@ -18,28 +19,59 @@ namespace EagleEye.Common {
 		}
 		#endregion Singleton
 
-		Persistence persistence;
+		private const int ThumbSize = 200;
+		private Persistence persistence;
+
 
 		private Thumbnails() {
 			persistence = new Persistence("Thumbnails");
+
+			//Set Compression stuff
+			jpgEncoder = GetEncoder(ImageFormat.Jpeg);
+			System.Drawing.Imaging.Encoder myEncoder = System.Drawing.Imaging.Encoder.Quality;
+			myEncoderParameters = new EncoderParameters(1);
+			EncoderParameter myEncoderParameter = new EncoderParameter(myEncoder, 50L);
+			myEncoderParameters.Param[0] = myEncoderParameter;
 		}
 
 		public System.Drawing.Bitmap GetThumbnail(long imgId) {
 			return persistence.Get<System.Drawing.Bitmap>(imgId, Converters.ReadBitmap);
 		}
 
-		public byte[] GenerateThumbnailData(Image i) {
-			System.Drawing.Image thumb = i.GenerateThumbnail("");
-			
-			//Compression stuff
-			ImageCodecInfo jpgEncoder = GetEncoder(ImageFormat.Jpeg);
-			System.Drawing.Imaging.Encoder myEncoder = System.Drawing.Imaging.Encoder.Quality;
-			EncoderParameters myEncoderParameters = new EncoderParameters(1);
-			EncoderParameter myEncoderParameter = new EncoderParameter(myEncoder, 50L);
-			myEncoderParameters.Param[0] = myEncoderParameter;
 
+		// Cenas necessárias para o processo e que não mudam
+		private ImageCodecInfo jpgEncoder;
+		private EncoderParameters myEncoderParameters;
+		System.Drawing.Image.GetThumbnailImageAbort abort = delegate {
+			Console.WriteLine("THUMBNAIL ABORTED!");
+			return false;
+		};
+		IntPtr intptr = IntPtr.Zero;
+		MemoryStream memStream;
+		System.Drawing.Image thumb;
+
+		/// <summary>
+		/// Generates a thumbnail on the filesystem. Sets the i.v. thumbnail
+		/// </summary>
+		/// <param name="path">The FOLDER where the thumbnail will be created</param>
+		/// <returns>Full path</returns>
+		public byte[] GenerateThumbnailData(Image i) {
+			int smallside = ThumbSize, newWidth, newHeight;
+			
+			if (!File.Exists(i.path)) return null;
+			Bitmap orig = new Bitmap(i.path);
+			if (orig.Size.Height < orig.Size.Width) {
+				newHeight = smallside;
+				newWidth = orig.Size.Width * smallside / orig.Size.Height;
+			} else {
+				newWidth = smallside;
+				newHeight = orig.Size.Height * smallside / orig.Size.Width;
+			}
+			thumb = orig.GetThumbnailImage(newWidth, newHeight, abort, intptr);
+			if (thumb == null) { throw new Exception("The thumbnail is null :S "); }
+			
 			//Saving to byte[]
-			MemoryStream memStream = new MemoryStream();
+			memStream = new MemoryStream();
 			thumb.Save(memStream, jpgEncoder, myEncoderParameters);
 			byte[] bytes = memStream.GetBuffer();
 			memStream.Close();
@@ -57,15 +89,13 @@ namespace EagleEye.Common {
 		}
 
 		public void PutThumbnailInDB(Image i, byte[] data) {
-			
+
 		}
 
 		public void GenerateAndSaveThumbnail(Image i) {
-			if (File.Exists(i.path)) {
-				byte[] data = GenerateThumbnailData(i);
-				if (data != null) {
-					persistence.Put(i.id.ToString(), data);
-				}
+			byte[] data = GenerateThumbnailData(i);
+			if (data != null) {
+				persistence.Put(i.id.ToString(), data);
 			}
 		}
 

@@ -87,15 +87,16 @@ namespace EagleEye {
 		}
 
 		public void GenerateThumbnails() {
-			/*string thumbnailpath = Path.GetFullPath(path+"\\thumbnails\\");
-			if (!Directory.Exists(thumbnailpath)) {
-				Directory.CreateDirectory(thumbnailpath);
-			}*/
+			Console.WriteLine("Generating thumbnails...");
+			double size = collection.Count();
+			double items = 0;
 			foreach (Image i in collection.ToList()) {
-				if (!Thumbs.ThumbnailExists(i)) {
+				if (!Thumbs.ThumbnailExists(i) && File.Exists(i.path)) {
 					Thumbs.GenerateAndSaveThumbnail(i);
 				}
+				Console.Write("\r{0:0.00%}   ", ++items / size);
 			}
+			Console.WriteLine("Generation completed.");
 		}
 	}
 }
