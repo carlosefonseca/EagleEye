@@ -5,6 +5,8 @@ using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Drawing;
 using System.Drawing.Imaging;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace EagleEye.Common {
 	[Serializable]
@@ -114,9 +116,39 @@ namespace EagleEye.Common {
 				memStream.Close();
 				return bytes;
 			} catch {
-				Console.WriteLine("ERRO A SERIALIZAR IMAGEM: " + this.ToString());
+				Console.WriteLine("A reformatar " + this.path);
+				this.ReformatEXIF();
+				try {
+					formatter = new BinaryFormatter();
+					memStream = new MemoryStream();
+					formatter.Serialize(memStream, this);
+					byte[] bytes = memStream.GetBuffer();
+					memStream.Close();
+					return bytes;
+				} catch {
+					Console.WriteLine("ERRO A SERIALIZAR " + this.path);
+				}
 			}
 			return null;
+		}
+
+		private void ReformatEXIF() {
+			Dictionary<string, object> itemsToChange = new Dictionary<string, object>();
+			foreach (KeyValuePair<string,object> kv in exif) {
+				string name = kv.Value.GetType().FullName;
+				if (name.StartsWith("System.")) continue;
+				switch (name) {
+					case "Newtonsoft.Json.Linq.JArray":
+						JArray jarr = (JArray)kv.Value;
+						itemsToChange[kv.Key] = JsonConvert.DeserializeObject<List<Object>>(jarr.ToString());
+						break;
+					default: Console.WriteLine("Type " + name + " not implemented");
+						break;
+				}
+			}
+			foreach (KeyValuePair<string, object> kv in itemsToChange) {
+				exif[kv.Key] = kv.Value;
+			}
 		}
 
 		public byte[] Key() {

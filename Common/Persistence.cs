@@ -73,9 +73,10 @@ namespace EagleEye.Common {
 
 		public void timer_Elapsed(object sender, ElapsedEventArgs e) {
 			timer = null;
+			Console.Write("DB: Flushing... ");
 			btreeDB.Sync();
 			//Save();
-			Console.WriteLine("DB: Flushing");
+			Console.WriteLine("Flushed.");
 		}
 
 
