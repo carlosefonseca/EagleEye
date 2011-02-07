@@ -148,9 +148,14 @@ namespace EagleEye {
 			} else {
 				dir = cmd[1];
 			}
-			Console.WriteLine("Processing " + dir);
-			images.Add(ExifToolWrapper.CrawlDir(dir));
-			Console.WriteLine(images.Count() + " images in Mem.");
+			dir = Path.GetFullPath(dir);
+			if (Directory.Exists(dir)) {
+				Console.WriteLine("Processing " + dir);
+				images.Add(ExifToolWrapper.CrawlDir(dir));
+				Console.WriteLine(images.Count() + " images in Mem.");
+			} else {
+				Console.WriteLine("Directory not found.");
+			}
 		}
 
 
