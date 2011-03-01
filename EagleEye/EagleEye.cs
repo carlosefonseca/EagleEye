@@ -92,11 +92,24 @@ namespace EagleEye {
 					case "thumbs": LibMan.GenerateThumbnails(); break;
 					case "save": LibMan.Save(); break;
 					case "exit": Console.WriteLine("Bye"); break;
+					case "bigtest": BigTest(); break;
 					case "": Console.WriteLine(cmds); break;
 					default: Console.WriteLine("Unkown cmd. " + cmds); break;
 				}
 			} while (command != "exit");
 		}
+
+		private static void BigTest() {
+			String dir = "Z:\\Pictures\\2010";
+			Console.WriteLine("BIGTEST: Starting. Adding dir "+dir);
+			AddDir(dir);
+			Console.WriteLine("\nBIGTEST: Generating thumbs");
+			LibMan.GenerateThumbnails();
+			Console.WriteLine("\nBIGTEST: Running color color plugin");
+			PlugMan.RunPlugin(images, "color");
+			Console.WriteLine("\nBIGTEST: Done.");
+		}
+
 
 		private static void ListImages() {
 			Stopwatch SWCopy = Stopwatch.StartNew();
@@ -148,7 +161,12 @@ namespace EagleEye {
 			} else {
 				dir = cmd[1];
 			}
-			dir = Path.GetFullPath(dir);
+			dir = AddDir(dir);
+		}
+
+private static String AddDir(String dir)
+{
+   dir = Path.GetFullPath(dir);
 			if (Directory.Exists(dir)) {
 				Console.WriteLine("Processing " + dir);
 				images.Add(ExifToolWrapper.CrawlDir(dir));
@@ -156,7 +174,8 @@ namespace EagleEye {
 			} else {
 				Console.WriteLine("Directory not found.");
 			}
-		}
+return dir;
+}
 
 
 		public static void CmdShowImageInfo(string[] cmd) {

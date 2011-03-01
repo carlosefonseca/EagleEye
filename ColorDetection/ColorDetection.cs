@@ -87,17 +87,18 @@ namespace EEPlugin {
 					continue;
 				}
 				if (File.Exists(i.path)) {
-					Console.Write("Color Detecting " + i.path + "... ");
-					Color result = RunDetection(i.path);
+					Console.WriteLine("Color Detecting " + i.path + "... ");
+					//Color result = RunDetection(i.path);
+					Color result = RunDetection(thumbs.GetThumbnail(i.id));
 					PutData(i, result);
-					Console.WriteLine(result.ToString());
+					//Console.WriteLine(result.ToString());
 				}
 				Save();
 			}
 			Console.WriteLine("\n-- Color detection completed. Now sorting.");
 
 			// COLOR MAP
-			// calcula a Saturaçao e a luminancia e ordena na árvore de cores * Histograma HSL
+			// calcula a Hue e a luminancia e ordena na árvore de cores * Histograma HSL
 			if (ColorMap == null) ColorMap = new SortedDictionary<double, SortedDictionary<double, List<long>>>();
 
 			foreach (EagleEye.Common.Image i in ic.ToList()) {
@@ -110,41 +111,35 @@ namespace EEPlugin {
 				try {
 					img = thumbs.GetThumbnail(i.id);
 				} catch {
-					continue;
+					Console.WriteLine("ERROR: Thumbnail required!");
+					return null;
 				}
-				AForge.Imaging.ImageStatisticsHSL histogram = new AForge.Imaging.ImageStatisticsHSL(img);
-				double saturation = histogram.Saturation.Median;
-				double luminance = histogram.Luminance.Median;
-				if (!ColorMap.ContainsKey(saturation)) {
-					ColorMap[saturation] = new SortedDictionary<double, List<long>>();
+
+				Color c = PluginData[i.id];
+				double hue = c.GetHue();
+				double luminance = c.GetBrightness();
+
+				if (!ColorMap.ContainsKey(hue)) {
+					ColorMap[hue] = new SortedDictionary<double, List<long>>();
 				}
-				if (!ColorMap[saturation].ContainsKey(luminance)) {
-					ColorMap[saturation][luminance] = new List<long>();
+				if (!ColorMap[hue].ContainsKey(luminance)) {
+					ColorMap[hue][luminance] = new List<long>();
 				}
-				ColorMap[saturation][luminance].Add(i.id);
+				ColorMap[hue][luminance].Add(i.id);
 				MappedImages.Add(i.id);
 				Console.Write(".");
 			}
 			Console.WriteLine();
 			SaveColorMap();
 
+			DrawMap();
 
-/*				// Percorre a árvore e imprime as imagens 
-				foreach (KeyValuePair<double, SortedDictionary<double, List<long>>> row in ColorMap) {
-					Console.WriteLine(row.Key.ToString());
-					foreach (KeyValuePair<double, List<long>> col in row.Value) {
-						Console.Write("   {0}: ", col.Key);
-						foreach (long item in col.Value) {
-							Console.Write("{0} ", item);
-						}
-						Console.WriteLine();
-					}
-				}
-			}*/
+			return null;
+		}
 
+		private void DrawMap() {
 			Size canvas = new Size(3000, 1000);
 			Size thumb = new Size(25, 25);
-
 
 			// Cria um png com as imagens lá colocadas nas suas posições de acordo com a árvore
 			// Altura > luminancia ; Largura > saturação
@@ -157,18 +152,19 @@ namespace EEPlugin {
 			gr.FillRectangle(solidWhite, pgRect);
 
 			int x, y;
+			int xMax = 360;
 			int marginX = thumb.Width / 2, marginY = thumb.Height / 2;
 			Rectangle rect = new Rectangle();
 			double totalItems = MappedImages.Count;
 			double itemCount = 0;
 			foreach (KeyValuePair<double, SortedDictionary<double, List<long>>> col in ColorMap) {
-				x = Convert.ToInt16(col.Key * canvas.Width);
+				x = Convert.ToInt16(col.Key * canvas.Width / xMax);
 				foreach (KeyValuePair<double, List<long>> row in col.Value) {
 					y = Convert.ToInt16(row.Key * canvas.Height);
 					foreach (long item in row.Value) {
 						System.Drawing.Bitmap img = thumbs.GetThumbnail(item);
 						rect.X = x - marginX;
-						rect.Y = y - marginY;
+						rect.Y = canvas.Height - y - marginY;
 						rect.Size = thumb;
 						rect.Height = img.Height * thumb.Width / img.Width;
 						gr.DrawImage(img, rect);
@@ -179,34 +175,30 @@ namespace EEPlugin {
 			}
 			Console.WriteLine();
 			pg.Save(Path.GetFullPath("colormap.png"));
-
-
-
-
-			return null;
 		}
 
 		private Color RunDetection(string p) {
 			Bitmap img = new Bitmap(p);
 			AForge.Imaging.ImageStatistics histogram = new AForge.Imaging.ImageStatistics(img);
-			Color c = Color.FromArgb(histogram.Red.Median, histogram.Green.Median, histogram.Blue.Median);
-
-			if (false) {
-				//output debug
-				System.Drawing.Bitmap pg = new System.Drawing.Bitmap(100, 100);
-				Graphics gr = Graphics.FromImage(pg);
-
-				// clear the canvas to color
-				Rectangle pgRect = new Rectangle(0, 0, pg.Width, pg.Height);
-				SolidBrush solidWhite = new SolidBrush(c);
-				gr.FillRectangle(solidWhite, pgRect);
-
-				pg.Save(System.IO.Path.ChangeExtension(p, "_.jpg"));
+			Color c;
+			if (histogram.IsGrayscale) {
+				c = Color.FromArgb(histogram.Gray.Median, histogram.Gray.Median, histogram.Gray.Median);
+			} else {
+				c = Color.FromArgb(histogram.Red.Median, histogram.Green.Median, histogram.Blue.Median);
 			}
-
 			return c;
 		}
 
+		private Color RunDetection(Bitmap img) {
+			AForge.Imaging.ImageStatistics histogram = new AForge.Imaging.ImageStatistics(img);
+			Color c;
+			if (histogram.IsGrayscale) {
+				c = Color.FromArgb(histogram.Gray.Median, histogram.Gray.Median, histogram.Gray.Median);
+			} else {
+				c = Color.FromArgb(histogram.Red.Median, histogram.Green.Median, histogram.Blue.Median);
+			}
+			return c;
+		}
 
 		private void PutData(EagleEye.Common.Image i, Color result) {
 			PluginData.Add(i.id, result);
