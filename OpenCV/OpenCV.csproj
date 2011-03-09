@@ -92,7 +92,7 @@
   </Target>
   -->
   <PropertyGroup>
-    <PostBuildEvent>move "$(TargetPath)" "$(SolutionDir)App\plugins"
-move "$(TargetDir)FaceDetect.exe" "$(SolutionDir)App\plugins"</PostBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
   </PropertyGroup>
 </Project>

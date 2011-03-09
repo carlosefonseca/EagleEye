@@ -11,16 +11,26 @@ using System.Diagnostics;
 
 
 namespace EagleEye {
-	class EagleEye {
+	public class EagleEyeCore {
 		private static PersistedImageCollection images;
 		private static Persistence persistence;
 		private static PluginManager PlugMan;
-		private static LibraryManager LibMan;
+		public static LibraryManager LibMan;
 
 		private static string PluginDir = "plugins/";
 		private static string LibraryDir = "EagleEyeDB";
 
 		static void Main(string[] a) {
+			Console.Write("Folder for DB? [.\\EagleEyeDB\\] ");
+			string buf = Console.ReadLine();
+			if (buf != "") LibraryDir = buf;
+
+			Init();
+
+			CommandLine();
+		}
+
+		public static void Init() {
 			#region Load Embeded Libs
 			foreach (string ass in Assembly.GetExecutingAssembly().GetManifestResourceNames())
 				Console.WriteLine(ass);
@@ -52,24 +62,19 @@ namespace EagleEye {
 						if (stream != null) break;
 					}
 				}
-				
+
 				Byte[] assemblyData = new Byte[stream.Length];
 				stream.Read(assemblyData, 0, assemblyData.Length);
 				return Assembly.Load(assemblyData);
 			};
 			#endregion Load Embeded Libs
 
-			Console.Write("Folder for DB? [.\\EagleEyeDB\\] ");
-			string buf = Console.ReadLine();
-			if (buf != "") LibraryDir = buf;
 			LibMan = LibraryManager.Init(LibraryDir);
 
 			images = LibMan.collection;
 
 			PlugMan = PluginManager.Get();
 			PlugMan.LoadPlugins(PluginDir);
-
-			CommandLine();
 		}
 
 		private static void CreateLib(string LibraryDir) {
@@ -101,7 +106,7 @@ namespace EagleEye {
 
 		private static void BigTest() {
 			String dir = "Z:\\Pictures\\2010";
-			Console.WriteLine("BIGTEST: Starting. Adding dir "+dir);
+			Console.WriteLine("BIGTEST: Starting. Adding dir " + dir);
 			AddDir(dir);
 			Console.WriteLine("\nBIGTEST: Generating thumbs");
 			LibMan.GenerateThumbnails();
@@ -123,7 +128,7 @@ namespace EagleEye {
 			SWString.Stop();
 			Console.WriteLine(output);
 			Console.WriteLine("Colection size: {0}", sorted.Count());
-			Console.WriteLine("Times | Copy: {0}ms | Sort: {1}ms | Generate Output: {2}ms", SWCopy.ElapsedMilliseconds, SWSort.ElapsedMilliseconds,SWString.ElapsedMilliseconds);
+			Console.WriteLine("Times | Copy: {0}ms | Sort: {1}ms | Generate Output: {2}ms", SWCopy.ElapsedMilliseconds, SWSort.ElapsedMilliseconds, SWString.ElapsedMilliseconds);
 		}
 
 		public static void CmdSort(string[] cmd) {
@@ -153,7 +158,7 @@ namespace EagleEye {
 			persistence.read();*/
 		}
 
-		public static void AddDir(string[] cmd) {
+		private static void AddDir(string[] cmd) {
 			String dir;
 			if (cmd.Length < 2) {
 				Console.Write("Enter a folder with photos: ");
@@ -164,9 +169,8 @@ namespace EagleEye {
 			dir = AddDir(dir);
 		}
 
-private static String AddDir(String dir)
-{
-   dir = Path.GetFullPath(dir);
+		public static String AddDir(String dir) {
+			dir = Path.GetFullPath(dir);
 			if (Directory.Exists(dir)) {
 				Console.WriteLine("Processing " + dir);
 				images.Add(ExifToolWrapper.CrawlDir(dir));
@@ -174,8 +178,8 @@ private static String AddDir(String dir)
 			} else {
 				Console.WriteLine("Directory not found.");
 			}
-return dir;
-}
+			return dir;
+		}
 
 
 		public static void CmdShowImageInfo(string[] cmd) {

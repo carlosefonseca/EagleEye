@@ -30,6 +30,8 @@ namespace EagleEye.Common {
 			return dir;
 		}
 
+		public static string RootFolder() { return dir; }
+
 		/// <summary>
 		/// Transforms a filename into a full path and adds the .db extension, if needed
 		/// </summary>
@@ -115,6 +117,33 @@ namespace EagleEye.Common {
 		}
 
 
+		public List<T1> Read<T1>(ConvertFromBytes<T1> D1) {
+			List<T1> output = new List<T1>();
+
+			if (btreeDB == null)
+				throw new Exception("DB Not Initialized");
+
+			// Acquire a cursor for the database.
+			BTreeCursor dbc;
+			dbc = btreeDB.Cursor();
+
+			// Walk through the database and print out key/data pairs.
+			while (dbc.MoveNext()) {
+				if (dbc.Current.Value.Data == null) {
+					Console.WriteLine("#ERRO a ler entrada " + D1(dbc.Current.Key.Data).ToString() + " da BDB. Deleting");
+					dbc.Delete();
+				} else {
+					try {
+						T1 key = D1(dbc.Current.Key.Data);
+						output.Add(key);
+					} catch {
+						Console.WriteLine("Error loading data...");
+					}
+				}
+			}
+			return output;
+		}
+
 		public Dictionary<TK, TV> Read<TK, TV>(ConvertFromBytes<TK> DK, ConvertFromBytes<TV> DV) {
 			Dictionary<TK, TV> output = new Dictionary<TK, TV>();
 
@@ -170,6 +199,12 @@ namespace EagleEye.Common {
 
 			Console.WriteLine("BDB loaded");
 			return output;
+		}
+
+		public void Put(long id) {
+			System.Text.Encoding enc = System.Text.Encoding.ASCII;
+			byte[] i = enc.GetBytes(id.ToString());
+			Put(i, enc.GetBytes(""));
 		}
 
 		public void Put(Image i) {
@@ -232,6 +267,11 @@ namespace EagleEye.Common {
 			System.Text.Encoding enc = System.Text.Encoding.ASCII;
 			string k = enc.GetString(bytes);
 			return long.Parse(k);
+		};
+
+		public static ConvertFromBytes<string> ReadString = delegate(byte[] bytes) {
+			System.Text.Encoding enc = System.Text.Encoding.ASCII;
+			return enc.GetString(bytes);
 		};
 
 		public static ConvertFromBytes<double> ReadDouble = delegate(byte[] bytes) {

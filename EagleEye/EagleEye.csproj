@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.21022</ProductVersion>
+    <ProductVersion>9.0.30729</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{6A7B858C-D506-4804-A43D-EB5D01C96319}</ProjectGuid>
     <OutputType>Exe</OutputType>
@@ -17,7 +17,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
+    <OutputPath>..\App\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -92,9 +92,7 @@
   </Target>
   -->
   <PropertyGroup>
-    <PostBuildEvent>move "$(TargetPath)" "$(SolutionDir)App"
-move "$(TargetDir)Common.dll" "$(SolutionDir)App"
-move "$(TargetDir)exiftool.exe" "$(SolutionDir)App"
-</PostBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
   </PropertyGroup>
 </Project>
