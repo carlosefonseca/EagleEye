@@ -15,7 +15,9 @@ namespace EagleEye {
 		private static PersistedImageCollection images;
 		private static Persistence persistence;
 		private static PluginManager PlugMan;
-		public static LibraryManager LibMan;
+		private static LibraryManager LibMan;
+
+		public static StreamWriter logger;
 
 		private static string PluginDir = "plugins/";
 		private static string LibraryDir = "EagleEyeDB";
@@ -31,6 +33,8 @@ namespace EagleEye {
 		}
 
 		public static void Init() {
+			InitLogger();
+			//Console.SetOut(logger);
 			#region Load Embeded Libs
 			foreach (string ass in Assembly.GetExecutingAssembly().GetManifestResourceNames())
 				Console.WriteLine(ass);
@@ -87,7 +91,8 @@ namespace EagleEye {
 			Console.WriteLine(cmds);
 			do {
 				command = Console.ReadLine();
-				string[] split = command.Split(' ');
+				char[] sep = {' '};
+				string[] split = command.Split(sep,2);
 				switch (split[0]) {
 					case "show": CmdShowImageInfo(split); break;
 					case "list": ListImages(); break;
@@ -97,6 +102,7 @@ namespace EagleEye {
 					case "thumbs": LibMan.GenerateThumbnails(); break;
 					case "save": LibMan.Save(); break;
 					case "exit": Console.WriteLine("Bye"); break;
+					case "addgen": AddDir(split); PlugMan.RunPlugin(images, "dzcg"); break;
 					case "bigtest": BigTest(); break;
 					case "": Console.WriteLine(cmds); break;
 					default: Console.WriteLine("Unkown cmd. " + cmds); break;
@@ -207,6 +213,22 @@ namespace EagleEye {
 
 		public static string ShowImageInfo(Image i) {
 			return i.Details() + "\nPlugins:\n" + PlugMan.PluginsInfoForImage(i);
+		}
+
+
+		public static void InitLogger() {
+			String filename = DateTime.Now.ToString("yyyy-M-d HH-mm-ss");
+			filename = "EagleEye"; // Single File
+			logger = File.CreateText(".\\Logs\\" + filename + ".log");
+		}
+
+		public static void Log(String msg) {
+			logger.WriteLine(DateTime.Now.ToString("mm:ss ")+msg);
+			logger.Flush();
+		}
+
+		public static void Log(String id, String msg) {
+			Log(id + ": " + msg);
 		}
 	}
 }

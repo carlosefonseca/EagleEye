@@ -16,7 +16,7 @@ namespace EagleEye.Common {
 		BTreeDatabase btreeDB;
 		BTreeDatabaseConfig btreeConfig;
 		Timer timer;
-		const double timeout = 1000;
+		const double timeout = 10000;
 		public readonly bool existed;
 
 		public static string SetRootFolder(string f) {

@@ -58,6 +58,7 @@ namespace EEPlugin {
 				persistence.Put(kv.Key.ToString(), kv.Value);
 			}
 		}
+		#endregion EEPluginInterface Members
 
 		/// <summary>
 		/// Process images (called from manager)
@@ -75,26 +76,26 @@ namespace EEPlugin {
 				if (File.Exists(i.path)) {
 					Console.WriteLine("> " + i.path + "... ");
 					string target = DZDir + "images\\" + i.id.ToString() + ".xml";
-						Stopwatch st = Stopwatch.StartNew();
+					Stopwatch st = Stopwatch.StartNew();
 					GenerateDZC(i.path, target);
-						st.Stop();
-						times += st.ElapsedMilliseconds;
-						count++;
+					st.Stop();
+					times += st.ElapsedMilliseconds;
+					count++;
 					PluginData.Add(i.id, target);
 					Console.WriteLine(i.id.ToString());
 				}
 				Save();
 			}
-			Console.WriteLine(count + " images. Mean processing time of " + times / count + " ms.");
-
-			if (count != 0) {
-				Console.WriteLine("Generating Collection...");
-				GenerateCollection();
+			if (count > 0) {
+				Console.WriteLine(count + " images. Mean processing time of " + times / count + " ms.");
 			}
+
+			Console.WriteLine("Generating Collection...");
+			GenerateCollection();
 
 			return null;
 		}
-		#endregion EEPluginInterface Members
+		
 
 
 

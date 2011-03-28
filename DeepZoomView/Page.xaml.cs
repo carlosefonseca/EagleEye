@@ -14,17 +14,14 @@ namespace DeepZoomView
 {
     public partial class Page : UserControl
     {
-        //
         // Based on prior work done by Lutz Gerhard, Peter Blois, and Scott Hanselman
-        //
-
         double zoom = 3;
         bool duringDrag = false;
         bool mouseDown = false;
         Point lastMouseDownPos = new Point();
         Point lastMousePos = new Point();
         Point lastMouseViewPort = new Point();
-
+		int Hcells;
 
         public double ZoomFactor
         {
@@ -36,19 +33,14 @@ namespace DeepZoomView
         {
             InitializeComponent();
 
-            //
+
             // Firing an event when the MultiScaleImage is Loaded
-            //
             this.msi.Loaded += new RoutedEventHandler(msi_Loaded);
 
-            //
             // Firing an event when all of the images have been Loaded
-            //
-            this.msi.ImageOpenSucceeded += new RoutedEventHandler(msi_ImageOpenSucceeded);
+           this.msi.ImageOpenSucceeded += new RoutedEventHandler(msi_ImageOpenSucceeded);
 
-            //
             // Handling all of the mouse and keyboard functionality
-            //
             this.MouseMove += delegate(object sender, MouseEventArgs e)
             {
                 lastMousePos = e.GetPosition(msi);
@@ -102,13 +94,13 @@ namespace DeepZoomView
                 if (mouseDown && !duringDrag)
                 {
                     duringDrag = true;
-                    double w = msi.ViewportWidth;
+                    /*double w = msi.ViewportWidth;
                     Point o = new Point(msi.ViewportOrigin.X, msi.ViewportOrigin.Y);
                     msi.UseSprings = false;
                     msi.ViewportOrigin = new Point(o.X, o.Y);
                     msi.ViewportWidth = w;
                     zoom = 1 / w;
-                    msi.UseSprings = true;
+                    msi.UseSprings = true;*/
                 }
 
                 if (duringDrag)
@@ -138,24 +130,37 @@ namespace DeepZoomView
 
         void msi_ImageOpenSucceeded(object sender, RoutedEventArgs e)
         {
+			double visWidth = msi.RenderSize.Width;
+			double visHeight = msi.RenderSize.Height;
+			//double visHeight = ((msi.SubImages[0].ViewportWidth / msi.SubImages[0].AspectRatio) * msi.RenderSize.Height) / msi.SubImages[0].ViewportWidth;
+
+
+			double ratio = visHeight / visWidth;
+
+			Hcells = msi.SubImages.Count;
+			double Vcells = 1;
+
+			while (Vcells <= Hcells * ratio) {
+				Hcells--;
+				Vcells = msi.SubImages.Count / Hcells;
+			}
+
             //If collection, this gets you a list of all of the MultiScaleSubImages
-            //
             var x = 0.0;
             var y = 0.0;
             foreach (MultiScaleSubImage subImage in msi.SubImages)
             {
-                subImage.ViewportWidth = 5.333;
+                subImage.ViewportWidth = 1;
                 subImage.ViewportOrigin = new Point(-x, -y);
                 x += 1;
-
-                if (x >= 5)
+				
+				if (x >= Hcells)
                 {
-                    y += 1.333;
+                    y += 1;
                     x = 0.0;
                 }
             }
-
-            msi.ViewportWidth = 1;
+            msi.ViewportWidth = Hcells;
         }
 
         void msi_Loaded(object sender, RoutedEventArgs e)
@@ -165,14 +170,18 @@ namespace DeepZoomView
 
         private void Zoom(double newzoom, Point p)
         {
-            if (newzoom < 0.5)
+			if (this.msi.ViewportWidth > Hcells*1.1) {
+				GoHomeClick(null, null);
+			} else {/*
+			if (newzoom < 2)
             {
-                newzoom = 0.5;
+                newzoom = 2;
             }
-
-            msi.ZoomAboutLogicalPoint(newzoom / zoom, p.X, p.Y);
-            zoom = newzoom;
-        }
+				*/
+				msi.ZoomAboutLogicalPoint(newzoom / zoom, p.X, p.Y);
+				zoom = newzoom;
+			}
+		}
 
         private void ZoomInClick(object sender, System.Windows.RoutedEventArgs e)
         {
@@ -187,7 +196,7 @@ namespace DeepZoomView
 
         private void GoHomeClick(object sender, System.Windows.RoutedEventArgs e)
         {
-            this.msi.ViewportWidth = 1;
+            this.msi.ViewportWidth = Hcells;
             this.msi.ViewportOrigin = new Point(0, 0);
             ZoomFactor = 1;
         }
