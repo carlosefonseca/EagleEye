@@ -218,10 +218,14 @@
                 <vsm:VisualState x:Name="FadeOut"/>
             </vsm:VisualStateGroup>
         </vsm:VisualStateManager.VisualStateGroups>
-        <MultiScaleImage x:Name="msi" Source="EagleEyeDB/DZC/collection.xml"/>
+        <MultiScaleImage x:Name="msi" Source="SmallDB/DZC/collection.xml"/>
+        <Canvas x:Name="Mouse">
+            <Border Background="White" Opacity="0.5">
+                <TextBlock x:Name="MouseTitle" MaxWidth="200"></TextBlock>
+            </Border>
+        </Canvas>
         <Canvas Height="37" HorizontalAlignment="Right" Margin="0,0,8,8" x:Name="buttonCanvas" VerticalAlignment="Bottom" Width="500" Opacity="0" Background="{x:Null}">
-            <TextBox x:Name="Caption"></TextBox>
-            <TextBox x:Name="Mouse" Canvas.Left="100"></TextBox>
+            <TextBox x:Name="Caption" Text="{Binding Path=zoom}"></TextBox>
             <Button Height="30" x:Name="zoomIn" Width="42" Canvas.Left="197" Canvas.Top="4" Template="{StaticResource zoomInTemplate}" Content="Button" Click="ZoomInClick"/>
             <Button Height="30" x:Name="zoomOut" Width="42" Template="{StaticResource zoomOutTemplate}" Content="Button" Canvas.Left="227" Canvas.Top="4" Click="ZoomOutClick"/>
             <Button Height="30" x:Name="goHome" Width="42" Template="{StaticResource homeTemplate}" Content="Button" Canvas.Left="257" Canvas.Top="4" Click="GoHomeClick"/>

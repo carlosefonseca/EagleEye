@@ -15,7 +15,7 @@ namespace DeepZoomView
     public partial class Page : UserControl
     {
         // Based on prior work done by Lutz Gerhard, Peter Blois, and Scott Hanselman
-        double zoom = 3;
+        double zoom = 1;
         bool duringDrag = false;
         bool mouseDown = false;
         Point lastMouseDownPos = new Point();
@@ -36,6 +36,7 @@ namespace DeepZoomView
         {
             InitializeComponent();
 
+			Caption.DataContext = zoom;
 
             // Firing an event when the MultiScaleImage is Loaded
             this.msi.Loaded += new RoutedEventHandler(msi_Loaded);
@@ -55,16 +56,24 @@ namespace DeepZoomView
 					newPoint.Y += (lastMouseDownPos.Y - lastMousePos.Y) / msi.ActualWidth * msi.ViewportWidth;
 					msi.ViewportOrigin = newPoint;
 				} else {
-					Mouse.Text = e.GetPosition(msi).ToString();
 					int index = GetSubImageIndex(e.GetPosition(msi));
 
+					MouseTitle.Parent.SetValue(Canvas.TopProperty, e.GetPosition(msi).Y+20);
+					MouseTitle.Parent.SetValue(Canvas.LeftProperty, e.GetPosition(msi).X+20);
+
+					Caption.Text = zoom.ToString();
 					if (index != _LastIndex) {
 						_LastIndex = index;
 
 						if (index != -1) {
 							//Caption.Text = _Metadata[index].Caption;
-							Caption.Text = msi.SubImages[index].ViewportOrigin.ToString();
-							Caption.Text = "Image" + index;
+							//Caption.Text = msi.SubImages[index].ViewportOrigin.ToString();
+							//Caption.Text = "Image" + index;
+							MouseTitle.Text = "";
+							for (int i = 0; i <= index % 4; i++) {
+								MouseTitle.Text += "Image" + index + " " + "Image" + index + "\n";
+							}
+							MouseTitle.Text = MouseTitle.Text.TrimEnd(new char[1] { '\n' });
 							//Description.Text = _Metadata[index].Description;
 							//FadeIn.Begin();
 						} else {
@@ -89,16 +98,18 @@ namespace DeepZoomView
                 if (!duringDrag)
                 {
                     bool shiftDown = (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift;
+					bool ctrlDown = true;// (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Control;
                     double newzoom = zoom;
 
-                    if (shiftDown)
-                    {
-                        newzoom /= 2;
-                    }
-                    else
-                    {
-                        newzoom *= 2;
-                    }
+					if (ctrlDown) {
+						int index = GetSubImageIndex(e.GetPosition(msi));
+						msi.ViewportWidth = 1.5;
+						msi.ViewportOrigin = new Point(-msi.SubImages[index].ViewportOrigin.X, -msi.SubImages[index].ViewportOrigin.Y);
+					} else if (shiftDown) {
+						newzoom /= 2;
+					} else {
+						newzoom *= 2;
+					}
 
                     Zoom(newzoom, msi.ElementToLogicalPoint(this.lastMousePos));
                 }
@@ -160,7 +171,7 @@ namespace DeepZoomView
 			Hcells = msi.SubImages.Count;
 			double Vcells = 1;
 
-			while (Vcells <= Hcells * ratio) {
+			while (Vcells+1 < Hcells * ratio) {
 				Hcells--;
 				Vcells = msi.SubImages.Count / Hcells;
 			}
@@ -171,7 +182,7 @@ namespace DeepZoomView
 			int i = 0;
             foreach (MultiScaleSubImage subImage in msi.SubImages)
             {
-                subImage.ViewportWidth = 1;
+                subImage.ViewportWidth = 0.99;
                 subImage.ViewportOrigin = new Point(-x, -y);
 				canvasIndex.Add(x+";"+y, i++);
                 x += 1;
@@ -192,14 +203,9 @@ namespace DeepZoomView
 
         private void Zoom(double newzoom, Point p)
         {
-			if (this.msi.ViewportWidth > Hcells*1.1) {
+			if (newzoom < 1) {
 				GoHomeClick(null, null);
-			} else {/*
-			if (newzoom < 2)
-            {
-                newzoom = 2;
-            }
-				*/
+			} else {
 				msi.ZoomAboutLogicalPoint(newzoom / zoom, p.X, p.Y);
 				zoom = newzoom;
 			}
@@ -369,7 +375,11 @@ namespace DeepZoomView
 		private int GetSubImageIndex(Point point) {
 			double imgLogicalX = Math.Floor(msi.ViewportOrigin.X + msi.ViewportWidth * (point.X / msi.ActualWidth));
 			double imgLogicalY = Math.Floor(msi.ViewportOrigin.Y + (msi.ViewportWidth * (msi.ActualHeight / msi.ActualWidth)) * (point.Y / msi.ActualHeight));
-			return canvasIndex[imgLogicalX + ";" + imgLogicalY];
+			try {
+				return canvasIndex[imgLogicalX + ";" + imgLogicalY];
+			} catch {
+				return -1;
+			}
 		}
 
 		private int GetSubImageIndex2(Point point) {
