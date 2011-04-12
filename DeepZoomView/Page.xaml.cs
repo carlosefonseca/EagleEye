@@ -22,6 +22,9 @@ namespace DeepZoomView
         Point lastMousePos = new Point();
         Point lastMouseViewPort = new Point();
 		int Hcells;
+		long _LastIndex = -1;
+		Dictionary<long, string> _Metadata = new Dictionary<long, string>();
+		Dictionary<string, int> canvasIndex = new Dictionary<string, int>();
 
         public double ZoomFactor
         {
@@ -44,14 +47,31 @@ namespace DeepZoomView
             this.MouseMove += delegate(object sender, MouseEventArgs e)
             {
                 lastMousePos = e.GetPosition(msi);
+				
 
-                if (duringDrag)
-                {
-                    Point newPoint = lastMouseViewPort;
-                    newPoint.X += (lastMouseDownPos.X - lastMousePos.X) / msi.ActualWidth * msi.ViewportWidth;
-                    newPoint.Y += (lastMouseDownPos.Y - lastMousePos.Y) / msi.ActualWidth * msi.ViewportWidth;
-                    msi.ViewportOrigin = newPoint;
-                }
+				if (duringDrag) {
+					Point newPoint = lastMouseViewPort;
+					newPoint.X += (lastMouseDownPos.X - lastMousePos.X) / msi.ActualWidth * msi.ViewportWidth;
+					newPoint.Y += (lastMouseDownPos.Y - lastMousePos.Y) / msi.ActualWidth * msi.ViewportWidth;
+					msi.ViewportOrigin = newPoint;
+				} else {
+					Mouse.Text = e.GetPosition(msi).ToString();
+					int index = GetSubImageIndex(e.GetPosition(msi));
+
+					if (index != _LastIndex) {
+						_LastIndex = index;
+
+						if (index != -1) {
+							//Caption.Text = _Metadata[index].Caption;
+							Caption.Text = msi.SubImages[index].ViewportOrigin.ToString();
+							Caption.Text = "Image" + index;
+							//Description.Text = _Metadata[index].Description;
+							//FadeIn.Begin();
+						} else {
+							//FadeOut.Begin();
+						}
+					}
+				}
             };
 
             this.MouseLeftButtonDown += delegate(object sender, MouseButtonEventArgs e)
@@ -148,10 +168,12 @@ namespace DeepZoomView
             //If collection, this gets you a list of all of the MultiScaleSubImages
             var x = 0.0;
             var y = 0.0;
+			int i = 0;
             foreach (MultiScaleSubImage subImage in msi.SubImages)
             {
                 subImage.ViewportWidth = 1;
                 subImage.ViewportOrigin = new Point(-x, -y);
+				canvasIndex.Add(x+";"+y, i++);
                 x += 1;
 				
 				if (x >= Hcells)
@@ -343,5 +365,40 @@ namespace DeepZoomView
 
             return imageList;
         }
+
+		private int GetSubImageIndex(Point point) {
+			double imgLogicalX = Math.Floor(msi.ViewportOrigin.X + msi.ViewportWidth * (point.X / msi.ActualWidth));
+			double imgLogicalY = Math.Floor(msi.ViewportOrigin.Y + (msi.ViewportWidth * (msi.ActualHeight / msi.ActualWidth)) * (point.Y / msi.ActualHeight));
+			return canvasIndex[imgLogicalX + ";" + imgLogicalY];
+		}
+
+		private int GetSubImageIndex2(Point point) {
+			// Hit-test each sub-image in the MultiScaleImage control to determine
+			// whether  "point " lies within a sub-image
+			for (int i = msi.SubImages.Count - 1; i >= 0; i--) {
+				MultiScaleSubImage image = msi.SubImages[i];
+				double width = msi.ActualWidth /
+					(msi.ViewportWidth * image.ViewportWidth);
+				double height = msi.ActualWidth /
+					(msi.ViewportWidth * image.ViewportWidth * image.AspectRatio);
+				
+
+
+				Point pos = msi.LogicalToElementPoint(new Point(
+					-image.ViewportOrigin.X / image.ViewportWidth,
+					-image.ViewportOrigin.Y / image.ViewportWidth)
+				);
+				Rect rect = new Rect(pos.X, pos.Y, width, height);
+
+				if (rect.Contains(point)) {
+					long i2 = GetSubImageIndex2(point);
+					// Return the image index
+					return i;
+				}
+			}
+
+			// No corresponding sub-image
+			return -1;
+		}
     }
 }
