@@ -199,7 +199,7 @@
                 <Image Height="26" x:Name="normal" Width="26" Source="Images/fullscreen_rest.png" Stretch="Fill"/>
                 <Image Height="26" x:Name="down" Width="26" Opacity="0" Source="Images/fullscreen_pressed.png" Stretch="Fill"/>
                 <Image Height="26" x:Name="hover" Width="26" Opacity="0" Source="Images/fullscreen_hover.png" Stretch="Fill"/>
-                
+
             </Grid>
         </ControlTemplate>
     </UserControl.Resources>
@@ -222,9 +222,15 @@
         <!--<MultiScaleImage x:Name="msi" Source="SmallDB/DZC/collection.xml"/>-->
         <MultiScaleImage x:Name="msi" Source="EagleEyeDB/DZC/collection.xml"/>
         <Canvas>
-        <Grid x:Name="Overlays" >
-        </Grid>
+            <Canvas Name="Overlays">
+                <Canvas.RenderTransform>
+                    <ScaleTransform x:Name="OverlaysScale" ScaleX="1.0" ScaleY="1.0" />
+                </Canvas.RenderTransform>
+                <TextBlock Text="Something something" Foreground="White" Canvas.Left="500" Canvas.Top="0" Width="100"></TextBlock>
+                <TextBlock Text="Something something" Foreground="White" Canvas.Left="200" Canvas.Top="400" Width="100"></TextBlock>
+                <TextBlock Text="Something something" Foreground="White" Canvas.Left="700" Canvas.Top="600" Width="100"></TextBlock>
             </Canvas>
+        </Canvas>
         <Canvas x:Name="Mouse">
             <Border Background="White" Opacity="0.5">
                 <TextBlock x:Name="MouseTitle" MaxWidth="200"></TextBlock>
@@ -236,6 +242,6 @@
             <Button Height="30" x:Name="zoomOut" Width="42" Template="{StaticResource zoomOutTemplate}" Content="Button" Canvas.Left="227" Canvas.Top="4" Click="ZoomOutClick"/>
             <Button Height="30" x:Name="goHome" Width="42" Template="{StaticResource homeTemplate}" Content="Button" Canvas.Left="257" Canvas.Top="4" Click="GoHomeClick"/>
             <Button Height="30" x:Name="fullScreen" Width="42" Template="{StaticResource fullScreenTemplate}" Content="Button" Canvas.Left="287" Canvas.Top="4" Click="GoFullScreenClick"/>
-       </Canvas>
+        </Canvas>
     </Grid>
 </UserControl>

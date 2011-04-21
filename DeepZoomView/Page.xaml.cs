@@ -200,19 +200,8 @@ namespace DeepZoomView {
 			}
 			msi.ViewportWidth = Hcells;
 
-
-			for (int n = 0; n < Hcells; n++) {
-				ColumnDefinition cd = new ColumnDefinition();
-				this.Overlays.ColumnDefinitions.Add(cd);
-			}
-			for (int n = 0; n < Vcells; n++) {
-				RowDefinition rd = new RowDefinition();
-				this.Overlays.RowDefinitions.Add(rd);
-			}
 			Overlays.Width = msi.ActualWidth;
 			Overlays.Height = msi.ActualHeight;
-			Overlays.ShowGridLines = true;
-			//msi.ViewportOrigin
 			Overlays.GetValue(Canvas.TopProperty);
 		}
 
@@ -420,8 +409,11 @@ namespace DeepZoomView {
 			}
 			if ((Double)Overlays.GetValue(Canvas.LeftProperty) != -newX) {
 			Overlays.SetValue(Canvas.LeftProperty, -newX);
-			} 
-			/*if (Overlays.Height != newH) {
+			}
+			OverlaysScale.ScaleX = zoom;
+			OverlaysScale.ScaleY = zoom;
+			/*
+			if (Overlays.Height != newH) {
 				Overlays.Height = newH;
 			}
 			if (Overlays.Width != newW) {
