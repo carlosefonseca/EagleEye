@@ -61,15 +61,36 @@ namespace EagleEye.Common {
 		}
 
 		public DateTime Date() {
-			if (date == null) {
+			if (date == null || date.Equals(new DateTime(0))) {
+				String datetxt = null;
 				if (exif.ContainsKey("DateCreated")) {
-					Console.WriteLine(">> " + path + " > DateCreated");
-					date = DateTime.Parse(exif["DateCreated"].ToString());
+					Console.Write(">> " + path + " > DateCreated");
+					datetxt = exif["DateCreated"].ToString();
 				} else if (exif.ContainsKey("CreateDate")) {
-					Console.WriteLine(">> " + path + " > CreateDate");
-					date = DateTime.Parse(exif["CreateDate"].ToString());
+					Console.Write(">> " + path + " > CreateDate");
+					datetxt = exif["CreateDate"].ToString();
+				} else {
+					Console.WriteLine("!! No date found on EXIF :( for '" + this.path + "'");
+				}
+				if (datetxt != null) {
+					if (DateTime.TryParse(datetxt, out date)) {
+						Console.WriteLine(date);
+						return date;
+					} else {
+						String[] datearr = datetxt.Split(' ');
+						if (!datetxt.Contains("/")) {
+							if (datearr[0].Contains(":")
+								&& DateTime.TryParse(datearr[0].Replace(':', '/') + " " + datearr[1], out date)) {
+								Console.WriteLine(date);
+								return date;
+							} else {
+								Console.WriteLine("!! Could not parse '" + datetxt + "' from '" + this.path + "'");
+							}
+						}
+					}
 				}
 			}
+			//Console.WriteLine(date);
 			return date;
 		}
 
