@@ -13,19 +13,19 @@ using System.Windows.Shapes;
 namespace DeepZoomView {
 	public partial class Page : UserControl {
 		// Based on prior work done by Lutz Gerhard, Peter Blois, and Scott Hanselman
-		double zoom = 1;
+		Double zoom = 1;
 		bool duringDrag = false;
 		bool mouseDown = false;
 		Point lastMouseDownPos = new Point();
 		Point lastMousePos = new Point();
 		Point lastMouseViewPort = new Point();
-		double Hcells;
+		Double Hcells;
 		int Vcells;
 		long _LastIndex = -1;
 		Dictionary<long, string> _Metadata = new Dictionary<long, string>();
 		Dictionary<string, int> canvasIndex = new Dictionary<string, int>();
 
-		public double ZoomFactor {
+		public Double ZoomFactor {
 			get { return zoom; }
 			set { zoom = value; }
 		}
@@ -94,7 +94,7 @@ namespace DeepZoomView {
 				if (!duringDrag) {
 					bool shiftDown = (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift;
 					bool ctrlDown = true;// (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Control;
-					double newzoom = zoom;
+					Double newzoom = zoom;
 
 					if (ctrlDown) {
 						int index = GetSubImageIndex(e.GetPosition(msi));
@@ -120,7 +120,7 @@ namespace DeepZoomView {
 				lastMousePos = e.GetPosition(msi);
 				if (mouseDown && !duringDrag) {
 					duringDrag = true;
-					/*double w = msi.ViewportWidth;
+					/*Double w = msi.ViewportWidth;
 					Point o = new Point(msi.ViewportOrigin.X, msi.ViewportOrigin.Y);
 					msi.UseSprings = false;
 					msi.ViewportOrigin = new Point(o.X, o.Y);
@@ -140,7 +140,7 @@ namespace DeepZoomView {
 			new MouseWheelHelper(this).Moved += delegate(object sender, MouseWheelEventArgs e) {
 				e.Handled = true;
 
-				double newzoom = zoom;
+				Double newzoom = zoom;
 
 				if (e.Delta < 0)
 					newzoom /= 1.3;
@@ -181,14 +181,14 @@ namespace DeepZoomView {
 
 		void msi_ImageOpenSucceeded(object sender, RoutedEventArgs e) {
 			canvasIndex = new Dictionary<string, int>();
-			double imgAR = msi.SubImages[0].AspectRatio;
-			double imgWidth = msi.SubImages[0].ViewportWidth;
-			double imgHeight = imgWidth * imgAR;
-			double canvasWidth = msi.ActualWidth;
-			double canvasHeight = msi.ActualHeight;
+			Double imgAR = msi.SubImages[0].AspectRatio;
+			Double imgWidth = msi.SubImages[0].ViewportWidth;
+			Double imgHeight = imgWidth * imgAR;
+			Double canvasWidth = msi.ActualWidth;
+			Double canvasHeight = msi.ActualHeight;
 
-			double ratio = canvasWidth / canvasHeight;
-			double canvasRatio = canvasWidth / canvasHeight;
+			Double ratio = canvasWidth / canvasHeight;
+			Double canvasRatio = canvasWidth / canvasHeight;
 
 			int imgCount = msi.SubImages.Count;
 			Hcells = imgCount;
@@ -227,7 +227,7 @@ namespace DeepZoomView {
 			// Hook up any events you want when the image has successfully been opened
 		}
 
-		private void Zoom(double newzoom, Point p) {
+		private void Zoom(Double newzoom, Point p) {
 			if (newzoom < 1) {
 				GoHomeClick(null, null);
 			} else {
@@ -274,12 +274,12 @@ namespace DeepZoomView {
 			return new Rect(-msi.ViewportOrigin.X / msi.ViewportWidth, -msi.ViewportOrigin.Y / msi.ViewportWidth, 1 / msi.ViewportWidth, 1 / msi.ViewportWidth * msi.AspectRatio);
 		}
 
-		public Rect ZoomAboutPoint(Rect img, double zAmount, Point pt) {
+		public Rect ZoomAboutPoint(Rect img, Double zAmount, Point pt) {
 			return new Rect(pt.X + (img.X - pt.X) / zAmount, pt.Y + (img.Y - pt.Y) / zAmount, img.Width / zAmount, img.Height / zAmount);
 		}
 
 		public void LayoutDZI(Rect rect) {
-			double ar = msi.AspectRatio;
+			Double ar = msi.AspectRatio;
 			msi.ViewportWidth = 1 / rect.Width;
 			msi.ViewportOrigin = new Point(-rect.Left / rect.Width, -rect.Top / rect.Width);
 		}
@@ -377,8 +377,8 @@ namespace DeepZoomView {
 		}
 
 		private int GetSubImageIndex(Point point) {
-			double imgLogicalX = Math.Floor(msi.ViewportOrigin.X + msi.ViewportWidth * (point.X / msi.ActualWidth));
-			double imgLogicalY = Math.Floor(msi.ViewportOrigin.Y + (msi.ViewportWidth * (msi.ActualHeight / msi.ActualWidth)) * (point.Y / msi.ActualHeight));
+			Double imgLogicalX = Math.Floor(msi.ViewportOrigin.X + msi.ViewportWidth * (point.X / msi.ActualWidth));
+			Double imgLogicalY = Math.Floor(msi.ViewportOrigin.Y + (msi.ViewportWidth * (msi.ActualHeight / msi.ActualWidth)) * (point.Y / msi.ActualHeight));
 			try {
 				return canvasIndex[imgLogicalX + ";" + imgLogicalY];
 			} catch {
@@ -391,9 +391,9 @@ namespace DeepZoomView {
 			// whether  "point " lies within a sub-image
 			for (int i = msi.SubImages.Count - 1; i >= 0; i--) {
 				MultiScaleSubImage image = msi.SubImages[i];
-				double width = msi.ActualWidth /
+				Double width = msi.ActualWidth /
 					(msi.ViewportWidth * image.ViewportWidth);
-				double height = msi.ActualWidth /
+				Double height = msi.ActualWidth /
 					(msi.ViewportWidth * image.ViewportWidth * image.AspectRatio);
 
 
@@ -417,10 +417,10 @@ namespace DeepZoomView {
 
 		private void updateOverlay() {
 			zoom = Hcells / msi.ViewportWidth;
-			double newX = (msi.ViewportOrigin.X * (msi.ActualWidth / Hcells)) * zoom;
-			double newY = (msi.ViewportOrigin.Y * (msi.ActualHeight / Vcells)) * zoom;
-			double newH = msi.ActualHeight * zoom;
-			double newW = msi.ActualWidth * zoom;
+			Double newX = (msi.ViewportOrigin.X * (msi.ActualWidth / Hcells)) * zoom;
+			Double newY = (msi.ViewportOrigin.Y * (msi.ActualHeight / Vcells)) * zoom;
+			Double newH = msi.ActualHeight * zoom;
+			Double newW = msi.ActualWidth * zoom;
 			
 			if ((Double)Overlays.GetValue(Canvas.TopProperty) != -newY) {
 				Overlays.SetValue(Canvas.TopProperty, -newY);

@@ -18,14 +18,8 @@
 /EagleEye/bin
 /EagleEye/obj
 /App/
-/Common/bin
-/Common/obj
-/OpenCVTest/bin
-/OpenCVTest/obj
 .DS_Store
 /OpenCVTest/.DS_Store
-/OpenCV/obj
-/GPS/obj
 /ColorDetection/bin/
 /ColorDetection/obj/
 ._*
@@ -33,3 +27,7 @@
 /DeepZoomGen/obj
 /DeepZoomView/Bin
 /DeepZoomView/obj
+/Sketch.graffle/
+/Storyboard.pdf
+/WpfApplication1.vshost.exe.manifest
+/original_image.jpg.png

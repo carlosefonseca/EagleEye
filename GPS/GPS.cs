@@ -11,7 +11,11 @@ using System.IO;
 namespace EEPlugin {
 	public class GPS : EEPluginInterface {
 		private Persistence persistence;
+		private Persistence datePersistence;
 		private Dictionary<long, Coord> PluginData;
+		private Dictionary<long, DateTime> ImageDates;
+		private Dictionary<DateTime, List<long>> DatesOfImages;
+		
 		#region EEPluginInterface Members
 
 		public void Init() {
@@ -21,14 +25,29 @@ namespace EEPlugin {
 			} else {
 				PluginData = new Dictionary<long, Coord>();
 			}
+			
+			datePersistence = new Persistence(this.Id() + "-dates.eep.db");
+			if (datePersistence.existed) {
+				LoadDates();
+			} else {
+				DatesOfImages = new Dictionary<DateTime, List<long>>();
+			}
 		}
 
-		public ImageCollection processImageCollection(ImageCollection ic) {
+		public ImageCollection processImageCollection(ImageCollection ic) {/*
 			ImageCollection result = ic.ImagesWithExifKey("GPSPosition");
 			foreach (Image i in ic.ToList()) {
 				persistence.Put<Coord>(i.id.ToString(), new Coord((string)i.Exif("GPSLatitude"), (string)i.Exif("GPSLongitude")));
 			}
-			return result;
+			return result;*/
+//			SortedImageCollection sic = ic.ImagesWithAnyExifKeys(new String[]{"CreateDate", "DateCreated"}).ToSortable();
+/*			foreach (KeyValuePair<long,Image> kv in ic.TheDictionary()) {
+				DateTime key = kv.Value.Date();
+				if (DatesOfImages.ContainsKey(key)) {
+				DatesOfImages.Add(, kv.Key);
+			}
+			DatesOfImages.*/
+			return null;
 		}
 
 		public String Id() {
@@ -52,6 +71,10 @@ namespace EEPlugin {
 				return new Coord(bytes);
 			};
 			PluginData = persistence.Read<long, Coord>(Converters.ReadLong, ReadCoord);
+		}
+
+		public void LoadDates() {
+			ImageDates = datePersistence.Read<long, DateTime>(Converters.ReadLong, Converters.ReadDateTime);
 		}
 
 		public void Save() {

@@ -123,15 +123,15 @@ namespace EagleEye {
 
 
 		private static void ListImages() {
-			Stopwatch SWCopy = Stopwatch.StartNew();
+					Stopwatch SWCopy = Stopwatch.StartNew();
 			SortedImageCollection sorted = images.ToSortable();
-			SWCopy.Stop();
-			Stopwatch SWSort = Stopwatch.StartNew();
+					SWCopy.Stop();
+					Stopwatch SWSort = Stopwatch.StartNew();
 			sorted.SortById();
-			SWSort.Stop();
-			Stopwatch SWString = Stopwatch.StartNew();
+					SWSort.Stop();
+					Stopwatch SWString = Stopwatch.StartNew();
 			string output = sorted.ToStringWithExif("CreateDate");
-			SWString.Stop();
+					SWString.Stop();
 			Console.WriteLine(output);
 			Console.WriteLine("Colection size: {0}", sorted.Count());
 			Console.WriteLine("Times | Copy: {0}ms | Sort: {1}ms | Generate Output: {2}ms", SWCopy.ElapsedMilliseconds, SWSort.ElapsedMilliseconds, SWString.ElapsedMilliseconds);
