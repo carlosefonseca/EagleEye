@@ -19,8 +19,8 @@ namespace DeepZoomView {
 		Point lastMouseDownPos = new Point();
 		Point lastMousePos = new Point();
 		Point lastMouseViewPort = new Point();
-		int Hcells;
-		double Vcells;
+		double Hcells;
+		int Vcells;
 		long _LastIndex = -1;
 		Dictionary<long, string> _Metadata = new Dictionary<long, string>();
 		Dictionary<string, int> canvasIndex = new Dictionary<string, int>();
@@ -164,25 +164,43 @@ namespace DeepZoomView {
 			};*/
 			msi.MotionFinished += delegate {
 				updateOverlay();
+				showOverlay();
 			};
 			msi.ViewportChanged += delegate {
-				Caption.Text = "Viewport Changed!!!1";
+				hideOverlay();
 			};
 		}
 
+		private void showOverlay() {
+			Overlays.Opacity = 1;
+		}
+
+		private void hideOverlay() {
+			Overlays.Opacity = 0;
+		}
+
 		void msi_ImageOpenSucceeded(object sender, RoutedEventArgs e) {
-			double visWidth = msi.RenderSize.Width;
-			double visHeight = msi.RenderSize.Height;
+			canvasIndex = new Dictionary<string, int>();
+			double imgAR = msi.SubImages[0].AspectRatio;
+			double imgWidth = msi.SubImages[0].ViewportWidth;
+			double imgHeight = imgWidth * imgAR;
+			double canvasWidth = msi.ActualWidth;
+			double canvasHeight = msi.ActualHeight;
 
-			double ratio = visHeight / visWidth;
+			double ratio = canvasWidth / canvasHeight;
+			double canvasRatio = canvasWidth / canvasHeight;
 
-			Hcells = msi.SubImages.Count;
+			int imgCount = msi.SubImages.Count;
+			Hcells = imgCount;
 			Vcells = 1;
 
-			while (Vcells < Hcells * ratio) {
-				Hcells--;
-				Vcells = Math.Ceiling(msi.SubImages.Count / Hcells);
+			while (1.0 * (Math.Ceiling(1.0 * imgCount / Vcells+1)) / (Vcells+1) > canvasRatio) {
+				Vcells++;
+				Hcells = Convert.ToInt32(Math.Ceiling(1.0 * imgCount / Vcells));
 			}
+
+			Hcells = (canvasWidth * Vcells) / canvasHeight;
+
 
 			var x = 0.0;
 			var y = 0.0;
