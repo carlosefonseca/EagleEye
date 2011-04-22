@@ -7,6 +7,8 @@ using System.IO;
 using System.Diagnostics;
 using EagleEye.Common;
 using EagleEye.Plugins.FeatureExtraction;
+using System.Collections;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace EEPlugin {
 	public class DZCGenerator : EEPluginInterface {
@@ -14,28 +16,13 @@ namespace EEPlugin {
 		private Dictionary<long, string> PluginData; //id > xml path
 		private string DZDir;
 
-		#region EEPluginInterface Members
+		#region EEPluginInterface Boring
 
 		public String Id() {
 			return "dzcg";
 		}
 		public override String ToString() {
 			return "DeepZoomCollection Generator";
-		}
-
-		/// <summary>
-		/// Plugin initialization (called from manager)
-		/// </summary>
-		public void Init() {
-			if (persistence == null) {
-				persistence = new Persistence(Id() + ".eep");
-			}
-			if (persistence.existed) {
-				Load();
-			} else {
-				PluginData = new Dictionary<long, string>();
-			}
-			DZDir = Persistence.RootFolder() + "DZC\\";
 		}
 
 		public String ImageInfo(EagleEye.Common.Image i) {
@@ -58,7 +45,22 @@ namespace EEPlugin {
 				persistence.Put(kv.Key.ToString(), kv.Value);
 			}
 		}
-		#endregion EEPluginInterface Members
+		#endregion EEPluginInterface Boring
+
+		/// <summary>
+		/// Plugin initialization (called from manager)
+		/// </summary>
+		public void Init() {
+			if (persistence == null) {
+				persistence = new Persistence(Id() + ".eep");
+			}
+			if (persistence.existed) {
+				Load();
+			} else {
+				PluginData = new Dictionary<long, string>();
+			}
+			DZDir = Persistence.RootFolder() + "DZC\\";
+		}
 
 		/// <summary>
 		/// Process images (called from manager)
@@ -74,15 +76,15 @@ namespace EEPlugin {
 					continue;
 				}
 				if (File.Exists(i.path)) {
-					Console.WriteLine("> " + i.path + "... ");
+							Console.WriteLine("> " + i.path + "... ");
 					string target = DZDir + "images\\" + i.id.ToString() + ".xml";
-					Stopwatch st = Stopwatch.StartNew();
+							Stopwatch st = Stopwatch.StartNew();
 					GenerateDZC(i.path, target);
-					st.Stop();
-					times += st.ElapsedMilliseconds;
-					count++;
+							st.Stop();
+							times += st.ElapsedMilliseconds;
+							count++;
 					PluginData.Add(i.id, target);
-					Console.WriteLine(i.id.ToString());
+							Console.WriteLine(i.id.ToString());
 				}
 				Save();
 			}
@@ -92,13 +94,61 @@ namespace EEPlugin {
 
 			Console.WriteLine("Generating Collection...");
 			GenerateCollection();
+			GenerateAndSaveMetadata(ic, DZDir+"metadata");
 
 			return null;
 		}
-		
 
 
+		/// <summary>
+		/// Generates and writes image metadata and sorting information to the destination, to be read by the Viewer
+		/// </summary>
+		/// <param name="ic">Image Collection to process</param>
+		/// <param name="destination">Folder to write the files</param>
+		private void GenerateAndSaveMetadata(ImageCollection ic, String destination) {
+			if (!Directory.Exists(destination)) {
+				Directory.CreateDirectory(destination);
+			}
+			Console.WriteLine("Generating Metadata");
+			Hashtable datetimeSorted = new Hashtable();
+			DateTime date;
+			Console.Write("- Timestamps: ");
+			foreach (EagleEye.Common.Image i in ic.ToList()) {
+				date = i.Date();
+				while(datetimeSorted.ContainsKey(date)) {
+					date.AddMilliseconds(1.0);
+				}
+				Console.Write(date.ToString() + "->" + i.id);
+				datetimeSorted.Add(date, i.id);
+				Console.SetCursorPosition(14, Console.CursorTop);
+			}
+			Console.WriteLine("Done!                 ");
+			WriteHashtableToFolder(datetimeSorted, Path.Combine(destination, "datetime.sorted.db"));
+		}
 
+
+		/// <summary>
+		/// Writes an hashtable to disk using binnary formater
+		/// </summary>
+		/// <param name="ht">Hashtable to serialize</param>
+		/// <param name="p">File to write to</param>
+		private void WriteHashtableToFolder(Hashtable ht, string p) {
+			Console.Write("Writting '"+p+"'... ");
+			BinaryFormatter formatter = new BinaryFormatter();
+			FileStream stream = new FileStream(p, FileMode.Create);
+			formatter.Serialize(stream, ht);
+			stream.Close();
+			Console.WriteLine("Done.");
+		}
+
+
+		#region Helpers
+
+		/// <summary>
+		/// Generates the MultiScaleImage for the specified image
+		/// </summary>
+		/// <param name="source">Image to process</param>
+		/// <param name="target">Destination for the processed stuff</param>
 		private void GenerateDZC(string source, string target) {
 			ImageCreator ic = new ImageCreator();
 			ic.TileSize = 256;
@@ -108,7 +158,9 @@ namespace EEPlugin {
 			ic.Create(source, target);
 		}
 
-
+		/// <summary>
+		/// Generates the DeepZoomCollection file
+		/// </summary>
 		public void GenerateCollection() {
 			CollectionCreator cc = new CollectionCreator();
 
@@ -120,10 +172,20 @@ namespace EEPlugin {
 			cc.Create(PluginData.Values, DZDir + "collection");
 		}
 
+		/// <summary>
+		/// Returns all .jpg files in the specified directory and all its subdirectories
+		/// </summary>
+		/// <param name="path">Directory</param>
+		/// <returns>List of filenames</returns>
 		private static List<string> GetImagesInDirectory(string path) {
 			return GetImagesInDirectory(new DirectoryInfo(path));
 		}
 
+		/// <summary>
+		/// Returns all .jpg files in the specified directory and all its subdirectories
+		/// </summary>
+		/// <param name="di">Directory</param>
+		/// <returns>List of filenames</returns>
 		private static List<string> GetImagesInDirectory(DirectoryInfo di) {
 			List<string> images = new List<string>();
 
@@ -139,5 +201,6 @@ namespace EEPlugin {
 
 			return images;
 		}
+		#endregion Helpers
 	}
 }
