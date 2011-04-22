@@ -92,6 +92,45 @@ namespace EagleEye.Common {
 			return newIC;
 		}
 
+		/// <summary>
+		/// Images that contain any of the specified Exif keys
+		/// </summary>
+		/// <param name="keys">Array with the keys that each Image must contain.</param>
+		/// <returns></returns>
+		public ImageCollection ImagesWithAnyExifKeys(string[] keys) {
+			ImageCollection newIC = new ImageCollection();
+			foreach (Image i in collection.Values) {
+				foreach (string key in keys) {
+					if (i.ContainsExif(key)) {
+						newIC.Add(i);
+						continue;
+					}
+				}
+			}
+			return newIC;
+		}
+
+		/// <summary>
+		/// Images that contain all of the specified Exif keys
+		/// </summary>
+		/// <param name="keys">Array with the keys that each Image must contain.</param>
+		/// <returns></returns>
+		public ImageCollection ImagesWithAllExifKeys(string[] keys) {
+			ImageCollection newIC = new ImageCollection();
+			foreach (Image i in collection.Values) {
+				Boolean accepted = true;
+				foreach (string key in keys) {
+					if (!i.ContainsExif(key)) {
+						accepted = false;
+						break;
+					}
+				}
+				if (accepted) 
+					newIC.Add(i);
+			}
+			return newIC;
+		}
+
 		public String ToString(ImageToStringDelegate d) {
 			string txt = "";
 			foreach (Image i in collection.Values) {
@@ -134,7 +173,10 @@ namespace EagleEye.Common {
 			return txt;
 		}
 
-
+		/// <summary>
+		/// Returns a (possibly cached) copy of the collection that can be sorted. Internally is a List
+		/// </summary>
+		/// <returns></returns>
 		public SortedImageCollection ToSortable() {
 			if (cachedSortedImageCollection == null)
 				cachedSortedImageCollection = new SortedImageCollection(this);

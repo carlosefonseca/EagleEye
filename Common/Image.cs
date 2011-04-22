@@ -15,6 +15,7 @@ namespace EagleEye.Common {
 		public string path;
 		public bool exifImported = false;
 		public Dictionary<string, object> exif;
+		private DateTime date;
 		private string thumbnail;
 
 		public Image(string path) {
@@ -59,15 +60,19 @@ namespace EagleEye.Common {
 			return txt;
 		}
 
-		public string Date() {
-			if (exif.ContainsKey("DateCreated")) {
-				Console.WriteLine(">> " + path + " > DateCreated");
-				return exif["DateCreated"].ToString();
-			} else if (exif.ContainsKey("CreateDate")) {
-				Console.WriteLine(">> " + path + " > CreateDate");
-				return exif["CreateDate"].ToString();
-			} else return null;
+		public DateTime Date() {
+			if (date == null) {
+				if (exif.ContainsKey("DateCreated")) {
+					Console.WriteLine(">> " + path + " > DateCreated");
+					date = DateTime.Parse(exif["DateCreated"].ToString());
+				} else if (exif.ContainsKey("CreateDate")) {
+					Console.WriteLine(">> " + path + " > CreateDate");
+					date = DateTime.Parse(exif["CreateDate"].ToString());
+				}
+			}
+			return date;
 		}
+
 		public bool ContainsExif(string key) {
 			return exif.ContainsKey(key);
 		}

@@ -269,6 +269,12 @@ namespace EagleEye.Common {
 			return long.Parse(k);
 		};
 
+		public static ConvertFromBytes<DateTime> ReadDateTime = delegate(byte[] bytes) {
+			System.Text.Encoding enc = System.Text.Encoding.ASCII;
+			string k = enc.GetString(bytes);
+			return DateTime.Parse(k);
+		};
+
 		public static ConvertFromBytes<string> ReadString = delegate(byte[] bytes) {
 			System.Text.Encoding enc = System.Text.Encoding.ASCII;
 			return enc.GetString(bytes);

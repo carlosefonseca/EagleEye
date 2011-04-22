@@ -4,8 +4,8 @@ using System.Linq;
 using System.Text;
 
 namespace EagleEye.Common {
-	public class SortedImageCollection {
-		private List<Image> collection;
+	public class SortedImageCollection : ImageCollection {
+		private new List<Image> collection;
 
 		public SortedImageCollection() {
 		}
@@ -18,11 +18,11 @@ namespace EagleEye.Common {
 			collection = ic.ToList();
 		}
 
-		public int Count() {
+		public new int Count() {
 			return collection.Count;
 		}
 
-		public string ToStringWithExif(string key) {
+		public new string ToStringWithExif(string key) {
 			string txt = "";
 
 			foreach (Image i in collection) {
@@ -56,6 +56,9 @@ namespace EagleEye.Common {
 			}
 			return this;
 		}
-		
+
+		public List<Image> TheList() {
+			return collection;
+		}
 	}
 }
