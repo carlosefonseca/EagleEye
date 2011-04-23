@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.IO;
 
 namespace EagleEye.Common {
 	public class SortedImageCollection : ImageCollection {
@@ -43,11 +44,15 @@ namespace EagleEye.Common {
 		}
 
 
+		public SortedImageCollection SortByDate() {
+			ImageDateComparer c = new ImageDateComparer();
+			collection.Sort(c);
+			return this;
+		}
+
 		public SortedImageCollection SortByExif(string key) {
 			if (key == "date") {
-				ImageDateComparer c;
-				c = new ImageDateComparer();
-				collection.Sort(c);
+				SortByDate();
 			} else {
 				ImageExifComparer c;
 				Console.WriteLine("Comparing by " + key);
