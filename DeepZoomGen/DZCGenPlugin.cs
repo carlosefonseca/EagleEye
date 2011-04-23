@@ -109,37 +109,24 @@ namespace EEPlugin {
 			if (!Directory.Exists(destination)) {
 				Directory.CreateDirectory(destination);
 			}
-			Console.WriteLine("Generating Metadata");
-			Hashtable datetimeSorted = new Hashtable();
-			DateTime date;
-			Console.Write("- Timestamps: ");
-			foreach (EagleEye.Common.Image i in ic.ToList()) {
-				date = i.Date();
-				while(datetimeSorted.ContainsKey(date)) {
-					date.AddMilliseconds(1.0);
+			Console.Write("Sorting by Date. ");
+			SortedImageCollection collectionByDate = new SortedImageCollection(ic);
+			collectionByDate.SortByDate();
+			Console.Write("Writting string. ");
+			String txt = "";
+			DateTime lastDateWritten = new DateTime(0);
+			foreach (EagleEye.Common.Image i in collectionByDate.TheList()) {
+				if (i.Date().Date.CompareTo(lastDateWritten.Date) != 0) {
+					lastDateWritten = i.Date();
+					txt += "\n" + lastDateWritten.ToShortDateString() + ":";
 				}
-				Console.Write(date.ToString() + "->" + i.id);
-				datetimeSorted.Add(date, i.id);
-				Console.SetCursorPosition(14, Console.CursorTop);
+				txt += i.id + ";";
 			}
-			Console.WriteLine("Done!                 ");
-			WriteHashtableToFolder(datetimeSorted, Path.Combine(destination, "datetime.sorted.db"));
+			Console.Write("Writing file. ");
+			File.WriteAllText(Path.Combine(destination, "datetime.sorted.db"), txt.TrimStart('\n'));
+			Console.WriteLine("Done!");
 		}
 
-
-		/// <summary>
-		/// Writes an hashtable to disk using binnary formater
-		/// </summary>
-		/// <param name="ht">Hashtable to serialize</param>
-		/// <param name="p">File to write to</param>
-		private void WriteHashtableToFolder(Hashtable ht, string p) {
-			Console.Write("Writting '"+p+"'... ");
-			BinaryFormatter formatter = new BinaryFormatter();
-			FileStream stream = new FileStream(p, FileMode.Create);
-			formatter.Serialize(stream, ht);
-			stream.Close();
-			Console.WriteLine("Done.");
-		}
 
 
 		#region Helpers

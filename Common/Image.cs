@@ -7,6 +7,8 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Text.RegularExpressions;
+
 
 namespace EagleEye.Common {
 	[Serializable]
@@ -64,11 +66,14 @@ namespace EagleEye.Common {
 			if (date == null || date.Equals(new DateTime(0))) {
 				String datetxt = null;
 				if (exif.ContainsKey("DateCreated")) {
-					Console.Write(">> " + path + " > DateCreated");
+					Console.WriteLine(">> " + path + " > DateCreated");
 					datetxt = exif["DateCreated"].ToString();
 				} else if (exif.ContainsKey("CreateDate")) {
-					Console.Write(">> " + path + " > CreateDate");
+					Console.WriteLine(">> " + path + " > CreateDate");
 					datetxt = exif["CreateDate"].ToString();
+				} else if (exif.ContainsKey("FileModifyDate")) {
+					Console.WriteLine(">> " + path + " > FileModifyDate");
+					datetxt = exif["FileModifyDate"].ToString();
 				} else {
 					Console.WriteLine("!! No date found on EXIF :( for '" + this.path + "'");
 				}
@@ -77,14 +82,14 @@ namespace EagleEye.Common {
 						Console.WriteLine(date);
 						return date;
 					} else {
-						String[] datearr = datetxt.Split(' ');
-						if (!datetxt.Contains("/")) {
-							if (datearr[0].Contains(":")
-								&& DateTime.TryParse(datearr[0].Replace(':', '/') + " " + datearr[1], out date)) {
+						Match match = Regex.Match(datetxt, @"(\d{4}).(\d{2}).(\d{2}).(\d{2}).(\d{2}).(\d{2})", RegexOptions.IgnoreCase);
+						if (match.Success) {
+							String newTry = match.Groups[1] + "/" + match.Groups[2] + "-" + match.Groups[3] + " " + match.Groups[4] + ":" + match.Groups[5] + ":" + match.Groups[6];
+							if (DateTime.TryParse(newTry, out date)) {
 								Console.WriteLine(date);
 								return date;
 							} else {
-								Console.WriteLine("!! Could not parse '" + datetxt + "' from '" + this.path + "'");
+								Console.WriteLine("!! Could not parse '" + datetxt + "' from '" + Path.GetFileNameWithoutExtension(this.path) + "'");
 							}
 						}
 					}
@@ -213,7 +218,7 @@ namespace EagleEye.Common {
 
 	public class ImageDateComparer : IComparer<Image> {
 		public int Compare(Image x, Image y) {
-			return x.Exif("CreateDate").ToString().CompareTo(y.Exif("CreateDate").ToString());
+			return x.Date().CompareTo(y.Date());
 		}
 	}
 
