@@ -103,7 +103,6 @@ namespace DeepZoomView {
 			this.MouseLeftButtonUp += delegate(object sender, MouseButtonEventArgs e) {
 				if (!duringDrag && !duringDragSelection) {
 					bool shiftDown = (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift;
-					bool ctrlDown = true;// (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Control;
 					Double newzoom = zoom;
 
 					if (!shiftDown) {

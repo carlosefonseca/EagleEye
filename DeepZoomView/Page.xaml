@@ -219,8 +219,8 @@
                 <vsm:VisualState x:Name="FadeOut"/>
             </vsm:VisualStateGroup>
         </vsm:VisualStateManager.VisualStateGroups>
-        <!--<MultiScaleImage x:Name="msi" Source="SmallDB/DZC/collection.xml"/>-->
         <MultiScaleImage x:Name="msi" Source="EagleEyeDB/DZC/collection.xml"/>
+        <!--<MultiScaleImage x:Name="msi" Source="SmallDB/DZC/collection.xml"/>-->
         <Canvas>
             <Canvas Name="Overlays">
                 <Canvas.RenderTransform>
