@@ -9,6 +9,9 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Shapes;
+using System.IO;
+using System.Runtime.Serialization;
+using System.Collections;
 
 namespace DeepZoomView {
 	public partial class Page : UserControl {
@@ -24,6 +27,7 @@ namespace DeepZoomView {
 		long _LastIndex = -1;
 		Dictionary<long, string> _Metadata = new Dictionary<long, string>();
 		Dictionary<string, int> canvasIndex = new Dictionary<string, int>();
+		DateCollection dateCollection;
 
 		public Double ZoomFactor {
 			get { return zoom; }
@@ -194,7 +198,7 @@ namespace DeepZoomView {
 			Hcells = imgCount;
 			Vcells = 1;
 
-			while (1.0 * (Math.Ceiling(1.0 * imgCount / Vcells+1)) / (Vcells+1) > canvasRatio) {
+			while (1.0 * (Math.Ceiling(1.0 * imgCount / Vcells + 1)) / (Vcells + 1) > canvasRatio) {
 				Vcells++;
 				Hcells = Convert.ToInt32(Math.Ceiling(1.0 * imgCount / Vcells));
 			}
@@ -225,6 +229,7 @@ namespace DeepZoomView {
 
 		void msi_Loaded(object sender, RoutedEventArgs e) {
 			// Hook up any events you want when the image has successfully been opened
+			StartDownloadDateData("SmallDB\\DZC\\metadata\\datetime.sorted.db");
 		}
 
 		private void Zoom(Double newzoom, Point p) {
@@ -238,7 +243,80 @@ namespace DeepZoomView {
 
 		private void ZoomInClick(object sender, System.Windows.RoutedEventArgs e) {
 			//Zoom(zoom * 1.3, msi.ElementToLogicalPoint(new Point(.5 * msi.ActualWidth, .5 * msi.ActualHeight)));
-			ArrangeIntoGrid();
+			//ArrangeIntoGrid();
+			orderImagesByDate();
+		}
+
+
+
+		private void wc_DownloadStringCompleted(object sender, DownloadStringCompletedEventArgs e) {
+			if (e.Cancelled == false && e.Error == null) {
+				string s = e.Result;
+
+			}
+		}
+
+
+		private void StartDownloadDateData(string p) {
+			String newP = App.Current.Host.Source.AbsoluteUri.Substring(0, App.Current.Host.Source.AbsoluteUri.LastIndexOf('/') + 1) + p.Replace("\\", "/");
+			Uri uri = new Uri(newP);
+
+			Stream stream = this.GetType().Assembly.GetManifestResourceStream("DeepZoomView.datetime.sorted.db");
+			byte[] bytes = new byte[stream.Length];
+			stream.Read(bytes, 0, (int)stream.Length);
+			String s = System.Text.Encoding.UTF8.GetString(bytes, 0, (int)stream.Length);
+
+
+			/*
+			WebClient wc = new WebClient();
+			wc.DownloadStringCompleted += new DownloadStringCompletedEventHandler(processDateData);
+			wc.DownloadStringAsync(uri);
+			 * */
+
+			dateCollection = new DateCollection();
+
+			String[] lines = s.Split(new Char[1] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+
+			foreach (String line in lines) {
+				String[] split = line.Split(':');
+				DateTime date = DateTime.Parse(split[0]);
+				String[] ids = split[1].Split(new Char[1] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+				dateCollection.Add(date, ids);
+			}
+		}
+			
+			
+		private void orderImagesByDate() {
+			double imgSize = msi.ActualWidth / Hcells;
+			var x = 0.0;
+			var y = 0.0;
+			// era fixe guardar o anterior para repor
+			canvasIndex = new Dictionary<string, int>();
+			foreach (KeyValuePair<int, Dictionary<int, Dictionary<int, List<int>>>> years in dateCollection.Get()) {
+				foreach (KeyValuePair<int, Dictionary<int, List<int>>> month in years.Value) {
+					TextBlock yearOverlay = new TextBlock();
+					yearOverlay.Text = years.Key.ToString()+"\n"+(new DateTime(1,month.Key,1)).ToString("MMMM");
+					yearOverlay.Foreground = new SolidColorBrush(Colors.White);
+					yearOverlay.SetValue(Canvas.LeftProperty, x*imgSize);
+					yearOverlay.SetValue(Canvas.TopProperty, y * imgSize);
+					Overlays.Children.Add(yearOverlay);
+					x++;
+					foreach (KeyValuePair<int, List<int>> day in month.Value) {
+						foreach (int id in day.Value) {
+							msi.SubImages[id].ViewportOrigin = new Point(-x, -y);
+							canvasIndex.Add(x + ";" + y, id);
+							x++;
+
+							if (x >= Hcells) {
+								y += 1;
+								x = 0.0;
+							}
+						}
+					}
+					x = 0;
+					y++;
+				}
+			}
 		}
 
 		private void ZoomOutClick(object sender, System.Windows.RoutedEventArgs e) {
@@ -282,6 +360,15 @@ namespace DeepZoomView {
 			Double ar = msi.AspectRatio;
 			msi.ViewportWidth = 1 / rect.Width;
 			msi.ViewportOrigin = new Point(-rect.Left / rect.Width, -rect.Top / rect.Width);
+		}
+
+
+		private void SortByFile(string path) {
+			//BinaryFormatter formatter = new BinaryFormatter(); 
+			//FileStream stream = File.OpenRead(path);
+
+			Dictionary<String, long> sorted = new Dictionary<string, long>();
+
 		}
 
 
@@ -347,8 +434,6 @@ namespace DeepZoomView {
 					}
 				}
 			}
-
-
 		}
 
 		private List<MultiScaleSubImage> RandomizedListOfImages() {
@@ -386,34 +471,6 @@ namespace DeepZoomView {
 			}
 		}
 
-		private int GetSubImageIndex2(Point point) {
-			// Hit-test each sub-image in the MultiScaleImage control to determine
-			// whether  "point " lies within a sub-image
-			for (int i = msi.SubImages.Count - 1; i >= 0; i--) {
-				MultiScaleSubImage image = msi.SubImages[i];
-				Double width = msi.ActualWidth /
-					(msi.ViewportWidth * image.ViewportWidth);
-				Double height = msi.ActualWidth /
-					(msi.ViewportWidth * image.ViewportWidth * image.AspectRatio);
-
-
-
-				Point pos = msi.LogicalToElementPoint(new Point(
-					-image.ViewportOrigin.X / image.ViewportWidth,
-					-image.ViewportOrigin.Y / image.ViewportWidth)
-				);
-				Rect rect = new Rect(pos.X, pos.Y, width, height);
-
-				if (rect.Contains(point)) {
-					long i2 = GetSubImageIndex2(point);
-					// Return the image index
-					return i;
-				}
-			}
-
-			// No corresponding sub-image
-			return -1;
-		}
 
 		private void updateOverlay() {
 			zoom = Hcells / msi.ViewportWidth;
@@ -421,12 +478,12 @@ namespace DeepZoomView {
 			Double newY = (msi.ViewportOrigin.Y * (msi.ActualHeight / Vcells)) * zoom;
 			Double newH = msi.ActualHeight * zoom;
 			Double newW = msi.ActualWidth * zoom;
-			
+
 			if ((Double)Overlays.GetValue(Canvas.TopProperty) != -newY) {
 				Overlays.SetValue(Canvas.TopProperty, -newY);
 			}
 			if ((Double)Overlays.GetValue(Canvas.LeftProperty) != -newX) {
-			Overlays.SetValue(Canvas.LeftProperty, -newX);
+				Overlays.SetValue(Canvas.LeftProperty, -newX);
 			}
 			OverlaysScale.ScaleX = zoom;
 			OverlaysScale.ScaleY = zoom;

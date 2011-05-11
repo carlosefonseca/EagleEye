@@ -61,6 +61,7 @@
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
+    <Compile Include="DateCollection.cs" />
     <Compile Include="MouseWheelHelper.cs" />
     <Compile Include="Page.xaml.cs">
       <DependentUpon>Page.xaml</DependentUpon>
@@ -93,6 +94,12 @@
     <Resource Include="Images\zoomout_hover.png" />
     <Resource Include="Images\zoomout_pressed.png" />
     <Resource Include="Images\zoomout_rest.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="..\App\SmallDB\DZC\metadata\datetime.sorted.db">
+      <Link>datetime.sorted.db</Link>
+    </EmbeddedResource>
+    <None Include="Properties\OutOfBrowserSettings.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\Silverlight\V3.0\Microsoft.Silverlight.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
