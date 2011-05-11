@@ -18,6 +18,10 @@ namespace DeepZoomView {
 		// Based on prior work done by Lutz Gerhard, Peter Blois, and Scott Hanselman
 		Double zoom = 1;
 		bool duringDrag = false;
+		bool duringDragSelection = false;
+		Point selectionStart = new Point();
+		Rectangle selection = null;
+		List<MultiScaleSubImage> selectedImages = new List<MultiScaleSubImage>();
 		bool mouseDown = false;
 		Point lastMouseDownPos = new Point();
 		Point lastMousePos = new Point();
@@ -85,6 +89,7 @@ namespace DeepZoomView {
 				}
 			};
 
+			// CLICK
 			this.MouseLeftButtonDown += delegate(object sender, MouseButtonEventArgs e) {
 				lastMouseDownPos = e.GetPosition(msi);
 				lastMouseViewPort = msi.ViewportOrigin;
@@ -94,16 +99,19 @@ namespace DeepZoomView {
 				msi.CaptureMouse();
 			};
 
+			// RELEASE
 			this.MouseLeftButtonUp += delegate(object sender, MouseButtonEventArgs e) {
-				if (!duringDrag) {
+				if (!duringDrag && !duringDragSelection) {
 					bool shiftDown = (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift;
 					bool ctrlDown = true;// (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Control;
 					Double newzoom = zoom;
 
-					if (ctrlDown) {
+					if (!shiftDown) {
 						int index = GetSubImageIndex(e.GetPosition(msi));
-						msi.ViewportWidth = 1.5;
-						msi.ViewportOrigin = new Point(-msi.SubImages[index].ViewportOrigin.X, -msi.SubImages[index].ViewportOrigin.Y);
+						if (index != -1) {
+							msi.ViewportWidth = 1.5;
+							msi.ViewportOrigin = new Point(-msi.SubImages[index].ViewportOrigin.X, -msi.SubImages[index].ViewportOrigin.Y);
+						}
 						//zoom = Hcells / msi.ViewportWidth;
 						//						updateOverlay();
 					} else if (shiftDown) {
@@ -114,16 +122,58 @@ namespace DeepZoomView {
 
 					Zoom(newzoom, msi.ElementToLogicalPoint(this.lastMousePos));
 				}
+				if (duringDragSelection) {
+					duringDragSelection = false;
+					//do stuff
+					Point p1 = new Point((double)selection.GetValue(Canvas.LeftProperty), (double)selection.GetValue(Canvas.TopProperty));
+					Point p2 = new Point(p1.X+selection.Width, p1.Y+selection.Height);
+					Double p1LogicalX = Math.Floor(msi.ViewportOrigin.X + msi.ViewportWidth * (p1.X / msi.ActualWidth));
+					Double p1LogicalY = Math.Floor(msi.ViewportOrigin.Y + (msi.ViewportWidth * (msi.ActualHeight / msi.ActualWidth)) * (p1.Y / msi.ActualHeight));
+					Double p2LogicalX = Math.Floor(msi.ViewportOrigin.X + msi.ViewportWidth * (p2.X / msi.ActualWidth));
+					Double p2LogicalY = Math.Floor(msi.ViewportOrigin.Y + (msi.ViewportWidth * (msi.ActualHeight / msi.ActualWidth)) * (p2.Y / msi.ActualHeight));
+					selectedImages = new List<MultiScaleSubImage>();
+					MultiScaleSubImage img;
+					int id;
+					for (double x = p1LogicalX; x <= p2LogicalX; x++) {
+						for (double y = p1LogicalY; y <= p2LogicalY; y++) {
+							if (canvasIndex.ContainsKey(x + ";" + y)) {
+								img = msi.SubImages[canvasIndex[x + ";" + y]];
+								img.Opacity = 0.3;
+								//img.SetValue(BorderBrushProperty, new SolidColorBrush(Colors.Green));
+								selectedImages.Add(img);
+							}
+						}
+					}
+					Mouse.Children.Remove(selection);
+				}
 				duringDrag = false;
 				mouseDown = false;
 
 				msi.ReleaseMouseCapture();
 			};
 
+			// MOVE
 			this.MouseMove += delegate(object sender, MouseEventArgs e) {
 				lastMousePos = e.GetPosition(msi);
-				if (mouseDown && !duringDrag) {
-					duringDrag = true;
+				if (mouseDown && !duringDrag && !duringDragSelection) {
+					bool shiftDown = (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift;
+					if (shiftDown) {
+						duringDragSelection = true;
+						foreach (MultiScaleSubImage img in selectedImages) {
+							img.Opacity = 1;
+						}
+						selectionStart = new Point(lastMouseDownPos.X, lastMouseDownPos.Y);
+						selection = new Rectangle();
+						selection.SetValue(Canvas.TopProperty, lastMouseDownPos.Y);
+						selection.SetValue(Canvas.LeftProperty, lastMouseDownPos.X);
+						selection.Width = 0.0;
+						selection.Height = 0.0;
+						selection.Fill = new SolidColorBrush(Colors.Blue);
+						selection.Opacity = 0.5;
+						Mouse.Children.Add(selection);
+					} else {
+						duringDrag = true;
+					}
 					/*Double w = msi.ViewportWidth;
 					Point o = new Point(msi.ViewportOrigin.X, msi.ViewportOrigin.Y);
 					msi.UseSprings = false;
@@ -132,12 +182,19 @@ namespace DeepZoomView {
 					zoom = 1 / w;
 					msi.UseSprings = true;*/
 				}
-
+				
 				if (duringDrag) {
 					Point newPoint = lastMouseViewPort;
 					newPoint.X += (lastMouseDownPos.X - lastMousePos.X) / msi.ActualWidth * msi.ViewportWidth;
 					newPoint.Y += (lastMouseDownPos.Y - lastMousePos.Y) / msi.ActualWidth * msi.ViewportWidth;
 					msi.ViewportOrigin = newPoint;
+
+				} else if (duringDragSelection) {
+					selection.SetValue(Canvas.LeftProperty, Math.Min(lastMousePos.X, selectionStart.X));
+					selection.SetValue(Canvas.TopProperty,  Math.Min(lastMousePos.Y, selectionStart.Y));
+
+					selection.Width = Math.Abs(selectionStart.X - lastMousePos.X);
+					selection.Height = Math.Abs(selectionStart.Y - lastMousePos.Y);
 				}
 			};
 
