@@ -344,17 +344,21 @@ namespace DeepZoomView {
 			txt.Text = text;
 			txt.Foreground = new SolidColorBrush(Colors.White);
 			txt.TextAlignment = TextAlignment.Center;
-			txt.HorizontalAlignment = HorizontalAlignment.Stretch;
-			txt.VerticalAlignment = VerticalAlignment.Stretch;
-			
+			txt.HorizontalAlignment = HorizontalAlignment.Center;
+			txt.VerticalAlignment = VerticalAlignment.Center;
+			//			txt.SetValue(dp, dpv);
+
 			Border b = new Border();
+			//b.Background = new SolidColorBrush(Colors.Blue);
 			b.SetValue(dp, dpv);
-			b.BorderBrush = new SolidColorBrush(Colors.Gray);
-			b.BorderThickness = new Thickness(1.0);
-			if (dp == Grid.RowProperty) {
+			b.BorderBrush = new SolidColorBrush(Color.FromArgb(40, 200, 200, 200));
+
+			if (dp == Grid.RowProperty) {	// Y
 				b.Width = 50;
-			} else {
+				b.BorderThickness = new Thickness(0, 0, 0, 1);
+			} else {	// X
 				b.Height = 50;
+				b.BorderThickness = new Thickness(0, 0, 1, 0);
 			}
 			b.HorizontalAlignment = HorizontalAlignment.Stretch;
 			b.VerticalAlignment = VerticalAlignment.Stretch;
@@ -580,8 +584,8 @@ namespace DeepZoomView {
 
 
 		private void updateOverlay() {
-			zoom = Hcells / msi.ViewportWidth;
-			Double newX = (msi.ViewportOrigin.X * (msi.ActualWidth / Hcells)) * zoom;
+			zoom = Math.Round(Hcells) / msi.ViewportWidth;
+			Double newX = (msi.ViewportOrigin.X * (msi.ActualWidth / Math.Round(Hcells))) * zoom;
 			Double newY = (msi.ViewportOrigin.Y * (msi.ActualHeight / Vcells)) * zoom;
 			Double newH = msi.ActualHeight * zoom;
 			Double newW = msi.ActualWidth * zoom;
