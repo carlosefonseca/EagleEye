@@ -251,16 +251,15 @@ namespace DeepZoomView {
 			Double canvasRatio = canvasWidth / canvasHeight;
 
 			int imgCount = msi.SubImages.Count;
-			Hcells = imgCount;
+
+			int canHold = 1;
+			Hcells = 1;
 			Vcells = 1;
-
-			while (1.0 * (Math.Ceiling(1.0 * imgCount / Vcells + 1)) / (Vcells + 1) > canvasRatio) {
-				Vcells++;
-				Hcells = Convert.ToInt32(Math.Ceiling(1.0 * imgCount / Vcells));
+			while (canHold < imgCount) {
+				Hcells++;
+				Vcells = Convert.ToInt32(Math.Floor(Hcells / ratio));
+				canHold = Convert.ToInt32(Hcells * Vcells);
 			}
-
-			Hcells = (canvasWidth * Vcells) / canvasHeight;
-
 
 			var x = 0.0;
 			var y = 0.0;
