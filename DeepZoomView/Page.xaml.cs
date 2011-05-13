@@ -125,7 +125,7 @@ namespace DeepZoomView {
 					duringDragSelection = false;
 					//do stuff
 					Point p1 = new Point((double)selection.GetValue(Canvas.LeftProperty), (double)selection.GetValue(Canvas.TopProperty));
-					Point p2 = new Point(p1.X+selection.Width, p1.Y+selection.Height);
+					Point p2 = new Point(p1.X + selection.Width, p1.Y + selection.Height);
 					Double p1LogicalX = Math.Floor(msi.ViewportOrigin.X + msi.ViewportWidth * (p1.X / msi.ActualWidth));
 					Double p1LogicalY = Math.Floor(msi.ViewportOrigin.Y + (msi.ViewportWidth * (msi.ActualHeight / msi.ActualWidth)) * (p1.Y / msi.ActualHeight));
 					Double p2LogicalX = Math.Floor(msi.ViewportOrigin.X + msi.ViewportWidth * (p2.X / msi.ActualWidth));
@@ -181,7 +181,7 @@ namespace DeepZoomView {
 					zoom = 1 / w;
 					msi.UseSprings = true;*/
 				}
-				
+
 				if (duringDrag) {
 					Point newPoint = lastMouseViewPort;
 					newPoint.X += (lastMouseDownPos.X - lastMousePos.X) / msi.ActualWidth * msi.ViewportWidth;
@@ -190,7 +190,7 @@ namespace DeepZoomView {
 
 				} else if (duringDragSelection) {
 					selection.SetValue(Canvas.LeftProperty, Math.Min(lastMousePos.X, selectionStart.X));
-					selection.SetValue(Canvas.TopProperty,  Math.Min(lastMousePos.Y, selectionStart.Y));
+					selection.SetValue(Canvas.TopProperty, Math.Min(lastMousePos.Y, selectionStart.Y));
 
 					selection.Width = Math.Abs(selectionStart.X - lastMousePos.X);
 					selection.Height = Math.Abs(selectionStart.Y - lastMousePos.Y);
@@ -281,6 +281,8 @@ namespace DeepZoomView {
 			Overlays.Width = msi.ActualWidth;
 			Overlays.Height = msi.ActualHeight;
 			Overlays.GetValue(Canvas.TopProperty);
+
+			makeRullerCells(Hcells, y + 1);
 		}
 
 		void msi_Loaded(object sender, RoutedEventArgs e) {
@@ -313,6 +315,55 @@ namespace DeepZoomView {
 		}
 
 
+		private void makeRullerCells(double Hcells, double Vcells) {
+			XaxisGrid.ColumnDefinitions.Clear();
+			YaxisGrid.RowDefinitions.Clear();
+			XaxisGrid.Children.Clear();
+			YaxisGrid.Children.Clear();
+
+			RowDefinition rowD;
+			ColumnDefinition colD;
+			TextBlock txt;
+			for (int i = 0; i <= Hcells; i++) {
+				colD = new ColumnDefinition();
+				XaxisGrid.ColumnDefinitions.Add(colD);
+				UIElement elm = makeRullerLabel((i + 1).ToString(), Grid.ColumnProperty, i);
+				XaxisGrid.Children.Add(elm);
+			}
+			for (int i = 0; i <= Vcells; i++) {
+				rowD = new RowDefinition();
+				YaxisGrid.RowDefinitions.Add(rowD);
+				UIElement elm = makeRullerLabel((i + 1).ToString(), Grid.RowProperty, i);
+				YaxisGrid.Children.Add(elm);
+			}
+		}
+
+
+		private UIElement makeRullerLabel(String text, DependencyProperty dp, Object dpv) {
+			TextBlock txt = new TextBlock();
+			txt.Text = text;
+			txt.Foreground = new SolidColorBrush(Colors.White);
+			txt.TextAlignment = TextAlignment.Center;
+			txt.HorizontalAlignment = HorizontalAlignment.Stretch;
+			txt.VerticalAlignment = VerticalAlignment.Stretch;
+			
+			Border b = new Border();
+			b.SetValue(dp, dpv);
+			b.BorderBrush = new SolidColorBrush(Colors.Gray);
+			b.BorderThickness = new Thickness(1.0);
+			if (dp == Grid.RowProperty) {
+				b.Width = 50;
+			} else {
+				b.Height = 50;
+			}
+			b.HorizontalAlignment = HorizontalAlignment.Stretch;
+			b.VerticalAlignment = VerticalAlignment.Stretch;
+			b.Child = txt;
+
+			return b;
+		}
+
+
 		private void StartDownloadDateData(string p) {
 			String newP = App.Current.Host.Source.AbsoluteUri.Substring(0, App.Current.Host.Source.AbsoluteUri.LastIndexOf('/') + 1) + p.Replace("\\", "/");
 			Uri uri = new Uri(newP);
@@ -340,8 +391,8 @@ namespace DeepZoomView {
 				dateCollection.Add(date, ids);
 			}
 		}
-			
-			
+
+
 		private void orderImagesByDate() {
 			double imgSize = msi.ActualWidth / Hcells;
 			var x = 0.0;
@@ -351,9 +402,9 @@ namespace DeepZoomView {
 			foreach (KeyValuePair<int, Dictionary<int, Dictionary<int, List<int>>>> years in dateCollection.Get()) {
 				foreach (KeyValuePair<int, Dictionary<int, List<int>>> month in years.Value) {
 					TextBlock yearOverlay = new TextBlock();
-					yearOverlay.Text = years.Key.ToString()+"\n"+(new DateTime(1,month.Key,1)).ToString("MMMM");
+					yearOverlay.Text = years.Key.ToString() + "\n" + (new DateTime(1, month.Key, 1)).ToString("MMMM");
 					yearOverlay.Foreground = new SolidColorBrush(Colors.White);
-					yearOverlay.SetValue(Canvas.LeftProperty, x*imgSize);
+					yearOverlay.SetValue(Canvas.LeftProperty, x * imgSize);
 					yearOverlay.SetValue(Canvas.TopProperty, y * imgSize);
 					Overlays.Children.Add(yearOverlay);
 					x++;
