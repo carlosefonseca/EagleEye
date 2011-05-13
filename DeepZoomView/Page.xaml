@@ -244,7 +244,7 @@
                 <TextBlock Text="Something something" Foreground="White" Canvas.Left="700" Canvas.Top="600" Width="100"></TextBlock>
 -->
             </Canvas>
-            <Canvas Name="Yaxis" Grid.Row="1" Grid.Column="0">
+            <Canvas Name="Yaxis" Grid.Row="1" Grid.Column="0" VerticalAlignment="Top">
                 <Canvas.RenderTransform>
                     <ScaleTransform x:Name="YaxisScale" ScaleX="1.0" ScaleY="1.0" />
                 </Canvas.RenderTransform>
@@ -254,25 +254,14 @@
                         <GradientStop Color="#000" Offset="1"></GradientStop>
                     </LinearGradientBrush>
                 </Canvas.Background>
-                <Grid Name="YaxisGrid">
+                <Grid Name="YaxisGrid" VerticalAlignment="Top">
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="*"></RowDefinition>
-                        <RowDefinition Height="*"></RowDefinition>
-                        <RowDefinition Height="*"></RowDefinition>
-                        <RowDefinition Height="*"></RowDefinition>
-                        <RowDefinition Height="*"></RowDefinition>
-                        <RowDefinition Height="*"></RowDefinition>
                         <RowDefinition Height="*"></RowDefinition>
                         <RowDefinition Height="*"></RowDefinition>
                     </Grid.RowDefinitions>
 
                     <TextBlock Text="1" Foreground="White" Grid.Row="0"></TextBlock>
                     <TextBlock Text="2" Foreground="White" Grid.Row="1"></TextBlock>
-                    <TextBlock Text="3" Foreground="White" Grid.Row="2"></TextBlock>
-                    <TextBlock Text="4" Foreground="White" Grid.Row="3"></TextBlock>
-                    <TextBlock Text="5" Foreground="White" Grid.Row="4"></TextBlock>
-                    <TextBlock Text="6" Foreground="White" Grid.Row="5"></TextBlock>
-                    <TextBlock Text="7" Foreground="White" Grid.Row="6"></TextBlock>
                 </Grid>
             </Canvas>
 
@@ -290,18 +279,10 @@
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"></ColumnDefinition>
                         <ColumnDefinition Width="*"></ColumnDefinition>
-                        <ColumnDefinition Width="*"></ColumnDefinition>
-                        <ColumnDefinition Width="*"></ColumnDefinition>
-                        <ColumnDefinition Width="*"></ColumnDefinition>
-                        <ColumnDefinition Width="*"></ColumnDefinition>
                     </Grid.ColumnDefinitions>
 
                     <TextBlock Text="1" Foreground="White" Grid.Column="0" TextAlignment="Center"></TextBlock>
                     <TextBlock Text="2" Foreground="White" Grid.Column="1" TextAlignment="Center"></TextBlock>
-                    <TextBlock Text="3" Foreground="White" Grid.Column="2" TextAlignment="Center"></TextBlock>
-                    <TextBlock Text="4" Foreground="White" Grid.Column="3" TextAlignment="Center"></TextBlock>
-                    <TextBlock Text="5" Foreground="White" Grid.Column="4" TextAlignment="Center"></TextBlock>
-                    <TextBlock Text="6" Foreground="White" Grid.Column="5" TextAlignment="Center"></TextBlock>
                 </Grid>
             </Canvas>
 

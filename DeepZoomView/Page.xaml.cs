@@ -323,13 +323,13 @@ namespace DeepZoomView {
 			RowDefinition rowD;
 			ColumnDefinition colD;
 			TextBlock txt;
-			for (int i = 0; i <= Hcells; i++) {
+			for (int i = 0; i < Hcells; i++) {
 				colD = new ColumnDefinition();
 				XaxisGrid.ColumnDefinitions.Add(colD);
 				UIElement elm = makeRullerLabel((i + 1).ToString(), Grid.ColumnProperty, i);
 				XaxisGrid.Children.Add(elm);
 			}
-			for (int i = 0; i <= Vcells; i++) {
+			for (int i = 0; i < Vcells; i++) {
 				rowD = new RowDefinition();
 				YaxisGrid.RowDefinitions.Add(rowD);
 				UIElement elm = makeRullerLabel((i + 1).ToString(), Grid.RowProperty, i);
@@ -345,10 +345,8 @@ namespace DeepZoomView {
 			txt.TextAlignment = TextAlignment.Center;
 			txt.HorizontalAlignment = HorizontalAlignment.Center;
 			txt.VerticalAlignment = VerticalAlignment.Center;
-			//			txt.SetValue(dp, dpv);
 
 			Border b = new Border();
-			//b.Background = new SolidColorBrush(Colors.Blue);
 			b.SetValue(dp, dpv);
 			b.BorderBrush = new SolidColorBrush(Color.FromArgb(40, 200, 200, 200));
 
@@ -585,7 +583,7 @@ namespace DeepZoomView {
 		private void updateOverlay() {
 			zoom = Math.Round(Hcells) / msi.ViewportWidth;
 			Double newX = (msi.ViewportOrigin.X * (msi.ActualWidth / Math.Round(Hcells))) * zoom;
-			Double newY = (msi.ViewportOrigin.Y * (msi.ActualHeight / Vcells)) * zoom;
+			Double newY = (msi.ViewportOrigin.Y * (((msi.ActualWidth / Hcells) * Vcells) / Vcells)) * zoom;
 			Double newH = msi.ActualHeight * zoom;
 			Double newW = msi.ActualWidth * zoom;
 
@@ -601,7 +599,7 @@ namespace DeepZoomView {
 
 			Xaxis.Width = zoom * msi.ActualWidth;
 			XaxisGrid.Width = Xaxis.Width;
-			Yaxis.Height = zoom * msi.ActualHeight;
+			Yaxis.Height = zoom * ((msi.ActualWidth / Hcells) * Vcells);
 			YaxisGrid.Height = Yaxis.Height;
 		}
 	}
