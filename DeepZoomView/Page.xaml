@@ -244,9 +244,9 @@
                 <TextBlock Text="Something something" Foreground="White" Canvas.Left="700" Canvas.Top="600" Width="100"></TextBlock>
 -->
             </Canvas>
-            <Canvas Name="Vaxis" Grid.Row="1" Grid.Column="0">
+            <Canvas Name="Yaxis" Grid.Row="1" Grid.Column="0">
                 <Canvas.RenderTransform>
-                    <ScaleTransform x:Name="VaxisScale" ScaleX="1.0" ScaleY="1.0" />
+                    <ScaleTransform x:Name="YaxisScale" ScaleX="1.0" ScaleY="1.0" />
                 </Canvas.RenderTransform>
                 <Canvas.Background>
                     <LinearGradientBrush StartPoint="1,0" EndPoint="0,0">
@@ -254,6 +254,26 @@
                         <GradientStop Color="#000" Offset="1"></GradientStop>
                     </LinearGradientBrush>
                 </Canvas.Background>
+                <Grid Name="YaxisGrid">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"></RowDefinition>
+                        <RowDefinition Height="*"></RowDefinition>
+                        <RowDefinition Height="*"></RowDefinition>
+                        <RowDefinition Height="*"></RowDefinition>
+                        <RowDefinition Height="*"></RowDefinition>
+                        <RowDefinition Height="*"></RowDefinition>
+                        <RowDefinition Height="*"></RowDefinition>
+                        <RowDefinition Height="*"></RowDefinition>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Text="1" Foreground="White" Grid.Row="0"></TextBlock>
+                    <TextBlock Text="2" Foreground="White" Grid.Row="1"></TextBlock>
+                    <TextBlock Text="3" Foreground="White" Grid.Row="2"></TextBlock>
+                    <TextBlock Text="4" Foreground="White" Grid.Row="3"></TextBlock>
+                    <TextBlock Text="5" Foreground="White" Grid.Row="4"></TextBlock>
+                    <TextBlock Text="6" Foreground="White" Grid.Row="5"></TextBlock>
+                    <TextBlock Text="7" Foreground="White" Grid.Row="6"></TextBlock>
+                </Grid>
             </Canvas>
 
             <Canvas Name="Xaxis" Grid.Row="2" Grid.Column="1">
@@ -266,8 +286,38 @@
                         <GradientStop Color="#000" Offset="1"></GradientStop>
                     </LinearGradientBrush>
                 </Canvas.Background>
+                <Grid Name="XaxisGrid">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"></ColumnDefinition>
+                        <ColumnDefinition Width="*"></ColumnDefinition>
+                        <ColumnDefinition Width="*"></ColumnDefinition>
+                        <ColumnDefinition Width="*"></ColumnDefinition>
+                        <ColumnDefinition Width="*"></ColumnDefinition>
+                        <ColumnDefinition Width="*"></ColumnDefinition>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Text="1" Foreground="White" Grid.Column="0" TextAlignment="Center"></TextBlock>
+                    <TextBlock Text="2" Foreground="White" Grid.Column="1" TextAlignment="Center"></TextBlock>
+                    <TextBlock Text="3" Foreground="White" Grid.Column="2" TextAlignment="Center"></TextBlock>
+                    <TextBlock Text="4" Foreground="White" Grid.Column="3" TextAlignment="Center"></TextBlock>
+                    <TextBlock Text="5" Foreground="White" Grid.Column="4" TextAlignment="Center"></TextBlock>
+                    <TextBlock Text="6" Foreground="White" Grid.Column="5" TextAlignment="Center"></TextBlock>
+                </Grid>
             </Canvas>
 
+
+            <!--          <Canvas Name="Xaxis" Grid.Row="2" Grid.Column="1">
+                <Canvas.RenderTransform>
+                    <ScaleTransform x:Name="XaxisScale" ScaleX="1.0" ScaleY="1.0" />
+                </Canvas.RenderTransform>
+                <Canvas.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Color="#555" Offset="0"></GradientStop>
+                        <GradientStop Color="#000" Offset="1"></GradientStop>
+                    </LinearGradientBrush>
+                </Canvas.Background>
+            </Canvas>
+-->
             <Canvas x:Name="Mouse" Grid.Row="1" Grid.Column="1">
                 <Border Background="White" Opacity="0.5">
                     <TextBlock x:Name="MouseTitle" MaxWidth="200"></TextBlock>

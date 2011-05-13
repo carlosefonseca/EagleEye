@@ -541,15 +541,14 @@ namespace DeepZoomView {
 			if ((Double)Overlays.GetValue(Canvas.LeftProperty) != -newX) {
 				Overlays.SetValue(Canvas.LeftProperty, -newX);
 			}
-			OverlaysScale.ScaleX = zoom;
-			OverlaysScale.ScaleY = zoom;
-			/*
-			if (Overlays.Height != newH) {
-				Overlays.Height = newH;
-			}
-			if (Overlays.Width != newW) {
-				Overlays.Width = newW;
-			}*/
+
+			XaxisGrid.SetValue(Canvas.LeftProperty, -newX);
+			YaxisGrid.SetValue(Canvas.TopProperty, -newY);
+
+			Xaxis.Width = zoom * msi.ActualWidth;
+			XaxisGrid.Width = Xaxis.Width;
+			Yaxis.Height = zoom * msi.ActualHeight;
+			YaxisGrid.Height = Yaxis.Height;
 		}
 	}
 }
