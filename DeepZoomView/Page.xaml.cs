@@ -320,6 +320,10 @@ namespace DeepZoomView {
 			XaxisGrid.Children.Clear();
 			YaxisGrid.Children.Clear();
 
+			Xaxis.Width = msi.ActualWidth;
+			Yaxis.Height = msi.ActualHeight;
+			Yaxis.
+
 			RowDefinition rowD;
 			ColumnDefinition colD;
 			TextBlock txt;
@@ -597,10 +601,10 @@ namespace DeepZoomView {
 			XaxisGrid.SetValue(Canvas.LeftProperty, -newX);
 			YaxisGrid.SetValue(Canvas.TopProperty, -newY);
 
-			Xaxis.Width = zoom * msi.ActualWidth;
-			XaxisGrid.Width = Xaxis.Width;
-			Yaxis.Height = zoom * ((msi.ActualWidth / Hcells) * Vcells);
-			YaxisGrid.Height = Yaxis.Height;
+			//Xaxis.Width = zoom * msi.ActualWidth;
+			XaxisGrid.Width = zoom * msi.ActualWidth;
+			//Yaxis.Height = zoom * ((msi.ActualWidth / Hcells) * Vcells);
+			YaxisGrid.Height = zoom * ((msi.ActualWidth / Hcells) * Vcells);
 		}
 	}
 }
