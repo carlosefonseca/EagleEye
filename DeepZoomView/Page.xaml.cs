@@ -197,6 +197,7 @@ namespace DeepZoomView {
 				}
 			};
 
+			// WHEEL
 			new MouseWheelHelper(this).Moved += delegate(object sender, MouseWheelEventArgs e) {
 				e.Handled = true;
 
@@ -322,7 +323,7 @@ namespace DeepZoomView {
 
 			Xaxis.Width = msi.ActualWidth;
 			Yaxis.Height = msi.ActualHeight;
-			Yaxis.
+			
 
 			RowDefinition rowD;
 			ColumnDefinition colD;
@@ -398,7 +399,87 @@ namespace DeepZoomView {
 		}
 
 
+		private void orderTest() {
+			List<int> groupSizes = new List<int>();
+			int total = 0;
+			foreach (KeyValuePair<int, Dictionary<int, Dictionary<int, List<int>>>> years in dateCollection.Get()) {
+				foreach (KeyValuePair<int, Dictionary<int, List<int>>> month in years.Value) {
+					int count = 0;
+					foreach (KeyValuePair<int, List<int>> day in month.Value) {
+						count += day.Value.Count;
+					}
+					groupSizes.Add(count);
+					total += count;
+				}
+			}
+
+			Hcells = 1;
+			Vcells = 1;
+
+			foreach (int row in groupSizes) {
+				if (row > Hcells) {
+					Hcells = row;
+				}
+			}
+
+			Vcells = groupSizes.Count;
+			Vcells = Convert.ToInt32(Math.Floor(msi.ActualHeight * Hcells / msi.ActualWidth));
+			double rowsNeeded = 0;
+
+			while (true) {
+				rowsNeeded = 0;
+				// Determina o que acontece ao reduzir a largura
+				foreach (int row in groupSizes) {
+					rowsNeeded += Math.Ceiling(row / (Hcells-1));
+				}
+
+				// se for viavel reduzir a largura, faz isso mesmo.
+				Vcells = Convert.ToInt32(Math.Floor(msi.ActualHeight * (Hcells-1) / msi.ActualWidth));
+				if (rowsNeeded <= Vcells) {
+					Hcells--;		
+				} else {
+					Vcells = Convert.ToInt32(Math.Floor(msi.ActualHeight * Hcells / msi.ActualWidth));
+					break;
+				}
+			}
+
+
+
+			// put images in canvas
+			double imgSize = msi.ActualWidth / Hcells;
+			var x = 0.0;
+			var y = 0.0;
+			// era fixe guardar o anterior para repor
+			canvasIndex = new Dictionary<string, int>();
+
+			foreach (KeyValuePair<int, Dictionary<int, Dictionary<int, List<int>>>> years in dateCollection.Get()) {
+				foreach (KeyValuePair<int, Dictionary<int, List<int>>> month in years.Value) {
+					foreach (KeyValuePair<int, List<int>> day in month.Value) {
+						foreach (int id in day.Value) {
+							msi.SubImages[id].ViewportOrigin = new Point(-x, -y);
+							canvasIndex.Add(x + ";" + y, id);
+							x++;
+
+							if (x >= Hcells) {
+								y += 1;
+								x = 0.0;
+							}
+						}
+					}
+					x = 0;
+					y++;
+				}
+			}
+			double HcellsTmp = msi.ActualWidth * Vcells / msi.ActualHeight;
+			Hcells = Math.Max(Hcells, HcellsTmp);
+			msi.ViewportWidth = Hcells;
+			zoom = 1;
+		}
+
+			
 		private void orderImagesByDate() {
+			orderTest();
+			return;
 			double imgSize = msi.ActualWidth / Hcells;
 			var x = 0.0;
 			var y = 0.0;
