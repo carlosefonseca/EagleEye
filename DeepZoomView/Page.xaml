@@ -231,7 +231,11 @@
                 <ColumnDefinition Width="*"></ColumnDefinition>
             </Grid.ColumnDefinitions>
 
-            <TextBlock Text="Future Filter Bar" Grid.Column="1" Grid.Row="0" Foreground="White" ></TextBlock>
+            <StackPanel Grid.Column="1" Grid.Row="0" Orientation="Horizontal">
+                <TextBlock Text="Future Filter Bar" VerticalAlignment="Center" Foreground="White" Margin="0,0,10,0"></TextBlock>
+                <Button x:Name="ghDate" Content="Group Horizontally by Date" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="7" Margin="0,0,10,0" Click="ghDate_Click"></Button>
+                <Button x:Name="gvDate" Content="Group Vertically by Date" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="7"   Margin="0,0,10,0" Click="gvDate_Click"></Button>
+            </StackPanel>
 
             <MultiScaleImage x:Name="msi" Source="SmallDB/DZC/collection.xml" Grid.Row="1" Grid.Column="1"/>
 

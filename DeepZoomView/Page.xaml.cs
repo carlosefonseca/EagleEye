@@ -323,7 +323,7 @@ namespace DeepZoomView {
 
 			Xaxis.Width = msi.ActualWidth;
 			Yaxis.Height = msi.ActualHeight;
-			
+
 
 			RowDefinition rowD;
 			ColumnDefinition colD;
@@ -343,7 +343,7 @@ namespace DeepZoomView {
 		}
 
 
-		private UIElement makeRullerLabel(String text, DependencyProperty dp, Object dpv) {
+		private FrameworkElement makeRullerLabel(String text, DependencyProperty dp, Object dpv) {
 			TextBlock txt = new TextBlock();
 			txt.Text = text;
 			txt.Foreground = new SolidColorBrush(Colors.White);
@@ -399,11 +399,13 @@ namespace DeepZoomView {
 		}
 
 
-		private void orderTest() {
+		private void orderByGroupsHorizontally() {
 			List<int> groupSizes = new List<int>();
+			List<string> groupNames = new List<string>();
 			int total = 0;
 			foreach (KeyValuePair<int, Dictionary<int, Dictionary<int, List<int>>>> years in dateCollection.Get()) {
 				foreach (KeyValuePair<int, Dictionary<int, List<int>>> month in years.Value) {
+					groupNames.Add(years.Key.ToString() + "\n" + (new DateTime(1, month.Key, 1)).ToString("MMM"));
 					int count = 0;
 					foreach (KeyValuePair<int, List<int>> day in month.Value) {
 						count += day.Value.Count;
@@ -430,13 +432,13 @@ namespace DeepZoomView {
 				rowsNeeded = 0;
 				// Determina o que acontece ao reduzir a largura
 				foreach (int row in groupSizes) {
-					rowsNeeded += Math.Ceiling(row / (Hcells-1));
+					rowsNeeded += Math.Ceiling(row / (Hcells - 1));
 				}
 
 				// se for viavel reduzir a largura, faz isso mesmo.
-				Vcells = Convert.ToInt32(Math.Floor(msi.ActualHeight * (Hcells-1) / msi.ActualWidth));
+				Vcells = Convert.ToInt32(Math.Floor(msi.ActualHeight * (Hcells - 1) / msi.ActualWidth));
 				if (rowsNeeded <= Vcells) {
-					Hcells--;		
+					Hcells--;
 				} else {
 					Vcells = Convert.ToInt32(Math.Floor(msi.ActualHeight * Hcells / msi.ActualWidth));
 					break;
@@ -474,11 +476,59 @@ namespace DeepZoomView {
 			Hcells = Math.Max(Hcells, HcellsTmp);
 			msi.ViewportWidth = Hcells;
 			zoom = 1;
+
+			List<KeyValuePair<string, int>> groups = new List<KeyValuePair<string, int>>();
+			for (int i = 0; i < groupNames.Count; i++) {
+				groups.Add(new KeyValuePair<string, int>(groupNames[i], Convert.ToInt32(Math.Ceiling(groupSizes[i] / Hcells))));
+			}
+			makeAnAxis("Y", groups);
 		}
 
-			
+
+		private void makeAnAxis(String XorY, List<KeyValuePair<string, int>> groups) {
+			Grid axisGrid;
+			if (XorY == "X") {
+				axisGrid = XaxisGrid;
+			} else {
+				axisGrid = YaxisGrid;
+			}
+			axisGrid.ColumnDefinitions.Clear();
+			axisGrid.RowDefinitions.Clear();
+			axisGrid.Children.Clear();
+
+			ColumnDefinition colD;
+			RowDefinition rowD;
+			//UIElement elm;
+			FrameworkElement elm;
+			int i = 0;
+
+			if (XorY == "X") {
+				foreach (KeyValuePair<string, int> group in groups) {
+					for (int n = 0; n < group.Value; n++) {
+						colD = new ColumnDefinition();
+						XaxisGrid.ColumnDefinitions.Add(colD);
+					}
+					elm = makeRullerLabel(group.Key, Grid.ColumnProperty, i);
+					Grid.SetColumnSpan(elm, group.Value);
+					XaxisGrid.Children.Add(elm);
+					i += group.Value;
+				}
+			} else {
+				foreach (KeyValuePair<string, int> group in groups) {
+					for (int n = 0; n < group.Value; n++) {
+						rowD = new RowDefinition();
+						YaxisGrid.RowDefinitions.Add(rowD);
+					}
+					elm = makeRullerLabel(group.Key, Grid.RowProperty, i);
+					Grid.SetRowSpan(elm, group.Value);
+					YaxisGrid.Children.Add(elm);
+					i += group.Value;
+				}
+			}
+		}
+
 		private void orderImagesByDate() {
-			orderTest();
+			orderByGroupsHorizontally();
 			return;
 			double imgSize = msi.ActualWidth / Hcells;
 			var x = 0.0;
@@ -686,6 +736,14 @@ namespace DeepZoomView {
 			XaxisGrid.Width = zoom * msi.ActualWidth;
 			//Yaxis.Height = zoom * ((msi.ActualWidth / Hcells) * Vcells);
 			YaxisGrid.Height = zoom * ((msi.ActualWidth / Hcells) * Vcells);
+		}
+
+		private void ghDate_Click(object sender, RoutedEventArgs e) {
+			orderByGroupsHorizontally();
+		}
+
+		private void gvDate_Click(object sender, RoutedEventArgs e) {
+			orderByGroupsHorizontally();
 		}
 	}
 }
