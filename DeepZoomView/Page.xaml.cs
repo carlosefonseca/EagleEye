@@ -220,10 +220,11 @@ namespace DeepZoomView {
 			//test2.Text = "Test2";
 			//Overlays.Children.Add(test2);
 
-			/*this.msi.ViewportChanged += delegate {
+			msi.ViewportChanged += delegate {
 				updateOverlay();
-			};*/
+			};
 			msi.MotionFinished += delegate {
+				showOverlay();
 				updateOverlay();
 				showOverlay();
 			};
@@ -362,8 +363,6 @@ namespace DeepZoomView {
 				b.Height = 50;
 				b.BorderThickness = new Thickness(0, 0, 1, 0);
 			}
-			b.HorizontalAlignment = HorizontalAlignment.Stretch;
-			b.VerticalAlignment = VerticalAlignment.Stretch;
 			b.Child = txt;
 
 			return b;
@@ -476,6 +475,7 @@ namespace DeepZoomView {
 			Hcells = Math.Max(Hcells, HcellsTmp);
 			msi.ViewportWidth = Hcells;
 			zoom = 1;
+			GoHomeClick(null, null);
 
 			List<KeyValuePair<string, int>> groups = new List<KeyValuePair<string, int>>();
 			for (int i = 0; i < groupNames.Count; i++) {
@@ -736,6 +736,55 @@ namespace DeepZoomView {
 			XaxisGrid.Width = zoom * msi.ActualWidth;
 			//Yaxis.Height = zoom * ((msi.ActualWidth / Hcells) * Vcells);
 			YaxisGrid.Height = zoom * ((msi.ActualWidth / Hcells) * Vcells);
+
+			double visibleStart = -(double)YaxisGrid.GetValue(Canvas.TopProperty);
+			double visibleEnd = visibleStart+Yaxis.ActualHeight;
+			double elmStart = 0;
+			double elmHeight = 0;
+			double elmEnd = 0;
+			double labelHeight = 0;
+			double newTop = 0;
+			TextBlock label;
+			foreach(Border border in YaxisGrid.Children) {
+				elmHeight = border.RenderSize.Height;
+				elmEnd = elmStart + elmHeight;
+				labelHeight = border.Child.RenderSize.Height;
+				label = (TextBlock)border.Child;
+
+				if (elmStart >= visibleStart) {					// inicio visivel
+					if (elmEnd > visibleEnd) {					// fim !visivel
+						newTop = (visibleEnd - elmStart -labelHeight) / 2;
+						CustomLabelPosition(label, newTop);
+						break;			// toda a área visivel está preenchida, o resto n interessa
+					} else {			// elemento completamente visivel -> posição auto
+						CustomLabelPosition(label, -1);
+						elmStart = elmEnd;
+					}
+				} else if (elmEnd > visibleStart) {		// elemento não está completamente out
+					if (elmEnd <= visibleEnd) {			// inicio !visivel, fim visivel
+						newTop = (elmEnd - visibleStart - labelHeight) / 2 + visibleStart - elmStart;
+						CustomLabelPosition(label, newTop); 
+						elmStart = elmEnd;
+					} else {														// inicio e fim !visivel
+						newTop = (visibleEnd - visibleStart - labelHeight) / 2 + visibleStart - elmStart;
+						CustomLabelPosition(label, newTop); 
+						break;
+					}
+				} else {		// elemento está completamente fora de vista
+					CustomLabelPosition(label, -1);
+					elmStart = elmEnd;
+				}
+			}
+		}
+
+		private void CustomLabelPosition(TextBlock label, double newTop) {
+			if (newTop == -1) {	//Reset
+				label.Margin = new Thickness(0);
+				label.VerticalAlignment = VerticalAlignment.Center;
+			} else {
+				label.Margin = new Thickness(0, Math.Max(0, newTop), 0, 0);
+				label.VerticalAlignment = VerticalAlignment.Top;
+			}
 		}
 
 		private void ghDate_Click(object sender, RoutedEventArgs e) {
