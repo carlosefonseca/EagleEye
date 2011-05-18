@@ -931,9 +931,10 @@ namespace DeepZoomView {
 				img = msi.SubImages[item];
 				img.ViewportWidth = 0;
 				img.Opacity = 0;
-				img.ViewportOrigin = new Point(1, 1);
+				//img.ViewportOrigin = new Point(1, 1);
 			}
-			CalculateHcellsVcells(selectedImages.Count, true);
+			CalculateHcellsVcells(selectedImagesIds.Count, true);
+			selectedImagesIds.Sort();
 			ArrangeIntoGrid(selectedImagesIds, Hcells, Vcells, true);
 			msi.ViewportWidth = Hcells;
 		}
