@@ -43,8 +43,6 @@ namespace DeepZoomView {
 		public Page() {
 			InitializeComponent();
 
-			Caption.DataContext = zoom;
-
 			// Firing an event when the MultiScaleImage is Loaded
 			this.msi.Loaded += new RoutedEventHandler(msi_Loaded);
 
