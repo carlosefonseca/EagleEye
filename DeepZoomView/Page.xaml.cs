@@ -745,9 +745,7 @@ namespace DeepZoomView {
 		private void SortByFile(string path) {
 			//BinaryFormatter formatter = new BinaryFormatter(); 
 			//FileStream stream = File.OpenRead(path);
-
 			Dictionary<String, long> sorted = new Dictionary<string, long>();
-
 		}
 
 
@@ -755,8 +753,7 @@ namespace DeepZoomView {
 		// A small example that arranges all of your images (provided they are the same size) into a grid
 		//
 
-
-		private void ArrangeIntoGrid(List<int> imgList, double totalColumns, double totalRows, bool fixImgSettings) {
+		private void ArrangeIntoGrid(List<int> imgList, double totalColumns, double totalRows) {
 			canvasIndex = new Dictionary<string, int>();
 			int numberOfImages = imgList.Count();
 
@@ -767,10 +764,6 @@ namespace DeepZoomView {
 					if (numberOfImages != totalImagesAdded) {
 						int imgId = imgList[totalImagesAdded];
 						MultiScaleSubImage currentImage = msi.SubImages[imgId];
-						if (fixImgSettings) {
-							//	currentImage.Opacity = 1;
-							currentImage.ViewportWidth = 1;
-						}
 
 						Point currentPosition = currentImage.ViewportOrigin;
 						Point futurePosition = new Point(-col, -row);
@@ -780,22 +773,14 @@ namespace DeepZoomView {
 						Storyboard moveStoryboard = new Storyboard();
 
 						// Create Animation
-						PointAnimationUsingKeyFrames moveAnimation = new PointAnimationUsingKeyFrames();
+						//PointAnimationUsingKeyFrames moveAnimation = new PointAnimationUsingKeyFrames();
+						PointAnimation moveAnimation = new PointAnimation();
 
-						// Create Keyframe
-						SplinePointKeyFrame startKeyframe = new SplinePointKeyFrame();
-						startKeyframe.Value = currentPosition;
-						startKeyframe.KeyTime = KeyTime.FromTimeSpan(TimeSpan.Zero);
-
-						startKeyframe = new SplinePointKeyFrame();
-						startKeyframe.Value = futurePosition;
-						startKeyframe.KeyTime = KeyTime.FromTimeSpan(TimeSpan.FromSeconds(1));
-
-						KeySpline ks = new KeySpline();
-						ks.ControlPoint1 = new Point(0.2, 0.2);
-						ks.ControlPoint2 = new Point(0.8, 0.8);
-						startKeyframe.KeySpline = ks;
-						moveAnimation.KeyFrames.Add(startKeyframe);
+						QuadraticEase easeing = new QuadraticEase();
+						easeing.EasingMode = EasingMode.EaseInOut;
+						moveAnimation.EasingFunction = easeing;
+						moveAnimation.Duration = new Duration(TimeSpan.FromSeconds(1));
+						moveAnimation.To = futurePosition;
 
 						Storyboard.SetTarget(moveAnimation, currentImage);
 						Storyboard.SetTargetProperty(moveAnimation, new PropertyPath("ViewportOrigin"));
@@ -806,8 +791,7 @@ namespace DeepZoomView {
 						// Play Storyboard
 						moveStoryboard.Begin();
 
-						// Now that the Storyboard has done it's work, clear the 
-						// MultiScaleImage resources.
+						// Now that the Storyboard has done it's work, clear the MultiScaleImage resources.
 						msi.Resources.Clear();
 
 						totalImagesAdded++;
@@ -934,7 +918,7 @@ namespace DeepZoomView {
 			fadeImages(selectedImagesIds, FadeAnimation.In);
 			CalculateHcellsVcells(selectedImagesIds.Count, true);
 			selectedImagesIds.Sort();
-			ArrangeIntoGrid(selectedImagesIds, Hcells, Vcells, false);
+			ArrangeIntoGrid(selectedImagesIds, Hcells, Vcells);
 			ShowAllContent();
 		}
 
@@ -971,7 +955,7 @@ namespace DeepZoomView {
 			selectedImagesIds = new List<int>();
 			CalculateHcellsVcells(true);
 			fadeImages(allImageIds, FadeAnimation.In);
-			ArrangeIntoGrid(allImageIds, Hcells, Vcells, true);
+			ArrangeIntoGrid(allImageIds, Hcells, Vcells);
 			ShowAllContent();
 		}
 
