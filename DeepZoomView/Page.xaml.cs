@@ -753,6 +753,7 @@ namespace DeepZoomView {
 
 
 		private void ArrangeIntoGrid(List<int> imgList, double totalColumns, double totalRows, bool fixImgSettings) {
+			canvasIndex = new Dictionary<string, int>();
 			int numberOfImages = imgList.Count();
 
 			int totalImagesAdded = 0;
@@ -760,14 +761,16 @@ namespace DeepZoomView {
 			for (int row = 0; row < totalRows; row++) {
 				for (int col = 0; col < totalColumns; col++) {
 					if (numberOfImages != totalImagesAdded) {
-						MultiScaleSubImage currentImage = msi.SubImages[imgList[totalImagesAdded]];
+						int imgId = imgList[totalImagesAdded];
+						MultiScaleSubImage currentImage = msi.SubImages[imgId];
 						if (fixImgSettings) {
-							currentImage.Opacity = 1;
+							//	currentImage.Opacity = 1;
 							currentImage.ViewportWidth = 1;
 						}
 
 						Point currentPosition = currentImage.ViewportOrigin;
 						Point futurePosition = new Point(-col, -row);
+						canvasIndex.Add(col + ";" + row, imgId);
 
 						// Set up the animation to layout in grid
 						Storyboard moveStoryboard = new Storyboard();
@@ -785,8 +788,8 @@ namespace DeepZoomView {
 						startKeyframe.KeyTime = KeyTime.FromTimeSpan(TimeSpan.FromSeconds(1));
 
 						KeySpline ks = new KeySpline();
-						ks.ControlPoint1 = new Point(0, 1);
-						ks.ControlPoint2 = new Point(1, 1);
+						ks.ControlPoint1 = new Point(0.2, 0.2);
+						ks.ControlPoint2 = new Point(0.8, 0.8);
 						startKeyframe.KeySpline = ks;
 						moveAnimation.KeyFrames.Add(startKeyframe);
 
