@@ -694,8 +694,13 @@ namespace DeepZoomView {
 		}
 
 		private void GoHomeClick(object sender, System.Windows.RoutedEventArgs e) {
-			this.msi.ViewportWidth = Hcells;
-			this.msi.ViewportOrigin = new Point(0, 0);
+			if (Math.Round(Hcells) == 1 && Math.Round(Vcells) == 1 && (msi.ActualHeight < msi.ActualWidth)) {
+				msi.ViewportWidth = msi.ActualWidth / msi.ActualHeight;
+				this.msi.ViewportOrigin = new Point(-(((msi.ActualWidth / msi.ActualHeight) - 1) / 2), 0);
+			} else {
+				this.msi.ViewportWidth = Hcells;
+				this.msi.ViewportOrigin = new Point(0, 0);
+			}
 			ZoomFactor = 1;
 		}
 
