@@ -749,7 +749,7 @@ namespace DeepZoomView {
 		//
 
 
-		private void ArrangeIntoGrid(List<MultiScaleSubImage> imgList, double totalColumns, double totalRows) {
+		private void ArrangeIntoGrid(List<int> imgList, double totalColumns, double totalRows, bool fixImgSettings) {
 			int numberOfImages = imgList.Count();
 
 			int totalImagesAdded = 0;
@@ -757,7 +757,11 @@ namespace DeepZoomView {
 			for (int row = 0; row < totalRows; row++) {
 				for (int col = 0; col < totalColumns; col++) {
 					if (numberOfImages != totalImagesAdded) {
-						MultiScaleSubImage currentImage = imgList[totalImagesAdded];
+						MultiScaleSubImage currentImage = msi.SubImages[imgList[totalImagesAdded]];
+						if (fixImgSettings) {
+							currentImage.Opacity = 1;
+							currentImage.ViewportWidth = 1;
+						}
 
 						Point currentPosition = currentImage.ViewportOrigin;
 						Point futurePosition = new Point(-col, -row);
@@ -929,11 +933,8 @@ namespace DeepZoomView {
 				img.Opacity = 0;
 				img.ViewportOrigin = new Point(1, 1);
 			}
-			foreach (MultiScaleSubImage sImg in selectedImages) {
-				sImg.Opacity = 1;
-			}
 			CalculateHcellsVcells(selectedImages.Count, true);
-			ArrangeIntoGrid(selectedImages, Hcells, Vcells);
+			ArrangeIntoGrid(selectedImagesIds, Hcells, Vcells, true);
 			msi.ViewportWidth = Hcells;
 		}
 
@@ -941,12 +942,7 @@ namespace DeepZoomView {
 			selectedImages = new List<MultiScaleSubImage>();
 			selectedImagesIds = new List<int>();
 			CalculateHcellsVcells(true);
-			List<MultiScaleSubImage> allImages = msi.SubImages.ToList<MultiScaleSubImage>();
-			foreach (MultiScaleSubImage img in allImages) {
-				img.Opacity = 1;
-				img.ViewportWidth = 1;
-			}
-			ArrangeIntoGrid(allImages, Hcells, Vcells);
+			ArrangeIntoGrid(allImageIds, Hcells, Vcells, true);
 			msi.ViewportWidth = Hcells;
 		}
 	}
