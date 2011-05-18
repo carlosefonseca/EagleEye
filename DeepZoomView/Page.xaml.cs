@@ -327,7 +327,7 @@ namespace DeepZoomView {
 
 		private void Zoom(Double newzoom, Point p) {
 			if (newzoom < 1) {
-				GoHomeClick(null, null);
+				ShowAllContent();
 			} else {
 				msi.ZoomAboutLogicalPoint(newzoom / zoom, p.X, p.Y);
 				zoom = newzoom;
@@ -505,7 +505,7 @@ namespace DeepZoomView {
 			Hcells = Math.Max(Hcells, HcellsTmp);
 			msi.ViewportWidth = Hcells;
 			zoom = 1;
-			GoHomeClick(null, null);
+			ShowAllContent();
 
 			List<KeyValuePair<string, int>> groups = new List<KeyValuePair<string, int>>();
 			for (int i = 0; i < groupNames.Count; i++) {
@@ -593,7 +593,7 @@ namespace DeepZoomView {
 			Hcells = Math.Max(Hcells, HcellsTmp);
 			msi.ViewportWidth = Hcells;
 			zoom = 1;
-			GoHomeClick(null, null);
+			ShowAllContent();
 
 			List<KeyValuePair<string, int>> groups = new List<KeyValuePair<string, int>>();
 			for (int i = 0; i < groupNames.Count; i++) {
@@ -694,6 +694,10 @@ namespace DeepZoomView {
 		}
 
 		private void GoHomeClick(object sender, System.Windows.RoutedEventArgs e) {
+			ShowAllContent();
+		}
+
+		private void ShowAllContent() {
 			if (Math.Round(Hcells) == 1 && Math.Round(Vcells) == 1 && (msi.ActualHeight < msi.ActualWidth)) {
 				msi.ViewportWidth = msi.ActualWidth / msi.ActualHeight;
 				this.msi.ViewportOrigin = new Point(-(((msi.ActualWidth / msi.ActualHeight) - 1) / 2), 0);
@@ -941,8 +945,7 @@ namespace DeepZoomView {
 			CalculateHcellsVcells(selectedImagesIds.Count, true);
 			selectedImagesIds.Sort();
 			ArrangeIntoGrid(selectedImagesIds, Hcells, Vcells, false);
-			fitCanvasToCells();
-
+			ShowAllContent();
 		}
 
 		enum FadeAnimation { In, Out };
@@ -973,19 +976,13 @@ namespace DeepZoomView {
 			}
 		}
 
-		private void fitCanvasToCells() {
-
-			msi.ViewportWidth = Hcells;
-
-		}
-
 		private void resetbtn_Click(object sender, RoutedEventArgs e) {
 			selectedImages = new List<MultiScaleSubImage>();
 			selectedImagesIds = new List<int>();
 			CalculateHcellsVcells(true);
 			fadeImages(allImageIds, FadeAnimation.In);
 			ArrangeIntoGrid(allImageIds, Hcells, Vcells, true);
-			msi.ViewportWidth = Hcells;
+			ShowAllContent();
 		}
 	}
 }
