@@ -235,6 +235,7 @@
                 <TextBlock Text="Future Filter Bar" VerticalAlignment="Center" Foreground="White" Margin="0,0,10,0"></TextBlock>
                 <Button x:Name="ghDate" Content="Group Horizontally by Date" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="7" Margin="0,0,10,0" Click="ghDate_Click"></Button>
                 <Button x:Name="gvDate" Content="Group Vertically by Date" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="7"   Margin="0,0,10,0" Click="gvDate_Click"></Button>
+                <Button x:Name="random" Content="Random" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="7"   Margin="0,0,10,0" Click="random_Click"></Button>
                 <Button x:Name="OnlySelected" Content="Only Selected" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="7"   Margin="0,0,10,0" Click="OnlySelected_Click"></Button>
                 <Button x:Name="resetbtn" Content="Reset Filters" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="7"   Margin="0,0,10,0" Click="resetbtn_Click"></Button>
             </StackPanel>

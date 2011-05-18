@@ -818,29 +818,19 @@ namespace DeepZoomView {
 			}
 		}
 
-		private List<MultiScaleSubImage> RandomizedListOfImages() {
-			List<MultiScaleSubImage> imageList = new List<MultiScaleSubImage>();
+		private List<int> RandomizedListOfImages(List<int> idList) {
 			Random ranNum = new Random();
 
-			// Store List of Images
-			foreach (MultiScaleSubImage subImage in msi.SubImages) {
-				imageList.Add(subImage);
-			}
-
-			int numImages = imageList.Count;
+			int numImages = idList.Count;
 
 			// Randomize Image List
 			for (int i = 0; i < numImages; i++) {
-				MultiScaleSubImage tempImage = imageList[i];
-				imageList.RemoveAt(i);
-
-				int ranNumSelect = ranNum.Next(imageList.Count);
-
-				imageList.Insert(ranNumSelect, tempImage);
-
+				int tempImage = idList[i];
+				idList.RemoveAt(i);
+				int ranNumSelect = ranNum.Next(idList.Count);
+				idList.Insert(ranNumSelect, tempImage);
 			}
-
-			return imageList;
+			return idList;
 		}
 
 		private int GetSubImageIndex(Point point) {
@@ -983,6 +973,14 @@ namespace DeepZoomView {
 			fadeImages(allImageIds, FadeAnimation.In);
 			ArrangeIntoGrid(allImageIds, Hcells, Vcells, true);
 			ShowAllContent();
+		}
+
+		private void random_Click(object sender, RoutedEventArgs e) {
+			if (selectedImagesIds.Count != 0) {
+				ArrangeIntoGrid(RandomizedListOfImages(selectedImagesIds), Hcells, Vcells);
+			} else {
+				ArrangeIntoGrid(RandomizedListOfImages(allImageIds), Hcells, Vcells);
+			}
 		}
 	}
 }
