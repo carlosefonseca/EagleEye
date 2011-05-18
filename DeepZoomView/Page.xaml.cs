@@ -22,12 +22,14 @@ namespace DeepZoomView {
 		Point selectionStart = new Point();
 		Rectangle selection = null;
 		List<MultiScaleSubImage> selectedImages = new List<MultiScaleSubImage>();
+		List<int> selectedImagesIds = new List<int>();
+		List<int> allImageIds = new List<int>();
 		bool mouseDown = false;
 		Point lastMouseDownPos = new Point();
 		Point lastMousePos = new Point();
 		Point lastMouseViewPort = new Point();
 		Double Hcells;
-		int Vcells;
+		Double Vcells;
 		long _LastIndex = -1;
 		Dictionary<long, string> _Metadata = new Dictionary<long, string>();
 		Dictionary<string, int> canvasIndex = new Dictionary<string, int>();
@@ -131,6 +133,7 @@ namespace DeepZoomView {
 					Double p2LogicalX = Math.Floor(msi.ViewportOrigin.X + msi.ViewportWidth * (p2.X / msi.ActualWidth));
 					Double p2LogicalY = Math.Floor(msi.ViewportOrigin.Y + (msi.ViewportWidth * (msi.ActualHeight / msi.ActualWidth)) * (p2.Y / msi.ActualHeight));
 					selectedImages = new List<MultiScaleSubImage>();
+					selectedImagesIds = new List<int>();
 					MultiScaleSubImage img;
 					int id;
 					for (double x = p1LogicalX; x <= p2LogicalX; x++) {
@@ -140,6 +143,7 @@ namespace DeepZoomView {
 								img.Opacity = 0.3;
 								//img.SetValue(BorderBrushProperty, new SolidColorBrush(Colors.Green));
 								selectedImages.Add(img);
+								selectedImagesIds.Add(canvasIndex[x + ";" + y]);
 							}
 						}
 					}
@@ -231,6 +235,12 @@ namespace DeepZoomView {
 			msi.ViewportChanged += delegate {
 				hideOverlay();
 			};
+
+			App.Current.Host.Content.Resized += new EventHandler(Content_Resized);
+		}
+
+		void Content_Resized(object sender, EventArgs e) {
+
 		}
 
 		private void showOverlay() {
@@ -242,26 +252,14 @@ namespace DeepZoomView {
 		}
 
 		void msi_ImageOpenSucceeded(object sender, RoutedEventArgs e) {
+			for (int j = 0; j < msi.SubImages.Count; j++){
+				allImageIds.Add(j);
+			}
 			canvasIndex = new Dictionary<string, int>();
 			Double imgAR = msi.SubImages[0].AspectRatio;
 			Double imgWidth = msi.SubImages[0].ViewportWidth;
 			Double imgHeight = imgWidth * imgAR;
-			Double canvasWidth = msi.ActualWidth;
-			Double canvasHeight = msi.ActualHeight;
-
-			Double ratio = canvasWidth / canvasHeight;
-			Double canvasRatio = canvasWidth / canvasHeight;
-
-			int imgCount = msi.SubImages.Count;
-
-			int canHold = 1;
-			Hcells = 1;
-			Vcells = 1;
-			while (canHold < imgCount) {
-				Hcells++;
-				Vcells = Convert.ToInt32(Math.Floor(Hcells / ratio));
-				canHold = Convert.ToInt32(Hcells * Vcells);
-			}
+			CalculateHcellsVcells(true);
 
 			var x = 0.0;
 			var y = 0.0;
@@ -284,6 +282,44 @@ namespace DeepZoomView {
 			Overlays.GetValue(Canvas.TopProperty);
 
 			makeRullerCells(Hcells, y + 1);
+		}
+
+		private KeyValuePair<double, double> CalculateHcellsVcells() {
+			return CalculateHcellsVcells(0, false);
+		}
+
+		private KeyValuePair<double, double> CalculateHcellsVcells(int imgCount) {
+			return CalculateHcellsVcells(imgCount, false);
+		}
+
+		private KeyValuePair<double, double> CalculateHcellsVcells(Boolean setGlobals) {
+			return CalculateHcellsVcells(0, setGlobals);
+		}
+
+		private KeyValuePair<double, double> CalculateHcellsVcells(int imgCount, Boolean setGlobals) {
+			Double canvasWidth = msi.ActualWidth;
+			Double canvasHeight = msi.ActualHeight;
+
+			Double ratio = canvasWidth / canvasHeight;
+			Double canvasRatio = canvasWidth / canvasHeight;
+
+			if (imgCount <= 0) {
+				imgCount = msi.SubImages.Count;
+			}
+
+			int canHold = 1;
+			double Hcells = 1;
+			double Vcells = 1;
+			while (canHold < imgCount) {
+				Hcells++;
+				Vcells = Convert.ToInt32(Math.Floor(Hcells / ratio));
+				canHold = Convert.ToInt32(Hcells * Vcells);
+			}
+			if (setGlobals) {
+				this.Hcells = Hcells;
+				this.Vcells = Vcells;
+			}
+			return new KeyValuePair<double, double>(Hcells, Vcells);
 		}
 
 		void msi_Loaded(object sender, RoutedEventArgs e) {
@@ -321,10 +357,6 @@ namespace DeepZoomView {
 			YaxisGrid.RowDefinitions.Clear();
 			XaxisGrid.Children.Clear();
 			YaxisGrid.Children.Clear();
-
-			Xaxis.Width = msi.ActualWidth;
-			Yaxis.Height = msi.ActualHeight;
-
 
 			RowDefinition rowD;
 			ColumnDefinition colD;
@@ -395,6 +427,94 @@ namespace DeepZoomView {
 				String[] ids = split[1].Split(new Char[1] { ';' }, StringSplitOptions.RemoveEmptyEntries);
 				dateCollection.Add(date, ids);
 			}
+		}
+
+
+		private void orderByGroupsVertically() {
+			List<int> groupSizes = new List<int>();
+			List<string> groupNames = new List<string>();
+			int total = 0;
+			foreach (KeyValuePair<int, Dictionary<int, Dictionary<int, List<int>>>> years in dateCollection.Get()) {
+				foreach (KeyValuePair<int, Dictionary<int, List<int>>> month in years.Value) {
+					groupNames.Add(years.Key.ToString() + "\n" + (new DateTime(1, month.Key, 1)).ToString("MMM"));
+					int count = 0;
+					foreach (KeyValuePair<int, List<int>> day in month.Value) {
+						count += day.Value.Count;
+					}
+					groupSizes.Add(count);
+					total += count;
+				}
+			}
+
+			Hcells = 1;
+			Vcells = 1;
+
+			foreach (int row in groupSizes) {
+				if (row > Hcells) {
+					Hcells = row;
+				}
+			}
+
+			Vcells = groupSizes.Count;
+			Vcells = Convert.ToInt32(Math.Floor(msi.ActualHeight * Hcells / msi.ActualWidth));
+			double rowsNeeded = 0;
+
+			while (true) {
+				rowsNeeded = 0;
+				// Determina o que acontece ao reduzir a largura
+				foreach (int row in groupSizes) {
+					rowsNeeded += Math.Ceiling(row / (Hcells - 1));
+				}
+
+				// se for viavel reduzir a largura, faz isso mesmo.
+				Vcells = Convert.ToInt32(Math.Floor(msi.ActualHeight * (Hcells - 1) / msi.ActualWidth));
+				if (rowsNeeded <= Vcells) {
+					Hcells--;
+				} else {
+					Vcells = Convert.ToInt32(Math.Floor(msi.ActualHeight * Hcells / msi.ActualWidth));
+					break;
+				}
+			}
+
+
+
+			// put images in canvas
+			double imgSize = msi.ActualWidth / Hcells;
+			var x = 0.0;
+			var y = 0.0;
+			// era fixe guardar o anterior para repor
+			canvasIndex = new Dictionary<string, int>();
+
+			foreach (KeyValuePair<int, Dictionary<int, Dictionary<int, List<int>>>> years in dateCollection.Get()) {
+				foreach (KeyValuePair<int, Dictionary<int, List<int>>> month in years.Value) {
+					foreach (KeyValuePair<int, List<int>> day in month.Value) {
+						foreach (int id in day.Value) {
+							msi.SubImages[id].ViewportOrigin = new Point(-x, -y);
+							canvasIndex.Add(x + ";" + y, id);
+							x++;
+
+							if (x >= Hcells) {
+								y += 1;
+								x = 0.0;
+							}
+						}
+					}
+					x = 0;
+					y++;
+				}
+			}
+			double HcellsTmp = msi.ActualWidth * Vcells / msi.ActualHeight;
+			Hcells = Math.Max(Hcells, HcellsTmp);
+			msi.ViewportWidth = Hcells;
+			zoom = 1;
+			GoHomeClick(null, null);
+
+			List<KeyValuePair<string, int>> groups = new List<KeyValuePair<string, int>>();
+			for (int i = 0; i < groupNames.Count; i++) {
+				groups.Add(new KeyValuePair<string, int>(groupNames[i], Convert.ToInt32(Math.Ceiling(groupSizes[i] / Hcells))));
+			}
+			makeAnAxis("Y", groups);
+			makeAnAxis("X", Hcells);
 		}
 
 
@@ -482,6 +602,15 @@ namespace DeepZoomView {
 				groups.Add(new KeyValuePair<string, int>(groupNames[i], Convert.ToInt32(Math.Ceiling(groupSizes[i] / Hcells))));
 			}
 			makeAnAxis("Y", groups);
+			makeAnAxis("X", Hcells);
+		}
+
+		private void makeAnAxis(String XorY, double n) {
+			List<KeyValuePair<string, int>> list = new List<KeyValuePair<string, int>>();
+			for (int i = 1; i <= n; i++) {
+				list.Add(new KeyValuePair<string, int>(i.ToString(), 1));
+			}
+			makeAnAxis(XorY, list);
 		}
 
 
@@ -618,24 +747,20 @@ namespace DeepZoomView {
 		//
 		// A small example that arranges all of your images (provided they are the same size) into a grid
 		//
-		private void ArrangeIntoGrid() {
 
-			List<MultiScaleSubImage> randomList = RandomizedListOfImages();
-			int numberOfImages = randomList.Count();
+
+		private void ArrangeIntoGrid(List<MultiScaleSubImage> imgList, double totalColumns, double totalRows) {
+			int numberOfImages = imgList.Count();
 
 			int totalImagesAdded = 0;
 
-			int totalColumns = 10;
-			int totalRows = numberOfImages / (totalColumns - 1);
-
-
-			for (int col = 0; col < totalColumns; col++) {
-				for (int row = 0; row < totalRows; row++) {
+			for (int row = 0; row < totalRows; row++) {
+				for (int col = 0; col < totalColumns; col++) {
 					if (numberOfImages != totalImagesAdded) {
-						MultiScaleSubImage currentImage = randomList[totalImagesAdded];
+						MultiScaleSubImage currentImage = imgList[totalImagesAdded];
 
 						Point currentPosition = currentImage.ViewportOrigin;
-						Point futurePosition = new Point(-1.2 * col, -0.7 * row);
+						Point futurePosition = new Point(-col, -row);
 
 						// Set up the animation to layout in grid
 						Storyboard moveStoryboard = new Storyboard();
@@ -738,14 +863,14 @@ namespace DeepZoomView {
 			YaxisGrid.Height = zoom * ((msi.ActualWidth / Hcells) * Vcells);
 
 			double visibleStart = -(double)YaxisGrid.GetValue(Canvas.TopProperty);
-			double visibleEnd = visibleStart+Yaxis.ActualHeight;
+			double visibleEnd = visibleStart + Yaxis.ActualHeight;
 			double elmStart = 0;
 			double elmHeight = 0;
 			double elmEnd = 0;
 			double labelHeight = 0;
 			double newTop = 0;
 			TextBlock label;
-			foreach(Border border in YaxisGrid.Children) {
+			foreach (Border border in YaxisGrid.Children) {
 				elmHeight = border.RenderSize.Height;
 				elmEnd = elmStart + elmHeight;
 				labelHeight = border.Child.RenderSize.Height;
@@ -753,7 +878,7 @@ namespace DeepZoomView {
 
 				if (elmStart >= visibleStart) {					// inicio visivel
 					if (elmEnd > visibleEnd) {					// fim !visivel
-						newTop = (visibleEnd - elmStart -labelHeight) / 2;
+						newTop = (visibleEnd - elmStart - labelHeight) / 2;
 						CustomLabelPosition(label, newTop);
 						break;			// toda a área visivel está preenchida, o resto n interessa
 					} else {			// elemento completamente visivel -> posição auto
@@ -763,11 +888,11 @@ namespace DeepZoomView {
 				} else if (elmEnd > visibleStart) {		// elemento não está completamente out
 					if (elmEnd <= visibleEnd) {			// inicio !visivel, fim visivel
 						newTop = (elmEnd - visibleStart - labelHeight) / 2 + visibleStart - elmStart;
-						CustomLabelPosition(label, newTop); 
+						CustomLabelPosition(label, newTop);
 						elmStart = elmEnd;
 					} else {														// inicio e fim !visivel
 						newTop = (visibleEnd - visibleStart - labelHeight) / 2 + visibleStart - elmStart;
-						CustomLabelPosition(label, newTop); 
+						CustomLabelPosition(label, newTop);
 						break;
 					}
 				} else {		// elemento está completamente fora de vista
@@ -792,7 +917,37 @@ namespace DeepZoomView {
 		}
 
 		private void gvDate_Click(object sender, RoutedEventArgs e) {
-			orderByGroupsHorizontally();
+			orderByGroupsVertically();
+		}
+
+		private void OnlySelected_Click(object sender, RoutedEventArgs e) {
+			IEnumerable<int> notSelected = allImageIds.Except(selectedImagesIds);
+			MultiScaleSubImage img;
+			foreach (int item in notSelected) {
+				img = msi.SubImages[item];
+				img.ViewportWidth = 0;
+				img.Opacity = 0;
+				img.ViewportOrigin = new Point(1, 1);
+			}
+			foreach (MultiScaleSubImage sImg in selectedImages) {
+				sImg.Opacity = 1;
+			}
+			CalculateHcellsVcells(selectedImages.Count, true);
+			ArrangeIntoGrid(selectedImages, Hcells, Vcells);
+			msi.ViewportWidth = Hcells;
+		}
+
+		private void resetbtn_Click(object sender, RoutedEventArgs e) {
+			selectedImages = new List<MultiScaleSubImage>();
+			selectedImagesIds = new List<int>();
+			CalculateHcellsVcells(true);
+			List<MultiScaleSubImage> allImages = msi.SubImages.ToList<MultiScaleSubImage>();
+			foreach (MultiScaleSubImage img in allImages) {
+				img.Opacity = 1;
+				img.ViewportWidth = 1;
+			}
+			ArrangeIntoGrid(allImages, Hcells, Vcells);
+			msi.ViewportWidth = Hcells;
 		}
 	}
 }

@@ -235,6 +235,8 @@
                 <TextBlock Text="Future Filter Bar" VerticalAlignment="Center" Foreground="White" Margin="0,0,10,0"></TextBlock>
                 <Button x:Name="ghDate" Content="Group Horizontally by Date" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="7" Margin="0,0,10,0" Click="ghDate_Click"></Button>
                 <Button x:Name="gvDate" Content="Group Vertically by Date" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="7"   Margin="0,0,10,0" Click="gvDate_Click"></Button>
+                <Button x:Name="OnlySelected" Content="Only Selected" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="7"   Margin="0,0,10,0" Click="OnlySelected_Click"></Button>
+                <Button x:Name="resetbtn" Content="Reset Filters" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="7"   Margin="0,0,10,0" Click="resetbtn_Click"></Button>
             </StackPanel>
 
             <MultiScaleImage x:Name="msi" Source="SmallDB/DZC/collection.xml" Grid.Row="1" Grid.Column="1"/>
@@ -248,7 +250,7 @@
                 <TextBlock Text="Something something" Foreground="White" Canvas.Left="700" Canvas.Top="600" Width="100"></TextBlock>
 -->
             </Canvas>
-            <Canvas Name="Yaxis" Grid.Row="1" Grid.Column="0" VerticalAlignment="Top">
+            <Canvas Name="Yaxis" Grid.Row="1" Grid.Column="0" VerticalAlignment="Stretch">
                 <Canvas.RenderTransform>
                     <ScaleTransform x:Name="YaxisScale" ScaleX="1.0" ScaleY="1.0" />
                 </Canvas.RenderTransform>
@@ -258,7 +260,7 @@
                         <GradientStop Color="#000" Offset="1"></GradientStop>
                     </LinearGradientBrush>
                 </Canvas.Background>
-                <Grid Name="YaxisGrid" VerticalAlignment="Top">
+                <Grid Name="YaxisGrid" VerticalAlignment="Stretch">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"></RowDefinition>
                         <RowDefinition Height="*"></RowDefinition>
