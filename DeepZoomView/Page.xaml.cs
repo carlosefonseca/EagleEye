@@ -250,7 +250,7 @@ namespace DeepZoomView {
 		}
 
 		void msi_ImageOpenSucceeded(object sender, RoutedEventArgs e) {
-			for (int j = 0; j < msi.SubImages.Count; j++){
+			for (int j = 0; j < msi.SubImages.Count; j++) {
 				allImageIds.Add(j);
 			}
 			canvasIndex = new Dictionary<string, int>();
@@ -931,24 +931,59 @@ namespace DeepZoomView {
 		}
 
 		private void OnlySelected_Click(object sender, RoutedEventArgs e) {
-			IEnumerable<int> notSelected = allImageIds.Except(selectedImagesIds);
-			MultiScaleSubImage img;
-			foreach (int item in notSelected) {
-				img = msi.SubImages[item];
-				img.ViewportWidth = 0;
-				img.Opacity = 0;
-				//img.ViewportOrigin = new Point(1, 1);
+			if (selectedImagesIds.Count == 0) {
+				return;
 			}
+			IEnumerable<int> notSelected = allImageIds.Except(selectedImagesIds);
+
+			fadeImages(notSelected, FadeAnimation.Out);
+			fadeImages(selectedImagesIds, FadeAnimation.In);
 			CalculateHcellsVcells(selectedImagesIds.Count, true);
 			selectedImagesIds.Sort();
-			ArrangeIntoGrid(selectedImagesIds, Hcells, Vcells, true);
+			ArrangeIntoGrid(selectedImagesIds, Hcells, Vcells, false);
+			fitCanvasToCells();
+
+		}
+
+		enum FadeAnimation { In, Out };
+
+		private void fadeImages(IEnumerable<int> ids, FadeAnimation type) {
+			MultiScaleSubImage image;
+			foreach (int id in ids) {
+				image = msi.SubImages[id];
+				// Set up the animation to layout in grid
+				Storyboard fadeStoryboard = new Storyboard();
+
+				// Create Animation
+				DoubleAnimation fadeAnimation = new DoubleAnimation();
+
+				Storyboard.SetTarget(fadeAnimation, image);
+				Storyboard.SetTargetProperty(fadeAnimation, new PropertyPath("Opacity"));
+				fadeAnimation.Duration = new Duration(TimeSpan.FromSeconds(1));
+				fadeAnimation.To = (type == FadeAnimation.In ? 1.0 : 0.0);
+				fadeStoryboard.Children.Add(fadeAnimation);
+				msi.Resources.Add("unique_id", fadeStoryboard);
+
+				// Play Storyboard
+				fadeStoryboard.Begin();
+
+				// Now that the Storyboard has done it's work, clear the 
+				// MultiScaleImage resources.
+				msi.Resources.Clear();
+			}
+		}
+
+		private void fitCanvasToCells() {
+
 			msi.ViewportWidth = Hcells;
+
 		}
 
 		private void resetbtn_Click(object sender, RoutedEventArgs e) {
 			selectedImages = new List<MultiScaleSubImage>();
 			selectedImagesIds = new List<int>();
 			CalculateHcellsVcells(true);
+			fadeImages(allImageIds, FadeAnimation.In);
 			ArrangeIntoGrid(allImageIds, Hcells, Vcells, true);
 			msi.ViewportWidth = Hcells;
 		}
