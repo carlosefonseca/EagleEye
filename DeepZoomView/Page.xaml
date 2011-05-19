@@ -261,7 +261,7 @@
                         <GradientStop Color="#000" Offset="1"></GradientStop>
                     </LinearGradientBrush>
                 </Canvas.Background>
-                <Grid Name="YaxisGrid" VerticalAlignment="Stretch">
+                <Grid Name="YaxisGrid">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"></RowDefinition>
                         <RowDefinition Height="*"></RowDefinition>

@@ -957,6 +957,8 @@ namespace DeepZoomView {
 			fadeImages(allImageIds, FadeAnimation.In);
 			ArrangeIntoGrid(allImageIds, Hcells, Vcells);
 			ShowAllContent();
+			makeAnAxis("Y", Vcells);
+			makeAnAxis("X", Hcells);
 		}
 
 		private void random_Click(object sender, RoutedEventArgs e) {
