@@ -109,6 +109,15 @@ namespace EEPlugin {
 			if (!Directory.Exists(destination)) {
 				Directory.CreateDirectory(destination);
 			}
+			DateMetadata(ic, destination);
+			ColorMetadata(ic, destination);
+		}
+
+		private static void ColorMetadata(ImageCollection ic, String destination) {
+
+		}
+
+		private static void DateMetadata(ImageCollection ic, String destination) {
 			Console.Write("Sorting by Date. ");
 			SortedImageCollection collectionByDate = new SortedImageCollection(ic);
 			collectionByDate.SortByDate();
@@ -118,12 +127,12 @@ namespace EEPlugin {
 			foreach (EagleEye.Common.Image i in collectionByDate.TheList()) {
 				if (i.Date().Date.CompareTo(lastDateWritten.Date) != 0) {
 					lastDateWritten = i.Date();
-					txt += "\n" + lastDateWritten.ToShortDateString() + ":";
+					txt += Environment.NewLine + lastDateWritten.ToShortDateString() + ":";
 				}
 				txt += i.id + ";";
 			}
 			Console.Write("Writing file. ");
-			File.WriteAllText(Path.Combine(destination, "datetime.sorted.db"), txt.TrimStart('\n'));
+			File.WriteAllText(Path.Combine(destination, "datetime.sorted.db"), txt.TrimStart(Environment.NewLine.ToCharArray()));
 			Console.WriteLine("Done!");
 		}
 
