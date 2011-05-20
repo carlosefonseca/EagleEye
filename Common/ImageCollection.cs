@@ -168,7 +168,7 @@ namespace EagleEye.Common {
 			if (collection.Count < max)
 				max = collection.Count;
 			for (int i = 0; i < max; i++) {
-				txt += collection[i].path + "\n";
+				txt += collection[i].id + ": "+ collection[i].path + "\n";
 			}
 			return txt;
 		}
