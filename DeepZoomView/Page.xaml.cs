@@ -322,7 +322,6 @@ namespace DeepZoomView {
 
 		void msi_Loaded(object sender, RoutedEventArgs e) {
 			// Hook up any events you want when the image has successfully been opened
-			StartDownloadDateData("SmallDB\\DZC\\metadata\\datetime.sorted.db");
 		}
 
 		private void Zoom(Double newzoom, Point p) {
@@ -339,16 +338,6 @@ namespace DeepZoomView {
 			//ArrangeIntoGrid();
 			orderImagesByDate();
 		}
-
-
-
-		private void wc_DownloadStringCompleted(object sender, DownloadStringCompletedEventArgs e) {
-			if (e.Cancelled == false && e.Error == null) {
-				string s = e.Result;
-
-			}
-		}
-
 
 		private void makeRullerCells(double Hcells, double Vcells) {
 			XaxisGrid.ColumnDefinitions.Clear();
@@ -372,7 +361,6 @@ namespace DeepZoomView {
 				YaxisGrid.Children.Add(elm);
 			}
 		}
-
 
 		private FrameworkElement makeRullerLabel(String text, DependencyProperty dp, Object dpv) {
 			TextBlock txt = new TextBlock();
@@ -398,32 +386,55 @@ namespace DeepZoomView {
 			return b;
 		}
 
+		private bool AskForMetadata() {
+			DateCollection newdateCollection = new DateCollection();
+			List<String> failed = new List<string>();
 
-		private void StartDownloadDateData(string p) {
-			String newP = App.Current.Host.Source.AbsoluteUri.Substring(0, App.Current.Host.Source.AbsoluteUri.LastIndexOf('/') + 1) + p.Replace("\\", "/");
-			Uri uri = new Uri(newP);
+			OpenFileDialog ofd = new OpenFileDialog();
+			ofd.Filter = "sorted.db Files (*.sorted.db)|*.sorted.db|All Files (*.*)|*.*";
+			ofd.FilterIndex = 1;
 
-			Stream stream = this.GetType().Assembly.GetManifestResourceStream("DeepZoomView.datetime.sorted.db");
-			byte[] bytes = new byte[stream.Length];
-			stream.Read(bytes, 0, (int)stream.Length);
-			String s = System.Text.Encoding.UTF8.GetString(bytes, 0, (int)stream.Length);
+			String s;
+			if (ofd.ShowDialog() != true) {
+				return false;
+			}
+			foreach (FileInfo file in ofd.Files) {
+				Stream stream = file.OpenRead();
+				byte[] bytes = new byte[stream.Length];
+				stream.Read(bytes, 0, (int)stream.Length);
+				s = System.Text.Encoding.UTF8.GetString(bytes, 0, (int)stream.Length);
+				stream.Close();
 
 
-			/*
-			WebClient wc = new WebClient();
-			wc.DownloadStringCompleted += new DownloadStringCompletedEventHandler(processDateData);
-			wc.DownloadStringAsync(uri);
-			 * */
+				try {
+					String[] lines = s.Split(new string[1] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
 
-			dateCollection = new DateCollection();
-
-			String[] lines = s.Split(new Char[1] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
-
-			foreach (String line in lines) {
-				String[] split = line.Split(':');
-				DateTime date = DateTime.Parse(split[0]);
-				String[] ids = split[1].Split(new Char[1] { ';' }, StringSplitOptions.RemoveEmptyEntries);
-				dateCollection.Add(date, ids);
+					foreach (String line in lines) {
+						String[] split = line.Split(':');
+						DateTime date = DateTime.Parse(split[0]);
+						String[] ids = split[1].Split(new Char[1] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+						newdateCollection.Add(date, ids);
+					}
+				} catch {
+					failed.Add(file.Name);
+					newdateCollection = null;
+					continue;
+				}
+			}
+			if (failed.Count == 1) {
+				System.Windows.Browser.HtmlPage.Window.Alert("Metadata reading failed on the file " + failed[0]);
+			} else if (failed.Count > 1) {
+				String failedNames = "";
+				foreach (String fn in failed) {
+					failedNames += Environment.NewLine + " - " + fn;
+				}
+				System.Windows.Browser.HtmlPage.Window.Alert("Metadata reading failed on the files: " + failedNames);
+			}
+			if (newdateCollection != null && newdateCollection.Get().Count > 0) {
+				dateCollection = newdateCollection;
+				return true;
+			} else {
+				return false;
 			}
 		}
 
@@ -517,6 +528,10 @@ namespace DeepZoomView {
 
 
 		private void orderByGroupsHorizontally() {
+			if (dateCollection == null && !AskForMetadata()) {
+				return;
+			}
+
 			List<int> groupSizes = new List<int>();
 			List<string> groupNames = new List<string>();
 			int total = 0;
@@ -752,7 +767,6 @@ namespace DeepZoomView {
 		//
 		// A small example that arranges all of your images (provided they are the same size) into a grid
 		//
-
 		private void ArrangeIntoGrid(List<int> imgList, double totalColumns, double totalRows) {
 			canvasIndex = new Dictionary<string, int>();
 			int numberOfImages = imgList.Count();
