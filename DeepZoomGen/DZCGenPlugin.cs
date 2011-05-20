@@ -70,7 +70,7 @@ namespace EEPlugin {
 		public ImageCollection processImageCollection(ImageCollection ic) {
 			long times = 0;
 			int count = 0;
-			foreach (EagleEye.Common.Image i in ic.ToList()) {
+			foreach (EagleEye.Common.Image i in ic.ToSortable().SortById().TheList()) {
 				if (PluginData.ContainsKey(i.id)) {
 					Console.WriteLine("  " + i.path);
 					continue;
