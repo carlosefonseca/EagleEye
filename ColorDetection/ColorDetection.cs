@@ -132,10 +132,35 @@ namespace EEPlugin {
 			Console.WriteLine();
 			SaveColorMap();
 
-			DrawMap2();
+			//DrawMap2();
 
 			return null;
 		}
+
+		public String generateMetadata() {
+			String o = "";
+			Dictionary<int, List<long>> resorted = new Dictionary<int,List<long>>();
+
+			foreach (KeyValuePair<long, Color> kv in PluginData) {
+				int color = Convert.ToInt16(Math.Round(kv.Value.GetHue()));
+				if (!resorted.ContainsKey(color)) {
+					resorted.Add(color, new List<long>());
+				}
+				resorted[color].Add(kv.Key);
+			}
+			foreach (KeyValuePair<int, List<long>> kv in resorted) {
+				o += kv.Key + ":";
+				kv.Value.Sort();
+				foreach (long id in kv.Value) {
+					o += id + ";";
+				}
+				o += Environment.NewLine;
+			}
+			return o;
+		}
+
+
+
 
 		private void DrawMap() {
 			Size canvas = new Size(3000, 1000);

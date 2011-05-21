@@ -136,6 +136,9 @@ namespace EEPlugin {
 			Console.WriteLine("Done!");
 		}
 
+		public String generateMetadata() {
+			return "not generated";
+		}
 
 
 		#region Helpers

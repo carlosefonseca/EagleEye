@@ -99,6 +99,10 @@ namespace EEPlugin {
 			}
 		}
 
+		public String generateMetadata() {
+			return "not generated";
+		}
+
 		#endregion EEPluginInterface Members
 
 

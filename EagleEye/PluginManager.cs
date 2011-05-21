@@ -57,6 +57,7 @@ namespace EagleEye {
 				Console.Write(p + "; ");
 			string pluginId = Console.ReadLine();
 			RunPlugin(images, pluginId);
+			SaveMetadata(pluginId, Path.Combine(Persistence.RootFolder(), "DZC"));
 		}
 
 		public void RunPlugin(ImageCollection images, string pluginId) {
@@ -102,6 +103,17 @@ namespace EagleEye {
 			}
 			foreach (KeyValuePair<string,EEPluginInterface> kv in plugins) {
 				kv.Value.Save();
+			}
+		}
+		
+		public void SaveMetadata(String pluginId, String folder) {
+			if (plugins.ContainsKey(pluginId)) {
+				EEPluginInterface p = plugins[pluginId];
+				Console.Write("Generating metadata. ");
+				String txt = p.generateMetadata();
+				Console.Write("Writing file. ");
+				File.WriteAllText(Path.Combine(folder, p.Id() + ".sorted.db"), txt);
+				Console.WriteLine("Done!");
 			}
 		}
 	}

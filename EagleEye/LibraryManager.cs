@@ -66,6 +66,7 @@ namespace EagleEye {
 			collection = new PersistedImageCollection("Images");
 			PlugMan = PluginManager.Get();
 			Thumbs = Thumbnails.Get();
+			GenerateThumbnails();
 		}
 
 
