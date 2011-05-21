@@ -403,7 +403,7 @@ namespace DeepZoomView {
 					return false;
 				}
 			} catch (SecurityException e) {
-				System.Windows.Browser.HtmlPage.Window.Alert("Not allowed to open the Open File Dialog Box :("+Environment.NewLine+e.Message);
+				System.Windows.Browser.HtmlPage.Window.Alert("Not allowed to open the Open File Dialog Box :(" + Environment.NewLine + e.Message);
 				return false;
 			}
 			foreach (FileInfo file in ofd.Files) {
@@ -444,48 +444,42 @@ namespace DeepZoomView {
 		}
 
 
-		private void orderByGroupsVertically() {
+		private void orderByGroupsVertically(List<KeyValuePair<String, List<int>>> Groups) {
 			List<int> groupSizes = new List<int>();
 			List<string> groupNames = new List<string>();
 			int total = 0;
-			foreach (KeyValuePair<int, Dictionary<int, Dictionary<int, List<int>>>> years in dateCollection.Get()) {
-				foreach (KeyValuePair<int, Dictionary<int, List<int>>> month in years.Value) {
-					groupNames.Add(years.Key.ToString() + "\n" + (new DateTime(1, month.Key, 1)).ToString("MMM"));
-					int count = 0;
-					foreach (KeyValuePair<int, List<int>> day in month.Value) {
-						count += day.Value.Count;
-					}
-					groupSizes.Add(count);
-					total += count;
-				}
+			foreach (KeyValuePair<String, List<int>> group in Groups) {
+				groupNames.Add(group.Key);
+				groupSizes.Add(group.Value.Count);
+				total += group.Value.Count;
 			}
 
 			Hcells = 1;
 			Vcells = 1;
 
 			foreach (int row in groupSizes) {
-				if (row > Hcells) {
-					Hcells = row;
+				if (row > Vcells) {
+					Vcells = row;
 				}
 			}
 
-			Vcells = groupSizes.Count;
-			Vcells = Convert.ToInt32(Math.Floor(msi.ActualHeight * Hcells / msi.ActualWidth));
+			Hcells = groupSizes.Count;
+			Hcells = Convert.ToInt32(Math.Floor(msi.ActualHeight * Hcells / msi.ActualWidth));
 			double rowsNeeded = 0;
 
 			while (true) {
 				rowsNeeded = 0;
 				// Determina o que acontece ao reduzir a largura
 				foreach (int row in groupSizes) {
-					rowsNeeded += Math.Ceiling(row / (Hcells - 1));
+					rowsNeeded += Math.Ceiling(row / (Vcells - 1));
 				}
 
 				// se for viavel reduzir a largura, faz isso mesmo.
-				Vcells = Convert.ToInt32(Math.Floor(msi.ActualHeight * (Hcells - 1) / msi.ActualWidth));
-				if (rowsNeeded <= Vcells) {
-					Hcells--;
+				Hcells = Convert.ToInt32(Math.Floor(msi.ActualWidth * (Vcells - 1) / msi.ActualHeight));
+				if (rowsNeeded <= Hcells) {
+					Vcells--;
 				} else {
-					Vcells = Convert.ToInt32(Math.Floor(msi.ActualHeight * Hcells / msi.ActualWidth));
+					Hcells = Convert.ToInt32(Math.Floor(msi.ActualWidth * Vcells / msi.ActualHeight));
 					break;
 				}
 			}
@@ -493,30 +487,27 @@ namespace DeepZoomView {
 
 
 			// put images in canvas
-			double imgSize = msi.ActualWidth / Hcells;
+			double imgSize = msi.ActualHeight / Vcells;
 			var x = 0.0;
 			var y = 0.0;
 			// era fixe guardar o anterior para repor
 			canvasIndex = new Dictionary<string, int>();
 
-			foreach (KeyValuePair<int, Dictionary<int, Dictionary<int, List<int>>>> years in dateCollection.Get()) {
-				foreach (KeyValuePair<int, Dictionary<int, List<int>>> month in years.Value) {
-					foreach (KeyValuePair<int, List<int>> day in month.Value) {
-						foreach (int id in day.Value) {
-							msi.SubImages[id].ViewportOrigin = new Point(-x, -y);
-							canvasIndex.Add(x + ";" + y, id);
-							x++;
-
-							if (x >= Hcells) {
-								y += 1;
-								x = 0.0;
-							}
-						}
-					}
-					x = 0;
+			foreach (KeyValuePair<String, List<int>> group in Groups) {
+				foreach (int id in group.Value) {
+					msi.SubImages[id].ViewportOrigin = new Point(-x, -y);
+					canvasIndex.Add(x + ";" + y, id);
 					y++;
+
+					if (y >= Vcells) {
+						x += 1;
+						y = 0.0;
+					}
 				}
+				y = 0;
+				x++;
 			}
+
 			double HcellsTmp = msi.ActualWidth * Vcells / msi.ActualHeight;
 			Hcells = Math.Max(Hcells, HcellsTmp);
 			msi.ViewportWidth = Hcells;
@@ -527,8 +518,8 @@ namespace DeepZoomView {
 			for (int i = 0; i < groupNames.Count; i++) {
 				groups.Add(new KeyValuePair<string, int>(groupNames[i], Convert.ToInt32(Math.Ceiling(groupSizes[i] / Hcells))));
 			}
-			makeAnAxis("Y", groups);
-			makeAnAxis("X", Hcells);
+			makeAnAxis("X", groups);
+			makeAnAxis("Y", Vcells);
 		}
 
 
@@ -925,7 +916,7 @@ namespace DeepZoomView {
 		}
 
 		private void gvDate_Click(object sender, RoutedEventArgs e) {
-			orderByGroupsVertically();
+			//orderByGroupsVertically();
 		}
 
 		private void OnlySelected_Click(object sender, RoutedEventArgs e) {
@@ -998,7 +989,7 @@ namespace DeepZoomView {
 			}
 			Vorganize.Items.Add("Import Metadata");
 		}
-	
+
 		private void Vorganize_DropDownOpened(object sender, EventArgs e) {
 		}
 
@@ -1013,7 +1004,7 @@ namespace DeepZoomView {
 			} else if (selected == "Not Sorted") {
 			} else {
 				if (selected == "Color") {
-					Organizations["color"].GetGroups();
+					orderByGroupsVertically(Organizations["color"].GetGroups());
 				} else {
 					System.Windows.Browser.HtmlPage.Window.Alert("Will sort by " + selected);
 				}
