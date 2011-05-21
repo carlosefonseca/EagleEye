@@ -34,6 +34,7 @@ namespace DeepZoomView {
 		Dictionary<long, string> _Metadata = new Dictionary<long, string>();
 		Dictionary<string, int> canvasIndex = new Dictionary<string, int>();
 		DateCollection dateCollection;
+		Dictionary<String, Organizable> Organizations = new Dictionary<string, Organizable>();
 
 		public Double ZoomFactor {
 			get { return zoom; }
@@ -387,7 +388,6 @@ namespace DeepZoomView {
 		}
 
 		private bool AskForMetadata() {
-			DateCollection newdateCollection = new DateCollection();
 			List<String> failed = new List<string>();
 
 			OpenFileDialog ofd = new OpenFileDialog();
@@ -406,19 +406,17 @@ namespace DeepZoomView {
 				stream.Close();
 
 
-				try {
-					String[] lines = s.Split(new string[1] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries);
+				String type = "";
+				Organizable org = null;
+				if (file.Name.StartsWith("color")) {
+					org = new OrganizableByColor();
+					type = "color";
+				}
 
-					foreach (String line in lines) {
-						String[] split = line.Split(':');
-						DateTime date = DateTime.Parse(split[0]);
-						String[] ids = split[1].Split(new Char[1] { ';' }, StringSplitOptions.RemoveEmptyEntries);
-						newdateCollection.Add(date, ids);
-					}
-				} catch {
+				if (org != null && org.Import(s)) {
+					Organizations[type] = org;
+				} else {
 					failed.Add(file.Name);
-					newdateCollection = null;
-					continue;
 				}
 			}
 			if (failed.Count == 1) {
@@ -430,8 +428,7 @@ namespace DeepZoomView {
 				}
 				System.Windows.Browser.HtmlPage.Window.Alert("Metadata reading failed on the files: " + failedNames);
 			}
-			if (newdateCollection != null && newdateCollection.Get().Count > 0) {
-				dateCollection = newdateCollection;
+			if (Organizations.Count > 0) {
 				return true;
 			} else {
 				return false;
@@ -981,6 +978,16 @@ namespace DeepZoomView {
 				ArrangeIntoGrid(RandomizedListOfImages(selectedImagesIds), Hcells, Vcells);
 			} else {
 				ArrangeIntoGrid(RandomizedListOfImages(allImageIds), Hcells, Vcells);
+			}
+		}
+
+		private void Vorganize_DropDownOpened(object sender, EventArgs e) {
+			if (Organizations.Count == 0 && !AskForMetadata()) {
+				Vorganize.Items.Clear();
+			} else if (Vorganize.Items.Count != Organizations.Count) {
+				foreach (KeyValuePair<String, Organizable> kv in Organizations) {
+					Vorganize.Items.Add(kv.Value.Name);
+				}
 			}
 		}
 	}

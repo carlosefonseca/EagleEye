@@ -64,7 +64,10 @@
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
     <Compile Include="DateCollection.cs" />
+    <Compile Include="Organizable.cs" />
     <Compile Include="MouseWheelHelper.cs" />
+    <Compile Include="OrganizableByColor.cs" />
+    <Compile Include="OrganizableByDate.cs" />
     <Compile Include="Page.xaml.cs">
       <DependentUpon>Page.xaml</DependentUpon>
     </Compile>
@@ -98,9 +101,6 @@
     <Resource Include="Images\zoomout_rest.png" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="..\App\SmallDB\DZC\metadata\datetime.sorted.db">
-      <Link>datetime.sorted.db</Link>
-    </EmbeddedResource>
     <None Include="Properties\OutOfBrowserSettings.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\Silverlight\V3.0\Microsoft.Silverlight.CSharp.targets" />
