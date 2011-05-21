@@ -557,9 +557,8 @@ namespace DeepZoomView {
 			}
 
 			Vcells = groupSizes.Count;
-			Vcells = Convert.ToInt32(Math.Floor(msi.ActualHeight * Hcells / msi.ActualWidth));
 			double rowsNeeded = 0;
-
+			double NewVcells;
 			while (true) {
 				rowsNeeded = 0;
 				// Determina o que acontece ao reduzir a largura
@@ -568,11 +567,12 @@ namespace DeepZoomView {
 				}
 
 				// se for viavel reduzir a largura, faz isso mesmo.
-				Vcells = Convert.ToInt32(Math.Floor(msi.ActualHeight * (Hcells - 1) / msi.ActualWidth));
-				if (rowsNeeded <= Vcells) {
+				NewVcells = Convert.ToInt32(Math.Ceiling(msi.ActualHeight * (Hcells - 1) / msi.ActualWidth));
+				if (rowsNeeded <= NewVcells) {
 					Hcells--;
+					Vcells = NewVcells;
 				} else {
-					Vcells = Convert.ToInt32(Math.Floor(msi.ActualHeight * Hcells / msi.ActualWidth));
+					//Vcells = Math.Max(rowsNeeded, Convert.ToInt32(Math.Ceiling(msi.ActualHeight * Hcells / msi.ActualWidth)));
 					break;
 				}
 			}
@@ -843,6 +843,9 @@ namespace DeepZoomView {
 
 
 		private void updateOverlay() {
+			if (Hcells == 0 || Vcells == 0) {
+				return;
+			}
 			zoom = Math.Round(Hcells) / msi.ViewportWidth;
 			Double newX = (msi.ViewportOrigin.X * (msi.ActualWidth / Math.Round(Hcells))) * zoom;
 			Double newY = (msi.ViewportOrigin.Y * (((msi.ActualWidth / Hcells) * Vcells) / Vcells)) * zoom;
@@ -859,9 +862,7 @@ namespace DeepZoomView {
 			XaxisGrid.SetValue(Canvas.LeftProperty, -newX);
 			YaxisGrid.SetValue(Canvas.TopProperty, -newY);
 
-			//Xaxis.Width = zoom * msi.ActualWidth;
 			XaxisGrid.Width = zoom * msi.ActualWidth;
-			//Yaxis.Height = zoom * ((msi.ActualWidth / Hcells) * Vcells);
 			YaxisGrid.Height = zoom * ((msi.ActualWidth / Hcells) * Vcells);
 
 			double visibleStart = -(double)YaxisGrid.GetValue(Canvas.TopProperty);
