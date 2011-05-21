@@ -12,6 +12,7 @@ using System.Windows.Shapes;
 using System.IO;
 using System.Runtime.Serialization;
 using System.Collections;
+using System.Security;
 
 namespace DeepZoomView {
 	public partial class Page : UserControl {
@@ -236,6 +237,7 @@ namespace DeepZoomView {
 			};
 
 			App.Current.Host.Content.Resized += new EventHandler(Content_Resized);
+			Vorganize_Update();
 		}
 
 		void Content_Resized(object sender, EventArgs e) {
@@ -395,7 +397,12 @@ namespace DeepZoomView {
 			ofd.FilterIndex = 1;
 
 			String s;
-			if (ofd.ShowDialog() != true) {
+			try {
+				if (ofd.ShowDialog() != true) {
+					return false;
+				}
+			} catch (SecurityException e) {
+				System.Windows.Browser.HtmlPage.Window.Alert("Not allowed to open the Open File Dialog Box :("+Environment.NewLine+e.Message);
 				return false;
 			}
 			foreach (FileInfo file in ofd.Files) {
@@ -981,13 +988,31 @@ namespace DeepZoomView {
 			}
 		}
 
+		private void Vorganize_Update() {
+			Vorganize.Items.Clear();
+			Vorganize.Items.Add("Not Sorted");
+			Vorganize.SelectedIndex = 0;
+			foreach (KeyValuePair<String, Organizable> kv in Organizations) {
+				Vorganize.Items.Add(kv.Value.Name);
+			}
+			Vorganize.Items.Add("Import Metadata");
+		}
+	
 		private void Vorganize_DropDownOpened(object sender, EventArgs e) {
-			if (Organizations.Count == 0 && !AskForMetadata()) {
-				Vorganize.Items.Clear();
-			} else if (Vorganize.Items.Count != Organizations.Count) {
-				foreach (KeyValuePair<String, Organizable> kv in Organizations) {
-					Vorganize.Items.Add(kv.Value.Name);
-				}
+		}
+
+		private void Vorganize_SelectionChanged(object sender, SelectionChangedEventArgs e) {
+			String selected = (String)Vorganize.SelectedItem;
+			if (selected == null) {
+				return;
+			}
+			if (selected == "Import Metadata") {
+				AskForMetadata();
+				Vorganize_Update();
+			} else if (selected == "Not Sorted") {
+			} else {
+				System.Windows.Browser.HtmlPage.Window.Alert("Will sort by " + selected);
+				Vorganize.IsDropDownOpen = false;
 			}
 		}
 	}
