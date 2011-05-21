@@ -14,6 +14,7 @@ using System.Runtime.Serialization;
 using System.Collections;
 using System.Security;
 
+
 namespace DeepZoomView {
 	public partial class Page : UserControl {
 		// Based on prior work done by Lutz Gerhard, Peter Blois, and Scott Hanselman
@@ -1011,7 +1012,11 @@ namespace DeepZoomView {
 				Vorganize_Update();
 			} else if (selected == "Not Sorted") {
 			} else {
-				System.Windows.Browser.HtmlPage.Window.Alert("Will sort by " + selected);
+				if (selected == "Color") {
+					Organizations["color"].GetGroups();
+				} else {
+					System.Windows.Browser.HtmlPage.Window.Alert("Will sort by " + selected);
+				}
 				Vorganize.IsDropDownOpen = false;
 			}
 		}
