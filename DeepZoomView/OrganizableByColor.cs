@@ -15,12 +15,14 @@ using System.Linq;
 namespace DeepZoomView {
 	public class OrganizableByColor : Organizable {
 		Dictionary<int, List<int>> organization;
+		public Dictionary<int, int> colorOfId;
 
 		/// <summary>
 		/// Constructor
 		/// </summary>
 		public OrganizableByColor() : base("Color"){
 			organization = new Dictionary<int, List<int>>();
+			colorOfId = new Dictionary<int, int>();
 		}
 
 		/// <summary>
@@ -68,6 +70,7 @@ namespace DeepZoomView {
 			}
 			foreach (String id in ids) {
 				organization[color].Add(Convert.ToInt16(id));
+				colorOfId.Add(Convert.ToInt16(id), color);
 			}
 		}
 
@@ -79,7 +82,11 @@ namespace DeepZoomView {
 			return organization.Count;
 		}
 
-
+		/// <summary>
+		/// Takes a list of 
+		/// </summary>
+		/// <param name="subset"></param>
+		/// <returns></returns>
 		public override List<KeyValuePair<String,List<int>>> GetGroups(List<int> subset) {
 			if (organization.Count == 0) {
 				return null;
@@ -97,8 +104,11 @@ namespace DeepZoomView {
 
 			Color[] theColors = new Color[] { Colors.Red, Colors.Orange, Colors.Yellow, Colors.Green, Colors.Cyan, Colors.Blue, Colors.Purple };
 
+			int buckets = 20;
+			double spread = 360.0 / buckets;
+
 			foreach (KeyValuePair<int, List<int>> kv in set) {
-				int group = Convert.ToInt16(Math.Round((kv.Key % 330) / 60.0));
+				int group = Convert.ToInt16(Math.Round((kv.Key % Math.Ceiling(360-(spread/2))) / spread));
 				Console.WriteLine("Hue: "+kv.Key+" -> "+group);
 				if (!groups.ContainsKey(group)) {
 					groups.Add(group, new List<int>());
@@ -119,7 +129,7 @@ namespace DeepZoomView {
 			List<int> sortedKeys = groups.Keys.ToList<int>();
 			sortedKeys.Sort();
 			foreach (int c in sortedKeys) {
-				groupsOut.Add(new KeyValuePair<String, List<int>>(colorNames[c], groups[c]));
+				groupsOut.Add(new KeyValuePair<String, List<int>>(c.ToString(), groups[c]));
 			}
 
 			return groupsOut;
