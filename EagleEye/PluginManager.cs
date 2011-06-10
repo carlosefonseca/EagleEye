@@ -67,6 +67,7 @@ namespace EagleEye {
 				Stopwatch watch = Stopwatch.StartNew();
 				ImageCollection ic = p.processImageCollection(images);
 				watch.Stop();
+				LibraryManager.Get().collection.Update();
 				Console.WriteLine(watch.ElapsedMilliseconds + "ms. Results:");
 
 				if (ic != null) {

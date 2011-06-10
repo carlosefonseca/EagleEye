@@ -31,5 +31,13 @@ namespace EagleEye.Common {
 				Add(i);
 			}
 		}
+
+		public void Update() {
+			foreach (Image i in collection.Values) {
+				if (i.Dirty()) {
+					persistence.Put(i);
+				}
+			}
+		}
 	}
 }
