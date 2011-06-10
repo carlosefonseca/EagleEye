@@ -130,7 +130,6 @@ namespace EEPlugin {
 			XElement xml = XElement.Load(p);
 			Console.WriteLine(xml.ToString());
 
-			//while (true) {
 			foreach (XElement a in xml.Elements().First().Elements()) {
 				Dictionary<string, string> tags = new Dictionary<string, string>();
 				String id = a.Attribute("Source").Value.Split(new Char[] { '/', '.' })[1];
@@ -152,9 +151,7 @@ namespace EEPlugin {
 
 				Console.WriteLine(a);
 			}
-			XmlWriter writer = new XmlTextWriter(p, Encoding.UTF8);
-			xml.WriteTo(writer);
-			//}
+			xml.Save(p,SaveOptions.DisableFormatting);
 		}
 
 
