@@ -84,6 +84,12 @@ namespace EEPlugin {
 			foreach (EagleEye.Common.Image i in ic.ToList()) {
 				if (PluginData.ContainsKey(i.id)) {
 					Console.WriteLine("Skipping " + i.path);
+					if (i.ContainsPluginData(Id())) {
+						Console.WriteLine("Images HAS plugin data");
+					} else {
+						Console.WriteLine("ADDING plugin data to image");
+						i.SetPluginData(Id(), PluginData[i.id].ToString());
+					}
 					continue;
 				}
 				if (File.Exists(i.path)) {
@@ -92,9 +98,12 @@ namespace EEPlugin {
 					Color result = RunDetection(thumbs.GetThumbnail(i.id));
 					PutData(i, result);
 					//Console.WriteLine(result.ToString());
+					Console.WriteLine("ADDING plugin data to image");
+					i.SetPluginData(Id(), PluginData[i.id].ToString());
 				}
 				Save();
 			}
+			return null;
 			Console.WriteLine("\n-- Color detection completed. Now sorting.");
 
 			// COLOR MAP
@@ -317,7 +326,7 @@ namespace EEPlugin {
 		}
 
 		public String ImageInfo(EagleEye.Common.Image i) {
-			return PluginData.ContainsKey(i.id) ? PluginData[i.id].ToString() : "Not Processed";
+			return PluginData.ContainsKey(i.id) ? PluginData[i.id].ToString() + " Hue: " + PluginData[i.id].GetHue().ToString() : "Not Processed";
 		}
 
 		public String ImageToString(EagleEye.Common.Image i) {
