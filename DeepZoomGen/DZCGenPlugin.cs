@@ -9,6 +9,9 @@ using EagleEye.Common;
 using EagleEye.Plugins.FeatureExtraction;
 using System.Collections;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Xml;
+using System.Xml.Linq;
+using Newtonsoft.Json;
 
 namespace EEPlugin {
 	public class DZCGenerator : EEPluginInterface {
@@ -18,13 +21,27 @@ namespace EEPlugin {
 
 		#region EEPluginInterface Boring
 
+		/// <summary>
+		/// Plugin ID
+		/// </summary>
+		/// <returns></returns>
 		public String Id() {
 			return "dzcg";
 		}
+
+		/// <summary>
+		/// Full Plugin Name
+		/// </summary>
+		/// <returns></returns>
 		public override String ToString() {
 			return "DeepZoomCollection Generator";
 		}
 
+		/// <summary>
+		/// Textual Plugin data for this image
+		/// </summary>
+		/// <param name="i">Image</param>
+		/// <returns></returns>
 		public String ImageInfo(EagleEye.Common.Image i) {
 			return PluginData.ContainsKey(i.id) ? "OK" : "Not Processed";
 		}
@@ -76,15 +93,15 @@ namespace EEPlugin {
 					continue;
 				}
 				if (File.Exists(i.path)) {
-							Console.WriteLine("> " + i.path + "... ");
+					Console.WriteLine("> " + i.path + "... ");
 					string target = DZDir + "images\\" + i.id.ToString() + ".xml";
-							Stopwatch st = Stopwatch.StartNew();
+					Stopwatch st = Stopwatch.StartNew();
 					GenerateDZC(i.path, target);
-							st.Stop();
-							times += st.ElapsedMilliseconds;
-							count++;
+					st.Stop();
+					times += st.ElapsedMilliseconds;
+					count++;
 					PluginData.Add(i.id, target);
-							Console.WriteLine(i.id.ToString());
+					Console.WriteLine(i.id.ToString());
 				}
 				Save();
 			}
@@ -94,9 +111,50 @@ namespace EEPlugin {
 
 			Console.WriteLine("Generating Collection...");
 			GenerateCollection();
-			GenerateAndSaveMetadata(ic, DZDir+"metadata");
+			// DZ XML file
+			IncludeMetadata(ic, DZDir + "collection.xml");
+
+
+			// External file
+			GenerateAndSaveMetadata(ic, DZDir + "metadata");
 
 			return null;
+		}
+
+		/// <summary>
+		/// Includes Image Metadata inside the DZC XML file
+		/// </summary>
+		/// <param name="ic">Collection of Images to add</param>
+		/// <param name="p">Path to XML file to use</param>
+		private void IncludeMetadata(ImageCollection ic, string p) {
+			XElement xml = XElement.Load(p);
+			Console.WriteLine(xml.ToString());
+
+			//while (true) {
+			foreach (XElement a in xml.Elements().First().Elements()) {
+				Dictionary<string, string> tags = new Dictionary<string, string>();
+				String id = a.Attribute("Source").Value.Split(new Char[] { '/', '.' })[1];
+				tags.Add("id", id);
+
+				EagleEye.Common.Image i = ic.Get(Convert.ToInt32(id));
+				tags.Add("date", i.Date().ToString());
+
+				Dictionary<string, string> plugins = i.GetPluginData();
+
+				foreach (KeyValuePair<string, string> kv in plugins) {
+					tags.Add(kv.Key, kv.Value);
+				}
+
+				if (a.Elements("Tag").Count() != 0) {
+					a.Elements("Tag").Remove();
+				}
+				a.Add(new XElement("Tag", JsonConvert.SerializeObject(tags)));
+
+				Console.WriteLine(a);
+			}
+			XmlWriter writer = new XmlTextWriter(p, Encoding.UTF8);
+			xml.WriteTo(writer);
+			//}
 		}
 
 
@@ -154,6 +212,7 @@ namespace EEPlugin {
 			ic.TileFormat = ImageFormat.Jpg;
 			ic.ImageQuality = 0.7;
 			ic.TileOverlap = 0;
+			Console.WriteLine(source + "->" + target);
 			ic.Create(source, target);
 		}
 
