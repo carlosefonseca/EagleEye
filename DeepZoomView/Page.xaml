@@ -232,6 +232,7 @@
             </Grid.ColumnDefinitions>
 
             <StackPanel Grid.Column="1" Grid.Row="0" Orientation="Horizontal">
+                <Button x:Name="load" Content="Load" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="7" Margin="0,0,10,0" Click="msi_Loaded"></Button>
                 <TextBlock Text="Future Filter Bar" VerticalAlignment="Center" Foreground="White" Margin="0,0,10,0"></TextBlock>
                 <Button x:Name="ghDate" Content="Group Horizontally by Date" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="7" Margin="0,0,10,0" Click="ghDate_Click"></Button>
                 <TextBlock Text="Vertical Sort:" VerticalAlignment="Center" Foreground="White" Margin="0,0,10,0"></TextBlock>
@@ -241,7 +242,7 @@
                 <Button x:Name="resetbtn" Content="Reset Filters" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="7"   Margin="0,0,10,0" Click="resetbtn_Click"></Button>
             </StackPanel>
 
-            <MultiScaleImage x:Name="msi" Source="SmallDB/DZC/collection.xml" Grid.Row="1" Grid.Column="1"/>
+            <MultiScaleImage x:Name="msi" Source="C:/SmallDB/DZC/collection.xml" Grid.Row="1" Grid.Column="1"/>
 
             <Canvas Name="Overlays" Grid.Row="1" Grid.Column="1">
                 <Canvas.RenderTransform>

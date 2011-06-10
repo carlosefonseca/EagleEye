@@ -13,6 +13,10 @@ using System.IO;
 using System.Runtime.Serialization;
 using System.Collections;
 using System.Security;
+using System.Xml;
+using System.Xml.Linq;
+using System.Json;
+using System.Text;
 
 
 namespace DeepZoomView {
@@ -37,6 +41,7 @@ namespace DeepZoomView {
 		Dictionary<string, int> canvasIndex = new Dictionary<string, int>();
 		DateCollection dateCollection;
 		Dictionary<String, Organizable> Organizations = new Dictionary<string, Organizable>();
+		Dictionary<int, Dictionary<string, string>> Metadata = new Dictionary<int, Dictionary<string, string>>();
 
 		public Double ZoomFactor {
 			get { return zoom; }
@@ -78,11 +83,15 @@ namespace DeepZoomView {
 							//Caption.Text = _Metadata[index].Caption;
 							//Caption.Text = msi.SubImages[index].ViewportOrigin.ToString();
 							//Caption.Text = "Image" + index;
-							MouseTitle.Text = "";
-							for (int i = 0; i <= index % 4; i++) {
+							if (Organizations.ContainsKey("color")) {
+								OrganizableByColor colors = (OrganizableByColor)Organizations["color"];
+								MouseTitle.Text = "ID: "+index+Environment.NewLine+"Color: " + colors.colorOfId[index].ToString();
+							
+/*							for (int i = 0; i <= index % 4; i++) {
 								MouseTitle.Text += "Image" + index + " " + "Image" + index + "\n";
 							}
-							MouseTitle.Text = MouseTitle.Text.TrimEnd(new char[1] { '\n' });
+*/							MouseTitle.Text = MouseTitle.Text.TrimEnd(new char[1] { '\n' });
+							}
 							//Description.Text = _Metadata[index].Description;
 							//FadeIn.Begin();
 						} else {
@@ -325,8 +334,8 @@ namespace DeepZoomView {
 		}
 
 		void msi_Loaded(object sender, RoutedEventArgs e) {
-			// Hook up any events you want when the image has successfully been opened
 		}
+
 
 		private void Zoom(Double newzoom, Point p) {
 			if (newzoom < 1) {
@@ -394,7 +403,7 @@ namespace DeepZoomView {
 			List<String> failed = new List<string>();
 
 			OpenFileDialog ofd = new OpenFileDialog();
-			ofd.Filter = "sorted.db Files (*.sorted.db)|*.sorted.db|All Files (*.*)|*.*";
+			ofd.Filter = "All Files (*.*)|*.*";
 			ofd.FilterIndex = 1;
 
 			String s;
@@ -407,25 +416,18 @@ namespace DeepZoomView {
 				return false;
 			}
 			foreach (FileInfo file in ofd.Files) {
-				Stream stream = file.OpenRead();
-				byte[] bytes = new byte[stream.Length];
-				stream.Read(bytes, 0, (int)stream.Length);
-				s = System.Text.Encoding.UTF8.GetString(bytes, 0, (int)stream.Length);
+				StreamReader stream = file.OpenText();
+				XElement xml = XElement.Load(stream);
+				foreach (XElement a in xml.Elements().First().Elements()) {
+					String tag = a.Element("Tag").Value;
+					JsonObject obj = (JsonObject)JsonObject.Parse(tag);
+					Dictionary<string, string> data = new Dictionary<string, string>();
+					foreach (KeyValuePair<string, JsonValue> n in obj) {
+						data.Add(n.Key, n.Value.ToString());
+					}
+					Metadata.Add(obj["id"], data);
+				}
 				stream.Close();
-
-
-				String type = "";
-				Organizable org = null;
-				if (file.Name.StartsWith("color")) {
-					org = new OrganizableByColor();
-					type = "color";
-				}
-
-				if (org != null && org.Import(s)) {
-					Organizations[type] = org;
-				} else {
-					failed.Add(file.Name);
-				}
 			}
 			if (failed.Count == 1) {
 				System.Windows.Browser.HtmlPage.Window.Alert("Metadata reading failed on the file " + failed[0]);
@@ -436,11 +438,7 @@ namespace DeepZoomView {
 				}
 				System.Windows.Browser.HtmlPage.Window.Alert("Metadata reading failed on the files: " + failedNames);
 			}
-			if (Organizations.Count > 0) {
 				return true;
-			} else {
-				return false;
-			}
 		}
 
 
