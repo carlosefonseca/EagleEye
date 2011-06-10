@@ -23,10 +23,14 @@ namespace EagleEye {
 		private static string LibraryDir = "EagleEyeDB";
 
 		static void Main(string[] a) {
-			Console.Write("Folder for DB? [.\\EagleEyeDB\\] ");
-			string buf = Console.ReadLine();
-			if (buf != "") LibraryDir = buf;
-
+			if (a.Length > 0) {
+				LibraryDir = a[0];
+				Console.WriteLine("Using '" + a[0] + "' as library.");
+			} else {
+				Console.Write("Folder for DB? [.\\EagleEyeDB\\] ");
+				string buf = Console.ReadLine();
+				if (buf != "") LibraryDir = buf;
+			}
 			Init();
 
 			CommandLine();
