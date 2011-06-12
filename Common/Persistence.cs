@@ -286,6 +286,12 @@ namespace EagleEye.Common {
 			return double.Parse(k);
 		};
 
+		public static ConvertFromBytes<bool> ReadBoolean = delegate(byte[] bytes) {
+			System.Text.Encoding enc = System.Text.Encoding.ASCII;
+			string k = enc.GetString(bytes);
+			return Boolean.Parse(k);
+		};
+
 		public static ConvertFromBytes<Image> ReadImage = delegate(byte[] bytes) {
 			return new Image(bytes);
 		};
