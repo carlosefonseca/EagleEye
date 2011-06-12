@@ -17,6 +17,7 @@ using System.Xml;
 using System.Xml.Linq;
 using System.Json;
 using System.Text;
+using System.Collections.ObjectModel;
 
 
 namespace DeepZoomView {
@@ -40,8 +41,9 @@ namespace DeepZoomView {
 		Dictionary<long, string> _Metadata = new Dictionary<long, string>();
 		Dictionary<string, int> canvasIndex = new Dictionary<string, int>();
 		DateCollection dateCollection;
-		Dictionary<String, Organizable> Organizations = new Dictionary<string, Organizable>();
-		Dictionary<int, Dictionary<string, string>> Metadata = new Dictionary<int, Dictionary<string, string>>();
+		//Dictionary<String, Organizable> Organizations = new Dictionary<string, Organizable>();
+		MetadataCollection metadataCollection = new MetadataCollection();
+		ObservableCollection<String> CbItems = null;
 
 		public Double ZoomFactor {
 			get { return zoom; }
@@ -83,15 +85,22 @@ namespace DeepZoomView {
 							//Caption.Text = _Metadata[index].Caption;
 							//Caption.Text = msi.SubImages[index].ViewportOrigin.ToString();
 							//Caption.Text = "Image" + index;
-							if (Organizations.ContainsKey("color")) {
-								OrganizableByColor colors = (OrganizableByColor)Organizations["color"];
-								MouseTitle.Text = "ID: "+index+Environment.NewLine+"Color: " + colors.colorOfId[index].ToString();
+							//if (metadataCollection.GetOrganized("color")) {
+							//	OrganizableByColor colors = (OrganizableByColor)Organizations["color"];
+							OrganizableByColor colordata = (OrganizableByColor)metadataCollection.GetOrganized("color");
+							Color c;
+							String ctxt = "";
+							if (colordata != null && colordata.ContainsId(index)) {
+								c = colordata.Color(index);
+								ctxt = Environment.NewLine + "Color: [" + c.R + "," + c.G + "," + c.B + "]";
+															}
+							MouseTitle.Text = "ID: " + index + ctxt;
 							
 /*							for (int i = 0; i <= index % 4; i++) {
 								MouseTitle.Text += "Image" + index + " " + "Image" + index + "\n";
 							}
 */							MouseTitle.Text = MouseTitle.Text.TrimEnd(new char[1] { '\n' });
-							}
+							//}
 							//Description.Text = _Metadata[index].Description;
 							//FadeIn.Begin();
 						} else {
@@ -417,16 +426,8 @@ namespace DeepZoomView {
 			}
 			foreach (FileInfo file in ofd.Files) {
 				StreamReader stream = file.OpenText();
-				XElement xml = XElement.Load(stream);
-				foreach (XElement a in xml.Elements().First().Elements()) {
-					String tag = a.Element("Tag").Value;
-					JsonObject obj = (JsonObject)JsonObject.Parse(tag);
-					Dictionary<string, string> data = new Dictionary<string, string>();
-					foreach (KeyValuePair<string, JsonValue> n in obj) {
-						data.Add(n.Key, n.Value.ToString());
-					}
-					Metadata.Add(obj["id"], data);
-				}
+				metadataCollection.ParseXML(stream);
+				Vorganize_Update();
 				stream.Close();
 			}
 			if (failed.Count == 1) {
@@ -979,13 +980,14 @@ namespace DeepZoomView {
 		}
 
 		private void Vorganize_Update() {
-			Vorganize.Items.Clear();
-			Vorganize.Items.Add("Not Sorted");
-			Vorganize.SelectedIndex = 0;
-			foreach (KeyValuePair<String, Organizable> kv in Organizations) {
-				Vorganize.Items.Add(kv.Value.Name);
+			if (CbItems == null) {
+				CbItems = new ObservableCollection<string>();
+				Vorganize.ItemsSource = CbItems;
 			}
-			Vorganize.Items.Add("Import Metadata");
+			CbItems.Clear();
+			foreach (String s in metadataCollection.GetOrganizationOptions()) {
+				CbItems.Add(s);
+			}
 		}
 
 		private void Vorganize_DropDownOpened(object sender, EventArgs e) {
@@ -1002,12 +1004,16 @@ namespace DeepZoomView {
 			} else if (selected == "Not Sorted") {
 			} else {
 				if (selected == "Color") {
-					orderByGroupsVertically(Organizations["color"].GetGroups());
+					orderByGroupsVertically(metadataCollection.GetOrganized("color").GetGroups());
 				} else {
-					System.Windows.Browser.HtmlPage.Window.Alert("Will sort by " + selected);
+					orderByGroupsVertically(metadataCollection.GetOrganized(selected).GetGroups());
 				}
 				Vorganize.IsDropDownOpen = false;
 			}
+		}
+
+		private void LoadMetadata(object sender, RoutedEventArgs e) {
+			AskForMetadata();
 		}
 	}
 }

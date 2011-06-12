@@ -34,7 +34,20 @@ namespace EEPlugin {
 			}
 		}
 
-		public ImageCollection processImageCollection(ImageCollection ic) {/*
+		public ImageCollection processImageCollection(ImageCollection ic) {
+			foreach (Image i in ic.ToList()) {
+				if (i.ContainsPluginData("device")) continue;
+				String device = "";
+				if (i.ContainsExif("Make")) {
+					device = (String)i.Exif("Make")+" ";
+				}
+				if (i.ContainsExif("Model")) {
+					device += (String)i.Exif("Model");
+				}
+				i.SetPluginData("device", device);
+			}
+			
+			/*
 			ImageCollection result = ic.ImagesWithExifKey("GPSPosition");
 			foreach (Image i in ic.ToList()) {
 				persistence.Put<Coord>(i.id.ToString(), new Coord((string)i.Exif("GPSLatitude"), (string)i.Exif("GPSLongitude")));

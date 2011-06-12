@@ -14,9 +14,9 @@ namespace DeepZoomView {
 	public class OrganizableByDate : Organizable {
 		public OrganizableByDate() : base("Date") { }
 
-		public override List<KeyValuePair<String, List<int>>> GetGroups(List<int> subset) { return null; }
+		new public List<KeyValuePair<String, List<int>>> GetGroups(List<int> subset) { return null; }
 
-		public override int Count() { return 0; }
-		public override Boolean Import(String s) { return false; }
+		new public int Count() { return 0; }
+		new public Boolean Import(String s) { return false; }
 	}
 }

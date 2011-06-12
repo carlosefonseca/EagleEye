@@ -68,6 +68,8 @@
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
     <Compile Include="DateCollection.cs" />
+    <Compile Include="ColorUtils.cs" />
+    <Compile Include="MetadataCollection.cs" />
     <Compile Include="Organizable.cs" />
     <Compile Include="MouseWheelHelper.cs" />
     <Compile Include="OrganizableByColor.cs" />

@@ -11,76 +11,92 @@ using System.Windows.Shapes;
 using System.Collections.Generic;
 using System.Collections;
 using System.Linq;
+using ColorUtils;
 
 namespace DeepZoomView {
 	public class OrganizableByColor : Organizable {
-		Dictionary<int, List<int>> organization;
-		public Dictionary<int, int> colorOfId;
+		public new Dictionary<int, List<int>> data = new Dictionary<int, List<int>>();
+		public new Dictionary<int, Color> invertedData = new Dictionary<int, Color>(); 
+		/*Dictionary<int, List<int>> organization;
+		public Dictionary<int, int> colorOfId;*/
 
 		/// <summary>
 		/// Constructor
 		/// </summary>
 		public OrganizableByColor() : base("Color"){
-			organization = new Dictionary<int, List<int>>();
-			colorOfId = new Dictionary<int, int>();
+			//organization = new Dictionary<int, List<int>>();
+			//colorOfId = new Dictionary<int, int>();
 		}
+
+		
+		public override void Add(int k, string p) {
+			Color c = ColorUtil.FromStringToColor(p);
+			int hue = HslColor.FromColor(c).SimpleHue();
+			if (!data.ContainsKey(hue)) {
+				data.Add(hue, new List<int>());
+			}
+			data[hue].Add(k);
+
+			invertedData.Add(k, c);
+		}
+
+
 
 		/// <summary>
 		/// Imports the contents of a metadata file into the this organizable
 		/// </summary>
 		/// <param name="s">The string with the contents of the file</param>
 		/// <returns>True if the import is successful and false otherwise</returns>
-		public override Boolean Import(String s) {
-			try {
-				String[] lines = s.Split(new string[1] { Environment.NewLine }, 
-											StringSplitOptions.RemoveEmptyEntries);
+		//new public Boolean Import(String s) {
+		//    throw new NotSupportedException();
+		//    try {
+		//        String[] lines = s.Split(new string[1] { Environment.NewLine }, 
+		//                                    StringSplitOptions.RemoveEmptyEntries);
 
-				foreach (String line in lines) {
-					String[] split = line.Split(':');
-					String[] ids = split[1].Split(new Char[1] { ';' }, StringSplitOptions.RemoveEmptyEntries);
-					Add(Convert.ToInt16(split[0]), ids);
-				}
-			} catch {
-				organization = new Dictionary<int, List<int>>();
-				return false;
-			}
-			return true;
-		}
+		//        foreach (String line in lines) {
+		//            String[] split = line.Split(':');
+		//            String[] ids = split[1].Split(new Char[1] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+		//            Add(Convert.ToInt16(split[0]), ids);
+		//        }
+		//    } catch {
+		//        organization = new Dictionary<int, List<int>>();
+		//        return false;
+		//    }
+		//    return true;
+		//}
 
 		/// <summary>
 		/// Adds a Color, Image pair to the organizable
 		/// </summary>
 		/// <param name="color">The Color</param>
 		/// <param name="id">The image ID</param>
-		public void Add(int color, int id) {
-			if (!organization.ContainsKey(color)) {
-				organization.Add(color, new List<int>());
-			}
-			organization[color].Add(id);
-		}
+		//public void Add(int color, int id) {
+		//    if (!organization.ContainsKey(color)) {
+		//        organization.Add(color, new List<int>());
+		//    }
+		//    organization[color].Add(id);
+		//}
 
 		/// <summary>
 		/// Adds a set of images to a color. Intended to be used with the Import
 		/// </summary>
 		/// <param name="color">The Color</param>
 		/// <param name="ids">Array of ids in string format</param>
-		private void Add(int color, String[] ids) {
-			if (!organization.ContainsKey(color)) {
-				organization.Add(color, new List<int>());
-			}
-			foreach (String id in ids) {
-				organization[color].Add(Convert.ToInt16(id));
-				colorOfId.Add(Convert.ToInt16(id), color);
-			}
+		//private void Add(int color, String[] ids) {
+		//    if (!organization.ContainsKey(color)) {
+		//        organization.Add(color, new List<int>());
+		//    }
+		//    foreach (String id in ids) {
+		//        organization[color].Add(Convert.ToInt16(id));
+		//        colorOfId.Add(Convert.ToInt16(id), color);
+		//    }
+		//}
+
+
+		public override List<KeyValuePair<String, List<int>>> GetGroups() {
+			return GetGroups(null);
 		}
 
-		/// <summary>
-		/// Returns the number of groups in this organizable
-		/// </summary>
-		/// <returns></returns>
-		public override int Count() {
-			return organization.Count;
-		}
 
 		/// <summary>
 		/// Takes a list of 
@@ -88,7 +104,7 @@ namespace DeepZoomView {
 		/// <param name="subset"></param>
 		/// <returns></returns>
 		public override List<KeyValuePair<String,List<int>>> GetGroups(List<int> subset) {
-			if (organization.Count == 0) {
+			if (data.Count == 0) {
 				return null;
 			}
 
@@ -97,7 +113,7 @@ namespace DeepZoomView {
 
 			Dictionary<int, List<int>> set = null;
 			if (subset == null) {
-				set = organization;
+				set = data;
 			} else {
 				set = OrganizedSubset(subset);
 			}
@@ -143,13 +159,31 @@ namespace DeepZoomView {
 		private Dictionary<int, List<int>> OrganizedSubset(List<int> subset) {
 			Dictionary<int, List<int>> newOrg = new Dictionary<int, List<int>>();
 			IEnumerable<int> intersectedList;
-			foreach (KeyValuePair<int, List<int>> kv in organization) {
+			foreach (KeyValuePair<int, List<int>> kv in data) {
 				intersectedList = kv.Value.Intersect(subset);
 				if (intersectedList.Count<int>() > 0) {
 					newOrg.Add(kv.Key, intersectedList.ToList<int>());
 				}
 			}
 			return newOrg;
+		}
+
+		public override string Id(int k) {
+			throw new NotSupportedException("Use Color() instead");
+		}
+
+
+		/// <summary>
+		/// Given an image id, returns its value for this organizable
+		/// </summary>
+		/// <param name="k">The MSI-Id for the image</param>
+		/// <returns></returns>
+		public Color Color(int k) {
+			return invertedData[k];
+		}
+
+		public override Boolean ContainsId(int k) {
+			return invertedData.ContainsKey(k);
 		}
 	}
 }

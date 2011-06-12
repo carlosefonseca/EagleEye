@@ -232,8 +232,7 @@
             </Grid.ColumnDefinitions>
 
             <StackPanel Grid.Column="1" Grid.Row="0" Orientation="Horizontal">
-                <Button x:Name="load" Content="Load" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="7" Margin="0,0,10,0" Click="msi_Loaded"></Button>
-                <TextBlock Text="Future Filter Bar" VerticalAlignment="Center" Foreground="White" Margin="0,0,10,0"></TextBlock>
+                <Button x:Name="load" Content="Load" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="7" Margin="0,0,10,0" Click="LoadMetadata"></Button>
                 <Button x:Name="ghDate" Content="Group Horizontally by Date" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="7" Margin="0,0,10,0" Click="ghDate_Click"></Button>
                 <TextBlock Text="Vertical Sort:" VerticalAlignment="Center" Foreground="White" Margin="0,0,10,0"></TextBlock>
                 <ComboBox Name="Vorganize" VerticalAlignment="Center" Margin="0,0,10,0" DropDownOpened="Vorganize_DropDownOpened" SelectionChanged="Vorganize_SelectionChanged" ></ComboBox>
