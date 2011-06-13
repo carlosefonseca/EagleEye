@@ -16,7 +16,9 @@ using ColorUtils;
 namespace DeepZoomView {
 	public class OrganizableByColor : Organizable {
 		public new Dictionary<int, List<int>> data = new Dictionary<int, List<int>>();
-		public new Dictionary<int, Color> invertedData = new Dictionary<int, Color>(); 
+		public new Dictionary<int, Color> invertedData = new Dictionary<int, Color>();
+		public new Dictionary<int, string> invertedDataHSB = new Dictionary<int, string>();
+		internal Boolean isHSB = false;
 		/*Dictionary<int, List<int>> organization;
 		public Dictionary<int, int> colorOfId;*/
 
@@ -24,20 +26,33 @@ namespace DeepZoomView {
 		/// Constructor
 		/// </summary>
 		public OrganizableByColor() : base("Color"){
-			//organization = new Dictionary<int, List<int>>();
-			//colorOfId = new Dictionary<int, int>();
+		}
+
+		public OrganizableByColor(Boolean hsb)
+			: base("HSB") {
+			isHSB = hsb;
 		}
 
 		
 		public override void Add(int k, string p) {
-			Color c = ColorUtil.FromStringToColor(p);
-			int hue = HslColor.FromColor(c).SimpleHue();
+			int hue;
+			Color c = Colors.White;
+			if (isHSB) {
+				string hueStr = p.Split(new Char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).First(x => x.StartsWith("H"));
+				hue = Convert.ToInt16(hueStr.Substring(2));
+			} else {
+				c = ColorUtil.FromStringToColor(p);
+				hue = HslColor.FromColor(c).SimpleHue();
+			}
 			if (!data.ContainsKey(hue)) {
 				data.Add(hue, new List<int>());
 			}
 			data[hue].Add(k);
-
-			invertedData.Add(k, c);
+			if (isHSB) {
+				invertedDataHSB.Add(k, p);
+			} else {
+				invertedData.Add(k, c);
+			}
 		}
 
 
@@ -120,7 +135,7 @@ namespace DeepZoomView {
 
 			Color[] theColors = new Color[] { Colors.Red, Colors.Orange, Colors.Yellow, Colors.Green, Colors.Cyan, Colors.Blue, Colors.Purple };
 
-			int buckets = 20;
+			int buckets = 12;
 			double spread = 360.0 / buckets;
 
 			foreach (KeyValuePair<int, List<int>> kv in set) {
@@ -179,11 +194,22 @@ namespace DeepZoomView {
 		/// <param name="k">The MSI-Id for the image</param>
 		/// <returns></returns>
 		public Color Color(int k) {
+			if (isHSB) {
+				throw new NotSupportedException("Use HSB() instead");
+			}
 			return invertedData[k];
 		}
 
+		public String HSB(int k) {
+			return invertedDataHSB[k];
+		}
+
 		public override Boolean ContainsId(int k) {
-			return invertedData.ContainsKey(k);
+			if (isHSB) {
+				return invertedDataHSB.ContainsKey(k);
+			} else {
+				return invertedData.ContainsKey(k);
+			}
 		}
 	}
 }
