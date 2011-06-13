@@ -57,7 +57,7 @@ namespace EagleEye {
 				Console.Write(p + "; ");
 			string pluginId = Console.ReadLine();
 			RunPlugin(images, pluginId);
-			SaveMetadata(pluginId, Path.Combine(Persistence.RootFolder(), "DZC"));
+			//SaveMetadata(pluginId, Path.Combine(Persistence.RootFolder(), "DZC"));
 		}
 
 		public void RunPlugin(ImageCollection images, string pluginId) {
