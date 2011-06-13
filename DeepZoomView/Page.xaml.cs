@@ -82,29 +82,20 @@ namespace DeepZoomView {
 						_LastIndex = index;
 
 						if (index != -1) {
-							//Caption.Text = _Metadata[index].Caption;
-							//Caption.Text = msi.SubImages[index].ViewportOrigin.ToString();
-							//Caption.Text = "Image" + index;
-							//if (metadataCollection.GetOrganized("color")) {
-							//	OrganizableByColor colors = (OrganizableByColor)Organizations["color"];
 							OrganizableByColor colordata = (OrganizableByColor)metadataCollection.GetOrganized("color");
+							OrganizableByColor huedata = (OrganizableByColor)metadataCollection.GetOrganized("HSB");
 							Color c;
 							String ctxt = "";
 							if (colordata != null && colordata.ContainsId(index)) {
 								c = colordata.Color(index);
 								ctxt = Environment.NewLine + "Color: [" + c.R + "," + c.G + "," + c.B + "]";
-															}
-							MouseTitle.Text = "ID: " + index + ctxt;
-							
-/*							for (int i = 0; i <= index % 4; i++) {
-								MouseTitle.Text += "Image" + index + " " + "Image" + index + "\n";
+								ctxt += Environment.NewLine + "Hue: " + ColorUtils.HslColor.FromColor(c).H;
 							}
-*/							MouseTitle.Text = MouseTitle.Text.TrimEnd(new char[1] { '\n' });
-							//}
-							//Description.Text = _Metadata[index].Description;
-							//FadeIn.Begin();
-						} else {
-							//FadeOut.Begin();
+							if (huedata != null && huedata.ContainsId(index)) {
+								ctxt += Environment.NewLine + "HSB: " + huedata.HSB(index);
+							}
+							MouseTitle.Text = "ID: " + index + ctxt;
+							MouseTitle.Text = MouseTitle.Text.TrimEnd(new char[1] { '\n' });
 						}
 					}
 				}
@@ -439,7 +430,7 @@ namespace DeepZoomView {
 				}
 				System.Windows.Browser.HtmlPage.Window.Alert("Metadata reading failed on the files: " + failedNames);
 			}
-				return true;
+			return true;
 		}
 
 
@@ -1006,9 +997,11 @@ namespace DeepZoomView {
 			} else if (selected == "Not Sorted") {
 			} else {
 				if (selected == "Color") {
-					GroupDisplay gd = new GroupDisplay(msi, metadataCollection.GetOrganized("color").GetGroups());
-					gd.DisplayGroupsOnScreen();
-					//orderByGroupsVertically(metadataCollection.GetOrganized("color").GetGroups());
+					GroupDisplay gd = new GroupDisplay(msi, metadataCollection.GetOrganized("Color").GetGroups());
+					canvasIndex = gd.DisplayGroupsOnScreen();
+				} else if (selected == "HSB") {
+					GroupDisplay gd = new GroupDisplay(msi, metadataCollection.GetOrganized("HSB").GetGroups());
+					canvasIndex = gd.DisplayGroupsOnScreen();
 				} else {
 					orderByGroupsVertically(metadataCollection.GetOrganized(selected).GetGroups());
 				}
