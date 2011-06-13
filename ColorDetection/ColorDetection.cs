@@ -82,73 +82,72 @@ namespace EEPlugin {
 		public ImageCollection processImageCollection(ImageCollection ic) {
 			// Obtem a cor mediana da imagem * Histograma RGB
 			foreach (EagleEye.Common.Image i in ic.ToList()) {
-				if (PluginData.ContainsKey(i.id)) {
-					Console.WriteLine("Skipping " + i.path);
-					if (i.ContainsPluginData(Id())) {
-						Console.WriteLine("Images HAS plugin data");
-					} else {
-						Console.WriteLine("ADDING plugin data to image");
-						i.SetPluginData(Id(), PluginData[i.id].ToString());
-					}
-					continue;
-				}
-				if (File.Exists(i.path)) {
+				Color? result = null;
+				if (!i.ContainsPluginData("color")) {
 					Console.WriteLine("Color Detecting " + i.path + "... ");
-					//Color result = RunDetection(i.path);
-					Color result = RunDetection(thumbs.GetThumbnail(i.id));
-					PutData(i, result);
-					//Console.WriteLine(result.ToString());
-					Console.WriteLine("ADDING plugin data to image");
-					i.SetPluginData(Id(), PluginData[i.id].ToString());
+					result = RunDetection(thumbs.GetThumbnail(i.id));
+					i.SetPluginData("color", result.ToString());
 				}
-				Save();
+				if (true || !i.ContainsPluginData("HSB")) {
+					if (!result.HasValue) {
+						result = (Color?)FromStringToColor(i.GetPluginData("color"));
+					}
+					i.SetPluginData("HSB", "H:" + (int)result.Value.GetHue() + " S:" + (int)result.Value.GetSaturation() + " B:" + (int)result.Value.GetBrightness());
+				}
 			}
-			return null;
-			Console.WriteLine("\n-- Color detection completed. Now sorting.");
-
-			// COLOR MAP
-			// calcula a Hue e a luminancia e ordena na árvore de cores * Histograma HSL
-			if (ColorMap == null) ColorMap = new SortedDictionary<double, SortedDictionary<double, List<long>>>();
-
-			foreach (EagleEye.Common.Image i in ic.ToList()) {
-				if (MappedImages.Contains(i.id)) {
-					Console.WriteLine("Skipping " + i.path);
-					continue;
-				}
-
-				System.Drawing.Bitmap img;
-				try {
-					img = thumbs.GetThumbnail(i.id);
-				} catch {
-					Console.WriteLine("ERROR: Thumbnail required!");
-					return null;
-				}
-
-				Color c = PluginData[i.id];
-				double hue = c.GetHue();
-				double luminance = c.GetBrightness();
-
-				if (!ColorMap.ContainsKey(hue)) {
-					ColorMap[hue] = new SortedDictionary<double, List<long>>();
-				}
-				if (!ColorMap[hue].ContainsKey(luminance)) {
-					ColorMap[hue][luminance] = new List<long>();
-				}
-				ColorMap[hue][luminance].Add(i.id);
-				MappedImages.Add(i.id);
-				Console.Write(".");
-			}
-			Console.WriteLine();
-			SaveColorMap();
-
-			//DrawMap2();
-
 			return null;
 		}
 
+		public static Color FromStringToColor(string txt) {
+			String[] p = txt.Split(new char[] { '[', ']', ',', ' ', '=' }, StringSplitOptions.RemoveEmptyEntries);
+			return Color.FromArgb(Convert.ToByte(p[2]), Convert.ToByte(p[4]), Convert.ToByte(p[6]), Convert.ToByte(p[8]));
+		}
+
+		//    Console.WriteLine("\n-- Color detection completed. Now sorting.");
+
+		//    // COLOR MAP
+		//    // calcula a Hue e a luminancia e ordena na árvore de cores * Histograma HSL
+		//    if (ColorMap == null) ColorMap = new SortedDictionary<double, SortedDictionary<double, List<long>>>();
+
+		//    foreach (EagleEye.Common.Image i in ic.ToList()) {
+		//        if (MappedImages.Contains(i.id)) {
+		//            Console.WriteLine("Skipping " + i.path);
+		//            continue;
+		//        }
+
+		//        System.Drawing.Bitmap img;
+		//        try {
+		//            img = thumbs.GetThumbnail(i.id);
+		//        } catch {
+		//            Console.WriteLine("ERROR: Thumbnail required!");
+		//            return null;
+		//        }
+
+		//        Color c = PluginData[i.id];
+		//        double hue = c.GetHue();
+		//        double luminance = c.GetBrightness();
+
+		//        if (!ColorMap.ContainsKey(hue)) {
+		//            ColorMap[hue] = new SortedDictionary<double, List<long>>();
+		//        }
+		//        if (!ColorMap[hue].ContainsKey(luminance)) {
+		//            ColorMap[hue][luminance] = new List<long>();
+		//        }
+		//        ColorMap[hue][luminance].Add(i.id);
+		//        MappedImages.Add(i.id);
+		//        Console.Write(".");
+		//    }
+		//    Console.WriteLine();
+		//    SaveColorMap();
+
+		//    //DrawMap2();
+
+		//    return null;
+		//}
+
 		public String generateMetadata() {
 			String o = "";
-			Dictionary<int, List<long>> resorted = new Dictionary<int,List<long>>();
+			Dictionary<int, List<long>> resorted = new Dictionary<int, List<long>>();
 
 			foreach (KeyValuePair<long, Color> kv in PluginData) {
 				int color = Convert.ToInt16(Math.Round(kv.Value.GetHue()));
@@ -226,10 +225,10 @@ namespace EEPlugin {
 			int destination_min = 0, destination_max = 1000;
 			int[] destination = new int[destination_max];
 			destination[destination_min] = image_counts.Keys.First<int>();
-			destination[destination_max-1] = image_counts.Keys.Last<int>();
+			destination[destination_max - 1] = image_counts.Keys.Last<int>();
 
 			int arr_min = destination[destination_min];
-			int arr_max = destination[destination_max-1];
+			int arr_max = destination[destination_max - 1];
 
 			Distribute(image_counts, arr_min, arr_max, ref destination, destination_min, destination_max);
 			#region hide
@@ -280,7 +279,7 @@ namespace EEPlugin {
 		private static void Distribute(Dictionary<int, int> image_counts, int arr_min, int arr_max,
 									   ref int[] destination, int destination_min, int destination_max) {
 			if (destination_min >= destination_max) return;
-			
+
 			int count = 0;
 			for (int i = arr_min; i <= arr_max; i++) {
 				if (image_counts.ContainsKey(i))
@@ -293,8 +292,8 @@ namespace EEPlugin {
 			int key;
 			for (key = arr_min; acc <= half_images; acc += image_counts[key++]) ;
 			destination[destination_middle] = key;
-			Distribute(image_counts, arr_min, key,   ref destination, destination_min,    destination_middle);
-			Distribute(image_counts, key+1, arr_max, ref destination, destination_middle, destination_max);
+			Distribute(image_counts, arr_min, key, ref destination, destination_min, destination_middle);
+			Distribute(image_counts, key + 1, arr_max, ref destination, destination_middle, destination_max);
 		}
 
 
