@@ -33,7 +33,7 @@ namespace DeepZoomView {
 		}
 
 
-		public void DisplayGroupsOnScreen() {
+		public Dictionary<string, int> DisplayGroupsOnScreen() {
 			IOrderedEnumerable<KeyValuePair<string, List<int>>> orderedGroup = groups.OrderByDescending(kv => kv.Value.Count);
 			foreach (KeyValuePair<string, List<int>> kv in orderedGroup) {
 				Group g = new Group(kv.Key, kv.Value);
@@ -67,7 +67,7 @@ namespace DeepZoomView {
 				}
 			}
 			HideNotPlacedImages();
-			PositionImages();
+			return PositionImages();
 		}
 
 		private Boolean Fill(Group g, int ix, int iy) {
@@ -105,7 +105,8 @@ namespace DeepZoomView {
 					y++;
 					x = ix;
 				} else {
-					throw new NotImplementedException("why tha fuck am I where?");
+					//throw new NotImplementedException("why tha fuck am I where?");
+					break;
 				}
 			}
 			g.rectangle = new Rect(ix, iy, H, V);
@@ -135,18 +136,23 @@ namespace DeepZoomView {
 			}
 		}
 
-		public void PositionImages() {
+		public Dictionary<string, int> PositionImages() {
+			Dictionary<string, int> positions = new Dictionary<string, int>();
 			foreach (Group g in placedGroups) {
 				double x = g.rectangle.X;
 				double y = g.rectangle.Y;
 				foreach (int id in g.images) {
-					msi.SubImages[id].ViewportOrigin = new Point(-x, -y);
+					if (!positions.ContainsKey(x + ";" + y)) {
+						positions.Add(x + ";" + y, id);
+						msi.SubImages[id].ViewportOrigin = new Point(-x, -y);
+					}
 					if (++x >= g.rectangle.X + g.rectangle.Width) {
 						x = g.rectangle.X;
 						y++;
 					}
 				}
 			}
+			return positions;
 		}
 
 		private void HideNotPlacedImages() {
