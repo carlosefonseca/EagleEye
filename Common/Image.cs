@@ -133,6 +133,9 @@ namespace EagleEye.Common {
 		/// <param name="pluginId">The unique plugin Id</param>
 		/// <param name="data">A string representing the generated data</param>
 		public void SetPluginData(string pluginId, string data) {
+			if (pluginData.ContainsKey(pluginId)) {
+				pluginData.Remove(pluginId);
+			}
 			pluginData.Add(pluginId, data);
 			dirty = true;
 		}
