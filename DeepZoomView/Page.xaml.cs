@@ -1004,7 +1004,9 @@ namespace DeepZoomView {
 			} else if (selected == "Not Sorted") {
 			} else {
 				if (selected == "Color") {
-					orderByGroupsVertically(metadataCollection.GetOrganized("color").GetGroups());
+					GroupDisplay gd = new GroupDisplay(msi, metadataCollection.GetOrganized("color").GetGroups());
+					gd.DisplayGroupsOnScreen();
+					//orderByGroupsVertically(metadataCollection.GetOrganized("color").GetGroups());
 				} else {
 					orderByGroupsVertically(metadataCollection.GetOrganized(selected).GetGroups());
 				}
