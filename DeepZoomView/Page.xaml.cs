@@ -969,6 +969,7 @@ namespace DeepZoomView {
 			ShowAllContent();
 			makeAnAxis("Y", Vcells);
 			makeAnAxis("X", Hcells);
+			Vorganize.SelectedIndex = 0;
 		}
 
 		private void random_Click(object sender, RoutedEventArgs e) {
@@ -985,6 +986,7 @@ namespace DeepZoomView {
 				Vorganize.ItemsSource = CbItems;
 			}
 			CbItems.Clear();
+			CbItems.Add("-None-");
 			foreach (String s in metadataCollection.GetOrganizationOptions()) {
 				CbItems.Add(s);
 			}
@@ -995,7 +997,7 @@ namespace DeepZoomView {
 
 		private void Vorganize_SelectionChanged(object sender, SelectionChangedEventArgs e) {
 			String selected = (String)Vorganize.SelectedItem;
-			if (selected == null) {
+			if (selected == null || selected == "-None-") {
 				return;
 			}
 			if (selected == "Import Metadata") {
@@ -1011,6 +1013,7 @@ namespace DeepZoomView {
 					orderByGroupsVertically(metadataCollection.GetOrganized(selected).GetGroups());
 				}
 				Vorganize.IsDropDownOpen = false;
+				GoHomeClick(null, null);
 			}
 		}
 
