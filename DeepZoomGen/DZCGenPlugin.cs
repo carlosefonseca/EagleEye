@@ -89,18 +89,22 @@ namespace EEPlugin {
 			int count = 0;
 			foreach (EagleEye.Common.Image i in ic.ToSortable().SortById().TheList()) {
 				if (PluginData.ContainsKey(i.id)) {
+					if (!PluginData[i.id].StartsWith("images")) {
+						PluginData[i.id] = PluginData[i.id].Substring(PluginData[i.id].IndexOf("images\\"));
+					}
 					Console.WriteLine("  " + i.path);
 					continue;
 				}
 				if (File.Exists(i.path)) {
 					Console.WriteLine("> " + i.path + "... ");
-					string target = DZDir + "images\\" + i.id.ToString() + ".xml";
+					string relativeTarget = "images\\" + i.id.ToString() + ".xml";
+					string target = DZDir + relativeTarget;
 					Stopwatch st = Stopwatch.StartNew();
 					GenerateDZC(i.path, target);
 					st.Stop();
 					times += st.ElapsedMilliseconds;
 					count++;
-					PluginData.Add(i.id, target);
+					PluginData.Add(i.id, relativeTarget);
 					Console.WriteLine(i.id.ToString());
 				}
 				Save();
@@ -210,7 +214,11 @@ namespace EEPlugin {
 			ic.ImageQuality = 0.7;
 			ic.TileOverlap = 0;
 			Console.WriteLine(source + "->" + target);
-			ic.Create(source, target);
+			try {
+				ic.Create(source, target);
+			} catch (ArgumentOutOfRangeException e) {
+				Console.WriteLine("Error on DZGen... is the image smaller than 150px?");
+			}
 		}
 
 		/// <summary>
@@ -223,8 +231,11 @@ namespace EEPlugin {
 			cc.TileFormat = ImageFormat.Jpg;
 			cc.MaxLevel = 5;
 			cc.ImageQuality = 0.8;
-
-			cc.Create(PluginData.Values, DZDir + "collection");
+			List<string> modifiedPD = new List<string>();
+			foreach (string s in PluginData.Values) {
+				modifiedPD.Add(DZDir + s);
+			}
+			cc.Create(modifiedPD, DZDir + "collection");
 		}
 
 		/// <summary>
