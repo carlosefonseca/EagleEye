@@ -19,6 +19,7 @@ namespace DeepZoomView {
 		}
 
 		public void AddImageMetadata(int msiId, Dictionary<string, string> metadata) {
+			imgMetadata.Clear();
 			metadata["id"] = (String)JsonPrimitive.Parse(metadata["id"]);
 			imgMetadata.Add(msiId, metadata);
 			String k;
@@ -45,6 +46,7 @@ namespace DeepZoomView {
 		private void CreateOrganizable(string k, JsonType type) {
 			Organizable o;
 			if (k == "color") o = new OrganizableByColor();
+			else if (k == "HSB") o = new OrganizableByColor(true);
 			else if (k == "date") o = new OrganizableByDate();
 			else {
 				Console.WriteLine("Unknown data type: '" + k + "'. Using base 'Organizable' type.");

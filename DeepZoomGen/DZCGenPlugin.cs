@@ -120,7 +120,7 @@ namespace EEPlugin {
 
 
 			// External file
-			GenerateAndSaveMetadata(ic, DZDir + "metadata");
+			//GenerateAndSaveMetadata(ic, DZDir + "metadata");
 
 			return null;
 		}
@@ -132,14 +132,15 @@ namespace EEPlugin {
 		/// <param name="p">Path to XML file to use</param>
 		private void IncludeMetadata(ImageCollection ic, string p) {
 			XElement xml = XElement.Load(p);
-			Console.WriteLine(xml.ToString());
+			Console.WriteLine("Modifying the XML");
+			//Console.WriteLine(xml.ToString());
 
 			foreach (XElement a in xml.Elements().First().Elements()) {
 				Dictionary<string, string> tags = new Dictionary<string, string>();
 				String id = a.Attribute("Source").Value.Split(new Char[] { '/', '.' })[1];
-				tags.Add("id", id);
-
+				
 				EagleEye.Common.Image i = ic.Get(Convert.ToInt32(id));
+				tags.Add("id", id);
 				tags.Add("date", i.Date().ToString());
 
 				Dictionary<string, string> plugins = i.GetPluginData();
@@ -153,8 +154,10 @@ namespace EEPlugin {
 				}
 				a.Add(new XElement("Tag", JsonConvert.SerializeObject(tags)));
 
-				Console.WriteLine(a);
+				//Console.WriteLine(a);
 			}
+
+			Console.WriteLine(xml.Elements().Last().Elements().Last().ToString());
 			xml.Save(p,SaveOptions.DisableFormatting);
 		}
 

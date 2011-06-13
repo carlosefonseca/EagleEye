@@ -26,17 +26,22 @@ namespace EEPlugin {
 
 		public ImageCollection processImageCollection(ImageCollection ic) {
 			foreach (Image i in ic.ToList()) {
-				if (i.ContainsPluginData("device")) continue;
-				String device = "";
-				if (i.ContainsExif("Make")) {
-					device = (String)i.Exif("Make")+" ";
-				}
-				if (i.ContainsExif("Model")) {
-					device += (String)i.Exif("Model");
-				}
-				i.SetPluginData("device", device);
+				Device(i);
 			}
 			return null;
+		}
+
+		private static void Device(Image i) {
+			if (i.ContainsPluginData("device"))
+				return;
+			String device = "";
+			if (i.ContainsExif("Make")) {
+				device = (String)i.Exif("Make") + " ";
+			}
+			if (i.ContainsExif("Model")) {
+				device += (String)i.Exif("Model");
+			}
+			i.SetPluginData("device", device);
 		}
 
 		public String Id() {
