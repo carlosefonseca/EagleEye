@@ -82,20 +82,7 @@ namespace DeepZoomView {
 						_LastIndex = index;
 
 						if (index != -1) {
-							OrganizableByColor colordata = (OrganizableByColor)metadataCollection.GetOrganized("color");
-							OrganizableByColor huedata = (OrganizableByColor)metadataCollection.GetOrganized("HSB");
-							Color c;
-							String ctxt = "";
-							if (colordata != null && colordata.ContainsId(index)) {
-								c = colordata.Color(index);
-								ctxt = Environment.NewLine + "Color: [" + c.R + "," + c.G + "," + c.B + "]";
-								ctxt += Environment.NewLine + "Hue: " + ColorUtils.HslColor.FromColor(c).H;
-							}
-							if (huedata != null && huedata.ContainsId(index)) {
-								ctxt += Environment.NewLine + "HSB: " + huedata.HSB(index);
-							}
-							MouseTitle.Text = "ID: " + index + ctxt;
-							MouseTitle.Text = MouseTitle.Text.TrimEnd(new char[1] { '\n' });
+							MakeTooltipText(index);
 						}
 					}
 				}
@@ -248,6 +235,17 @@ namespace DeepZoomView {
 
 			App.Current.Host.Content.Resized += new EventHandler(Content_Resized);
 			Vorganize_Update();
+		}
+
+		private void MakeTooltipText(int index) {
+			String tooltipTxt = "";
+			foreach(String oName in metadataCollection.GetOrganizationOptions()) {
+				Organizable o = metadataCollection.GetOrganized(oName);
+				if (o.ContainsId(index)) {
+					tooltipTxt += o.Name + ": "+ o.Id(index)+ Environment.NewLine;
+				}
+			}
+			MouseTitle.Text = tooltipTxt.TrimEnd(Environment.NewLine.ToCharArray());
 		}
 
 		void Content_Resized(object sender, EventArgs e) {
@@ -1003,7 +1001,9 @@ namespace DeepZoomView {
 					GroupDisplay gd = new GroupDisplay(msi, metadataCollection.GetOrganized("HSB").GetGroups());
 					canvasIndex = gd.DisplayGroupsOnScreen();
 				} else {
-					orderByGroupsVertically(metadataCollection.GetOrganized(selected).GetGroups());
+					GroupDisplay gd = new GroupDisplay(msi, metadataCollection.GetOrganized(selected).GetGroups());
+					canvasIndex = gd.DisplayGroupsOnScreen();
+//					orderByGroupsVertically(metadataCollection.GetOrganized(selected).GetGroups());
 				}
 				Vorganize.IsDropDownOpen = false;
 				GoHomeClick(null, null);
