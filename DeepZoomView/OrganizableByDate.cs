@@ -9,14 +9,58 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Shapes;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace DeepZoomView {
 	public class OrganizableByDate : Organizable {
+		public Dictionary<DateTime, List<int>> data = new Dictionary<DateTime, List<int>>();
+		public Dictionary<int, DateTime> invertedData = new Dictionary<int, DateTime>();
+
 		public OrganizableByDate() : base("Date") { }
 
-		new public List<KeyValuePair<String, List<int>>> GetGroups(List<int> subset) { return null; }
+		public override void Add(int k, string p) {
+			DateTime v = DateTime.Parse(p);
+			DateTime key = v.Date;
+			if (!data.ContainsKey(key)) {
+				data.Add(key, new List<int>());
+			}
+			data[key].Add(k);
 
-		new public int Count() { return 0; }
-		new public Boolean Import(String s) { return false; }
+			invertedData.Add(k, v);
+		}
+
+		public override List<KeyValuePair<String, List<int>>> GetGroups() {
+			IOrderedEnumerable<KeyValuePair<DateTime, List<int>>> ordered = data.OrderBy(x => x.Key);
+			List<KeyValuePair<String, List<int>>> reformated = new List<KeyValuePair<string,List<int>>>();
+			foreach (KeyValuePair<DateTime, List<int>> group in ordered) {
+				reformated.Add(new KeyValuePair<string, List<int>>(group.Key.ToShortDateString(), group.Value));
+			}
+			return reformated;
+		}
+	
+		public override List<KeyValuePair<String, List<int>>> GetGroups(List<int> subset) {
+			throw new NotImplementedException();
+		}
+
+		public override int Count() {
+			return data.Count;
+		}
+
+		/// <summary>
+		/// Given an image id, returns its value for this organizable
+		/// </summary>
+		/// <param name="k">The MSI-Id for the image</param>
+		/// <returns></returns>
+		public override string Id(int k) {
+			if (invertedData.ContainsKey(k)) {
+				return invertedData[k].ToString();
+			} else {
+				return null;
+			}
+		}
+
+		public override Boolean ContainsId(int k) {
+			return invertedData.ContainsKey(k);
+		}
 	}
 }
