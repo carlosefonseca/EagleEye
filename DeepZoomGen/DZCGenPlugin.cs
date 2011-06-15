@@ -87,40 +87,42 @@ namespace EEPlugin {
 		public ImageCollection processImageCollection(ImageCollection ic) {
 			long times = 0;
 			int count = 0;
+			PluginData.Clear();
+			Boolean generationOK;
+			Boolean collectionGenerationRequired = false;
 			foreach (EagleEye.Common.Image i in ic.ToSortable().SortById().TheList()) {
-				if (PluginData.ContainsKey(i.id)) {
-					if (!PluginData[i.id].StartsWith("images")) {
-						PluginData[i.id] = PluginData[i.id].Substring(PluginData[i.id].IndexOf("images\\"));
-					}
-					Console.WriteLine("  " + i.path);
-					continue;
-				}
-				if (File.Exists(i.path)) {
-					Console.WriteLine("> " + i.path + "... ");
-					string relativeTarget = "images\\" + i.id.ToString() + ".xml";
-					string target = DZDir + relativeTarget;
+				string relativeTarget = "images\\" + i.id.ToString() + ".xml";
+				string target = DZDir + relativeTarget;
+
+				if (File.Exists(target)) {
+					Console.WriteLine(i.id.ToString() + " " + i.path + "... ");
+						PluginData.Add(i.id, relativeTarget);
+				} else {
+					// Creation needed
+					Console.WriteLine(" >> " + i.id.ToString() + " " + i.path + "... ");
 					Stopwatch st = Stopwatch.StartNew();
-					GenerateDZC(i.path, target);
+					generationOK = GenerateDZC(i.path, target);
 					st.Stop();
 					times += st.ElapsedMilliseconds;
 					count++;
-					PluginData.Add(i.id, relativeTarget);
-					Console.WriteLine(i.id.ToString());
+					if (generationOK) {
+						PluginData.Add(i.id, relativeTarget);
+						collectionGenerationRequired = true;
+					}
+					Save();
 				}
-				Save();
 			}
 			if (count > 0) {
 				Console.WriteLine(count + " images. Mean processing time of " + times / count + " ms.");
 			}
 
-			Console.WriteLine("Generating Collection...");
-			GenerateCollection();
+			if (collectionGenerationRequired) {
+				Console.WriteLine("Generating Collection...");
+				GenerateCollection();
+			}
+
 			// DZ XML file
 			IncludeMetadata(ic, DZDir + "collection.xml");
-
-
-			// External file
-			//GenerateAndSaveMetadata(ic, DZDir + "metadata");
 
 			return null;
 		}
@@ -133,32 +135,30 @@ namespace EEPlugin {
 		private void IncludeMetadata(ImageCollection ic, string p) {
 			XElement xml = XElement.Load(p);
 			Console.WriteLine("Modifying the XML");
-			//Console.WriteLine(xml.ToString());
-
+			
 			foreach (XElement a in xml.Elements().First().Elements()) {
 				Dictionary<string, string> tags = new Dictionary<string, string>();
 				String id = a.Attribute("Source").Value.Split(new Char[] { '/', '.' })[1];
-				
+
 				EagleEye.Common.Image i = ic.Get(Convert.ToInt32(id));
 				tags.Add("id", id);
 				tags.Add("date", i.Date().ToString());
 
 				Dictionary<string, string> plugins = i.GetPluginData();
-
-				foreach (KeyValuePair<string, string> kv in plugins) {
-					tags.Add(kv.Key, kv.Value);
+				if (plugins != null) {
+					foreach (KeyValuePair<string, string> kv in plugins) {
+						tags.Add(kv.Key, kv.Value);
+					}
 				}
 
 				if (a.Elements("Tag").Count() != 0) {
 					a.Elements("Tag").Remove();
 				}
 				a.Add(new XElement("Tag", JsonConvert.SerializeObject(tags)));
-
-				//Console.WriteLine(a);
 			}
 
 			Console.WriteLine(xml.Elements().Last().Elements().Last().ToString());
-			xml.Save(p,SaveOptions.DisableFormatting);
+			xml.Save(p, SaveOptions.DisableFormatting);
 		}
 
 
@@ -210,7 +210,7 @@ namespace EEPlugin {
 		/// </summary>
 		/// <param name="source">Image to process</param>
 		/// <param name="target">Destination for the processed stuff</param>
-		private void GenerateDZC(string source, string target) {
+		private Boolean GenerateDZC(string source, string target) {
 			ImageCreator ic = new ImageCreator();
 			ic.TileSize = 256;
 			ic.TileFormat = ImageFormat.Jpg;
@@ -219,8 +219,10 @@ namespace EEPlugin {
 			Console.WriteLine(source + "->" + target);
 			try {
 				ic.Create(source, target);
+				return true;
 			} catch (ArgumentOutOfRangeException e) {
 				Console.WriteLine("Error on DZGen... is the image smaller than 150px?");
+				return false;
 			}
 		}
 
