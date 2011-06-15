@@ -55,8 +55,15 @@ namespace EagleEye {
 			Console.Write("Available Plugins: ");
 			foreach (string p in plugins.Keys)
 				Console.Write(p + "; ");
+			Console.Write("(also 'clear') ");
 			string pluginId = Console.ReadLine();
-			RunPlugin(images, pluginId);
+			if (pluginId == "clear") {
+				foreach (Image i in images.ToList()) {
+					i.ClearPluginMetadata();
+				}
+			} else {
+				RunPlugin(images, pluginId);
+			}
 			//SaveMetadata(pluginId, Path.Combine(Persistence.RootFolder(), "DZC"));
 		}
 
