@@ -44,6 +44,7 @@ namespace DeepZoomView {
 		//Dictionary<String, Organizable> Organizations = new Dictionary<string, Organizable>();
 		MetadataCollection metadataCollection = new MetadataCollection();
 		ObservableCollection<String> CbItems = null;
+		GroupDisplay gd = null;
 
 		public Double ZoomFactor {
 			get { return zoom; }
@@ -83,6 +84,9 @@ namespace DeepZoomView {
 
 						if (index != -1) {
 							MakeTooltipText(index);
+							if (gd != null) {
+								gd.ShowGroupBorderFromImg(index, Overlays);
+							}
 						}
 					}
 				}
@@ -174,13 +178,6 @@ namespace DeepZoomView {
 					} else {
 						duringDrag = true;
 					}
-					/*Double w = msi.ViewportWidth;
-					Point o = new Point(msi.ViewportOrigin.X, msi.ViewportOrigin.Y);
-					msi.UseSprings = false;
-					msi.ViewportOrigin = new Point(o.X, o.Y);
-					msi.ViewportWidth = w;
-					zoom = 1 / w;
-					msi.UseSprings = true;*/
 				}
 
 				if (duringDrag) {
@@ -212,14 +209,6 @@ namespace DeepZoomView {
 				Zoom(newzoom, msi.ElementToLogicalPoint(this.lastMousePos));
 				msi.CaptureMouse();
 			};
-
-			//TextBlock test2 = new TextBlock();
-			//test2.Name = "test2";
-			//test2.Foreground = new SolidColorBrush(Colors.Red);
-			//test2.MaxHeight = 100;
-			//test2.MaxWidth = 100;
-			//test2.Text = "Test2";
-			//Overlays.Children.Add(test2);
 
 			msi.ViewportChanged += delegate {
 				updateOverlay();
@@ -345,8 +334,6 @@ namespace DeepZoomView {
 		}
 
 		private void ZoomInClick(object sender, System.Windows.RoutedEventArgs e) {
-			//Zoom(zoom * 1.3, msi.ElementToLogicalPoint(new Point(.5 * msi.ActualWidth, .5 * msi.ActualHeight)));
-			//ArrangeIntoGrid();
 			orderImagesByDate();
 		}
 
@@ -358,7 +345,6 @@ namespace DeepZoomView {
 
 			RowDefinition rowD;
 			ColumnDefinition colD;
-			TextBlock txt;
 			for (int i = 0; i < Hcells; i++) {
 				colD = new ColumnDefinition();
 				XaxisGrid.ColumnDefinitions.Add(colD);
@@ -404,7 +390,6 @@ namespace DeepZoomView {
 			ofd.Filter = "All Files (*.*)|*.*";
 			ofd.FilterIndex = 1;
 
-			String s;
 			try {
 				if (ofd.ShowDialog() != true) {
 					return false;
@@ -994,17 +979,21 @@ namespace DeepZoomView {
 				Vorganize_Update();
 			} else if (selected == "Not Sorted") {
 			} else {
+				gd = new GroupDisplay(msi, metadataCollection.GetOrganized(selected).GetGroups());
+				Point max;
+				canvasIndex = gd.DisplayGroupsOnScreen(out max);
+				Hcells = max.X+1;
+				/*
 				if (selected == "Color") {
-					GroupDisplay gd = new GroupDisplay(msi, metadataCollection.GetOrganized("Color").GetGroups());
+					gd = new GroupDisplay(msi, metadataCollection.GetOrganized("Color").GetGroups());
 					canvasIndex = gd.DisplayGroupsOnScreen();
 				} else if (selected == "HSB") {
-					GroupDisplay gd = new GroupDisplay(msi, metadataCollection.GetOrganized("HSB").GetGroups());
+					gd = new GroupDisplay(msi, metadataCollection.GetOrganized("HSB").GetGroups());
 					canvasIndex = gd.DisplayGroupsOnScreen();
 				} else {
-					GroupDisplay gd = new GroupDisplay(msi, metadataCollection.GetOrganized(selected).GetGroups());
-					canvasIndex = gd.DisplayGroupsOnScreen();
+
 //					orderByGroupsVertically(metadataCollection.GetOrganized(selected).GetGroups());
-				}
+				}*/
 				Vorganize.IsDropDownOpen = false;
 				GoHomeClick(null, null);
 			}
