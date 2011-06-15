@@ -17,9 +17,11 @@ namespace DeepZoomView {
 		private List<KeyValuePair<string, List<int>>> groups;
 		private double pxHeight, pxWidth, aspectRatio;
 		private int imgHeight, imgWidth, imgCount;
+		Dictionary<int, Group> invertedGroups = new Dictionary<int, Group>();
 		Dictionary<string, Group> map = new Dictionary<string, Group>();
 		List<Group> placedGroups = new List<Group>();
 		List<Group> groupsNotPlaced = new List<Group>();
+		Rectangle groupBorder = null;
 
 		public GroupDisplay(MultiScaleImage msi, List<KeyValuePair<string, List<int>>> groups) {
 			this.msi = msi;
@@ -33,7 +35,7 @@ namespace DeepZoomView {
 		}
 
 
-		public Dictionary<string, int> DisplayGroupsOnScreen() {
+		public Dictionary<string, int> DisplayGroupsOnScreen(out Point max) {
 			IOrderedEnumerable<KeyValuePair<string, List<int>>> orderedGroup = groups.OrderByDescending(kv => kv.Value.Count);
 			foreach (KeyValuePair<string, List<int>> kv in orderedGroup) {
 				Group g = new Group(kv.Key, kv.Value);
@@ -67,7 +69,7 @@ namespace DeepZoomView {
 				}
 			}
 			HideNotPlacedImages();
-			return PositionImages();
+			return PositionImages(out max);
 		}
 
 		private Boolean Fill(Group g, int ix, int iy) {
@@ -142,15 +144,16 @@ namespace DeepZoomView {
 			}
 		}
 
-		public Dictionary<string, int> PositionImages() {
+		public Dictionary<string, int> PositionImages(out Point max) {
 			Dictionary<string, int> positions = new Dictionary<string, int>();
-			Point max = new Point(0, 0);
+			max = new Point(0, 0);
 			foreach (Group g in placedGroups) {
 				double x = g.rectangle.X;
 				double y = g.rectangle.Y;
 				foreach (int id in g.images) {
 					if (!positions.ContainsKey(x + ";" + y)) {
 						positions.Add(x + ";" + y, id);
+						invertedGroups.Add(id, g);
 						msi.SubImages[id].ViewportOrigin = new Point(-x, -y);
 						max = new Point(Math.Max(max.X, x), Math.Max(max.Y, y));
 					}
@@ -165,6 +168,8 @@ namespace DeepZoomView {
 			} else {
 				msi.ViewportWidth = max.X;
 			}
+			imgWidth = (int)max.X;
+			imgHeight = (int)max.Y;
 			return positions;
 		}
 
@@ -176,6 +181,34 @@ namespace DeepZoomView {
 					msi.SubImages[id].Opacity = 0.5;
 				}
 			}
+		}
+
+		public void ShowGroupBorderFromImg(int img, Canvas element) {
+			if (!invertedGroups.ContainsKey(img)) return;
+
+//			element.Children.Remove(groupBorder);
+			if (element.Children.Count > 0) {
+				groupBorder = (Rectangle)element.Children.First(x => (((String)x.GetValue(Canvas.TagProperty)) == "Group"));
+			}
+
+			double cellHeight = pxHeight / imgHeight;
+			double cellWidth = pxWidth / imgWidth;
+
+			Group g = invertedGroups[img];
+			if (groupBorder == null) {
+				groupBorder = new Rectangle();
+				groupBorder.SetValue(Canvas.TagProperty, "Group");
+				element.Children.Add(groupBorder);
+			}
+			groupBorder.SetValue(Canvas.TopProperty, g.rectangle.Y * cellHeight);
+			groupBorder.SetValue(Canvas.LeftProperty, g.rectangle.X * cellWidth);
+			groupBorder.Stroke = new SolidColorBrush(Colors.White);
+			groupBorder.StrokeThickness = 1.0;
+			//groupBorder.Fill = new SolidColorBrush(Colors.Red);
+			groupBorder.Width = g.rectangle.Width * cellHeight;
+			groupBorder.Height = g.rectangle.Height * cellWidth;
+
+			//g.rectangle;
 		}
 	}
 
