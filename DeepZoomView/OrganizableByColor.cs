@@ -184,7 +184,10 @@ namespace DeepZoomView {
 		}
 
 		public override string Id(int k) {
-			throw new NotSupportedException("Use Color() instead");
+			if (isHSB) {
+				return invertedDataHSB[k];
+			}
+			return invertedData[k].ToString();
 		}
 
 
