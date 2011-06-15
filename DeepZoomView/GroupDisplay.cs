@@ -79,6 +79,9 @@ namespace DeepZoomView {
 			// test against the canvas limits
 			if (V > imgHeight - iy) {
 				V = imgHeight - iy;
+				if (V < 1) {
+					return false;
+				}
 				H = (int)Math.Ceiling(g.images.Count / (1.0 * V));
 
 				if (H > imgWidth - ix) {
@@ -88,6 +91,9 @@ namespace DeepZoomView {
 			}
 			if (H > imgWidth - ix) {
 				H = imgWidth - ix;
+				if (H < 1) {
+					return false;
+				}
 				V = (int)Math.Ceiling(g.images.Count / (1.0 * H));
 
 				if (V > imgHeight - iy) {
@@ -138,6 +144,7 @@ namespace DeepZoomView {
 
 		public Dictionary<string, int> PositionImages() {
 			Dictionary<string, int> positions = new Dictionary<string, int>();
+			Point max = new Point(0, 0);
 			foreach (Group g in placedGroups) {
 				double x = g.rectangle.X;
 				double y = g.rectangle.Y;
@@ -145,12 +152,18 @@ namespace DeepZoomView {
 					if (!positions.ContainsKey(x + ";" + y)) {
 						positions.Add(x + ";" + y, id);
 						msi.SubImages[id].ViewportOrigin = new Point(-x, -y);
+						max = new Point(Math.Max(max.X, x), Math.Max(max.Y, y));
 					}
 					if (++x >= g.rectangle.X + g.rectangle.Width) {
 						x = g.rectangle.X;
 						y++;
 					}
 				}
+			}
+			if ((int)(max.X / aspectRatio) < max.Y) {
+				msi.ViewportWidth = max.Y * aspectRatio;
+			} else {
+				msi.ViewportWidth = max.X;
 			}
 			return positions;
 		}
