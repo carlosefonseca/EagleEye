@@ -1013,5 +1013,9 @@ namespace DeepZoomView {
 		private void LoadMetadata(object sender, RoutedEventArgs e) {
 			AskForMetadata();
 		}
+
+		private void showgroups_Click(object sender, RoutedEventArgs e) {
+
+		}
 	}
 }
