@@ -821,6 +821,7 @@ namespace DeepZoomView {
 			Double newH = msi.ActualHeight * zoom;
 			Double newW = msi.ActualWidth * zoom;
 
+			// Overlays
 			if ((Double)Overlays.GetValue(Canvas.TopProperty) != -newY) {
 				Overlays.SetValue(Canvas.TopProperty, -newY);
 			}
@@ -828,6 +829,10 @@ namespace DeepZoomView {
 				Overlays.SetValue(Canvas.LeftProperty, -newX);
 			}
 
+			OverlaysScale.ScaleX = zoom;
+			OverlaysScale.ScaleY = zoom;
+
+			// Rullers
 			XaxisGrid.SetValue(Canvas.LeftProperty, -newX);
 			YaxisGrid.SetValue(Canvas.TopProperty, -newY);
 
@@ -982,7 +987,7 @@ namespace DeepZoomView {
 				gd = new GroupDisplay(msi, metadataCollection.GetOrganized(selected).GetGroups());
 				Point max;
 				canvasIndex = gd.DisplayGroupsOnScreen(out max);
-				Hcells = max.X+1;
+				Hcells = max.X;
 				/*
 				if (selected == "Color") {
 					gd = new GroupDisplay(msi, metadataCollection.GetOrganized("Color").GetGroups());

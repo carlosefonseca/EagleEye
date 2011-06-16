@@ -45,27 +45,36 @@ namespace DeepZoomView {
 			int x = 0, y = 0;
 			String pos;
 			int countGroupsPlaced = -1;
-
-			while (placedGroups.Count > countGroupsPlaced) {
-				countGroupsPlaced = placedGroups.Count;
-				List<Group> groupsBeingPlaced = groupsNotPlaced.GetRange(0, groupsNotPlaced.Count);
-				foreach (Group g in groupsBeingPlaced) {
-					pos = p(x, y);
-					while (map.ContainsKey(pos)) {
-						x = x + (int)(map[pos].rectangle.Width - (x - map[pos].rectangle.X));
-						if (x >= imgWidth) {
-							x = 0;
-							y++;
-							if (y >= imgHeight) {
-								break;
-							}
-						}
+			while (groupsNotPlaced.Count != 0 && (x < imgWidth && y < imgHeight)) {
+				countGroupsPlaced = -1;
+				while (placedGroups.Count > countGroupsPlaced) {
+					countGroupsPlaced = placedGroups.Count;
+					List<Group> groupsBeingPlaced = groupsNotPlaced.GetRange(0, groupsNotPlaced.Count);
+					foreach (Group g in groupsBeingPlaced) {
 						pos = p(x, y);
+						while (map.ContainsKey(pos)) {
+							x = x + (int)(map[pos].rectangle.Width - (x - map[pos].rectangle.X));
+							if (x >= imgWidth) {
+								x = 0;
+								y++;
+								if (y >= imgHeight) {
+									break;
+								}
+							}
+							pos = p(x, y);
+						}
+						if (Fill(g, x, y)) {
+							placedGroups.Add(g);
+							groupsNotPlaced.Remove(g);
+						} else {
+						}
 					}
-					if (Fill(g, x, y)) {
-						placedGroups.Add(g);
-						groupsNotPlaced.Remove(g);
-					}
+				}
+				// caso ele não consiga meter nenhum grupo do ponto livre, experimenta outro ponto
+				x++;
+				if (x >= imgWidth) {
+					x = 0;
+					y++;
 				}
 			}
 			HideNotPlacedImages();
@@ -103,21 +112,31 @@ namespace DeepZoomView {
 					return false;
 				}
 			}
-
+			if (g.name == "10-04-2010") {
+				g.ToString();
+			}
+			List<string> mapTmp = new List<string>();
 			while (n > 0) {
-				if (x - ix < H && !map.ContainsKey(p(x, y))) {
-					map.Add(p(x, y), g);
-					n--;
-					x++;
-				} else if (y - iy < V) {
+				if (x - ix < H) {
+					if (!map.ContainsKey(p(x, y))) {
+						mapTmp.Add(p(x, y));
+						n--;
+						x++;
+					} else {
+						H = x - ix;
+					}
+				} else {
 					y++;
 					x = ix;
-				} else {
-					//throw new NotImplementedException("why tha fuck am I where?");
-					break;
+					if (y > imgHeight || map.ContainsKey(p(x, y))) {
+						return false;
+					}
 				}
 			}
-			g.rectangle = new Rect(ix, iy, H, V);
+			foreach (string pos in mapTmp) {
+				map.Add(pos, g);
+			}
+			g.rectangle = new Rect(ix, iy, H, y-iy+1);
 			return true;
 		}
 
@@ -128,7 +147,7 @@ namespace DeepZoomView {
 		private void CalculateCanvas() {
 			int Hcells;
 			int Vcells;
-			CalculateDistribution((int)Math.Ceiling(imgCount * 1.05), out Hcells, out Vcells);
+			CalculateDistribution((int)Math.Ceiling(imgCount * 1.1), out Hcells, out Vcells);
 			imgWidth = Hcells;
 			imgHeight = Vcells;
 		}
@@ -168,6 +187,8 @@ namespace DeepZoomView {
 			} else {
 				msi.ViewportWidth = max.X;
 			}
+			max.X++;
+			max.Y++;
 			imgWidth = (int)max.X;
 			imgHeight = (int)max.Y;
 			return positions;
@@ -186,13 +207,14 @@ namespace DeepZoomView {
 		public void ShowGroupBorderFromImg(int img, Canvas element) {
 			if (!invertedGroups.ContainsKey(img)) return;
 
-//			element.Children.Remove(groupBorder);
+			//			element.Children.Remove(groupBorder);
 			if (element.Children.Count > 0) {
 				groupBorder = (Rectangle)element.Children.First(x => (((String)x.GetValue(Canvas.TagProperty)) == "Group"));
 			}
 
 			double cellHeight = pxHeight / imgHeight;
 			double cellWidth = pxWidth / imgWidth;
+			cellHeight = cellWidth;
 
 			Group g = invertedGroups[img];
 			if (groupBorder == null) {
@@ -210,8 +232,20 @@ namespace DeepZoomView {
 
 			//g.rectangle;
 		}
-	}
 
+		public void Test(Canvas element) {
+			double cellHeight = pxHeight / imgHeight;
+			double cellWidth = pxWidth / imgWidth;
+			foreach (Group g in placedGroups) {
+				Rectangle r = new Rectangle();
+				r.Stroke = new SolidColorBrush(Colors.Red);
+				r.SetValue(Canvas.LeftProperty, g.rectangle.X);
+				r.SetValue(Canvas.TopProperty, g.rectangle.Y);
+				r.Width = cellWidth;
+				r.Height = cellHeight;
+			}
+		}
+	} // closes GroupDisplay
 
 	public class Group {
 		internal String name { get; set; }

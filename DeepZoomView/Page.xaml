@@ -244,14 +244,15 @@
 
             <MultiScaleImage x:Name="msi" Source="C:/SmallDB/DZC/collection.xml" Grid.Row="1" Grid.Column="1"/>
 
-            <Canvas Name="Overlays" Grid.Row="1" Grid.Column="1">
-                <Canvas.RenderTransform>
-                    <ScaleTransform x:Name="OverlaysScale" ScaleX="1.0" ScaleY="1.0" />
-                </Canvas.RenderTransform>
-                <!--                <TextBlock Text="Something something" Foreground="White" Canvas.Left="500" Canvas.Top="0" Width="100"></TextBlock>
-                <TextBlock Text="Something something" Foreground="White" Canvas.Left="200" Canvas.Top="400" Width="100"></TextBlock>
-                <TextBlock Text="Something something" Foreground="White" Canvas.Left="700" Canvas.Top="600" Width="100"></TextBlock>
--->
+            <Canvas Grid.Row="1" Grid.Column="1">
+                <Canvas Name="Overlays">
+                    <Canvas.RenderTransform>
+                        <ScaleTransform x:Name="OverlaysScale" ScaleX="1.0" ScaleY="1.0" />
+                    </Canvas.RenderTransform>
+                    <!--<TextBlock Text="Something something" Foreground="White" Canvas.Left="500" Canvas.Top="0" Width="100"></TextBlock>
+                    <TextBlock Text="Something something" Foreground="White" Canvas.Left="200" Canvas.Top="400" Width="100"></TextBlock>
+                    <TextBlock Text="Something something" Foreground="White" Canvas.Left="700" Canvas.Top="600" Width="100"></TextBlock>-->
+                </Canvas>
             </Canvas>
             <Canvas Name="Yaxis" Grid.Row="1" Grid.Column="0" VerticalAlignment="Stretch">
                 <Canvas.RenderTransform>
