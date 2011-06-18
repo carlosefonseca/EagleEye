@@ -67,6 +67,7 @@
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
+    <Compile Include="OrganizableByHSB.cs" />
     <Compile Include="GroupDisplay.cs" />
     <Compile Include="DateCollection.cs" />
     <Compile Include="ColorUtils.cs" />

@@ -14,39 +14,35 @@ using System.Linq;
 using ColorUtils;
 
 namespace DeepZoomView {
-	public class OrganizableByColor : Organizable {
+	public class OrganizableByHSB : Organizable {
+		const int BLACK = -1;
+		const int GREY = -2;
+		const int WHITE = -3;
+
 		public new Dictionary<int, List<int>> data = new Dictionary<int, List<int>>();
-		public new Dictionary<int, Color> invertedData = new Dictionary<int, Color>();
+		public new Dictionary<int, HsbColor> invertedData = new Dictionary<int, HsbColor>();
 
 		/// <summary>
 		/// Constructor
 		/// </summary>
-		public OrganizableByColor()
-			: base("Color") {
+		public OrganizableByHSB()
+			: base("HSB") {
 		}
 
 
 		public override void Add(int k, string p) {
-			int hue;
-			double sat = -1, lig = -1;
-			Color c = Colors.White;
-			try {
-				c = ColorUtil.FromStringToColor(p);
-			} catch {
-				return;
-			}
-			HslColor hsl = HslColor.FromColor(c);
-			hue = hsl.SimpleHue();
-			sat = hsl.S;
-			lig = hsl.L;
-			int key = hue;
-			if (lig != -1 && sat != -1) {
-				if (lig < 0.1) {
-					key = -1;
-				} else if (lig > 0.9) {
-					key = -3;
-				} else if (sat < 0.1) {
-					key = -2;
+			HsbColor c = HsbColor.Parse(p);
+			int key = c.H;
+
+			double t = 0.1;
+
+			if (c.S < t) {
+				if (c.B < t) {
+					key = BLACK;
+				} else if (c.B < 1 - t) {
+					key = WHITE;
+				} else {
+					key = GREY;
 				}
 			}
 
@@ -153,7 +149,7 @@ namespace DeepZoomView {
 		/// </summary>
 		/// <param name="k">The MSI-Id for the image</param>
 		/// <returns></returns>
-		public Color Color(int k) {
+		public HsbColor Color(int k) {
 			return invertedData[k];
 		}
 

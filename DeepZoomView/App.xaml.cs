@@ -26,7 +26,11 @@ namespace DeepZoomView
 
         private void Application_Startup(object sender, StartupEventArgs e)
         {
-            this.RootVisual = new Page();
+			if (e.InitParams.ContainsKey("msi")) {
+				this.RootVisual = new Page(e.InitParams["msi"]);
+			} else {
+				this.RootVisual = new Page();
+			}
         }
 
         private void Application_Exit(object sender, EventArgs e)

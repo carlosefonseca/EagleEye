@@ -18,6 +18,7 @@ using System.Xml.Linq;
 using System.Json;
 using System.Text;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 
 
 namespace DeepZoomView {
@@ -45,14 +46,24 @@ namespace DeepZoomView {
 		MetadataCollection metadataCollection = new MetadataCollection();
 		ObservableCollection<String> CbItems = null;
 		GroupDisplay gd = null;
+		//MultiScaleImage msi;
 
 		public Double ZoomFactor {
 			get { return zoom; }
 			set { zoom = value; }
 		}
 
-		public Page() {
+		public Page()
+			: this("MicroDB\\DZC\\collection.xml") {
+		}
+
+		public Page(String msiPath) {
 			InitializeComponent();
+			//msi = new MultiScaleImage();
+			//msi.SetValue(Grid.ColumnProperty, 1);
+			//msi.SetValue(Grid.RowProperty, 1);
+			//msi.Source = new DeepZoomImageTileSource(new Uri(msiPath, UriKind.Relative));
+			//RootGrid.Children.Add(msi);
 
 			// Firing an event when the MultiScaleImage is Loaded
 			this.msi.Loaded += new RoutedEventHandler(msi_Loaded);

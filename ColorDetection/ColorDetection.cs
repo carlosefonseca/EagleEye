@@ -9,6 +9,7 @@ using AForge.Imaging;
 using System.Reflection;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
+using System.Diagnostics;
 
 namespace EEPlugin {
 	public class ColorDetection : EEPluginInterface {
@@ -80,19 +81,32 @@ namespace EEPlugin {
 		/// <param name="ic">The colection of images</param>
 		/// <returns></returns>
 		public ImageCollection processImageCollection(ImageCollection ic) {
+			Boolean overrideData = false;
+
 			// Obtem a cor mediana da imagem * Histograma RGB
 			foreach (EagleEye.Common.Image i in ic.ToList()) {
 				Color? result = null;
-				if (!i.ContainsPluginData("color")) {
+				if (overrideData || !i.ContainsPluginData("color")) {
 					Console.WriteLine("Color Detecting " + i.path + "... ");
-					result = RunDetection(thumbs.GetThumbnail(i.id));
-					i.SetPluginData("color", result.ToString());
+/*					if (thumbs.ThumbnailExists(i)) {
+						continue;
+					}
+					Stopwatch s1 = Stopwatch.StartNew();
+*/					result = RunDetection(thumbs.GetThumbnail(i));
+/*					s1.Stop();
+					Stopwatch s2 = Stopwatch.StartNew();
+					result = RunDetection(i.path);
+					s2.Stop();
+					Console.WriteLine("Thumb: " + s1.ElapsedMilliseconds + "  Orig: " + s2.ElapsedMilliseconds);
+*/					i.SetPluginData("RGB", result.Value.ToArgb().ToString());
 				}
-				if (true || !i.ContainsPluginData("HSB")) {
+				if (overrideData || !i.ContainsPluginData("HSB")) {
 					if (!result.HasValue) {
 						result = (Color?)FromStringToColor(i.GetPluginData("color"));
 					}
-					i.SetPluginData("HSB", "H:" + (int)result.Value.GetHue() + " S:" + (int)result.Value.GetSaturation() + " B:" + (int)result.Value.GetBrightness());
+					i.SetPluginData("HSB", "H:" + (int)result.Value.GetHue()
+										+ " S:" + Math.Round(result.Value.GetSaturation(), 3)
+										+ " B:" + Math.Round(result.Value.GetBrightness(), 3));
 				}
 			}
 			return null;
@@ -168,134 +182,134 @@ namespace EEPlugin {
 		}
 
 
+		/*
 
+				private void DrawMap() {
+					Size canvas = new Size(3000, 1000);
+					Size thumb = new Size(25, 25);
 
-		private void DrawMap() {
-			Size canvas = new Size(3000, 1000);
-			Size thumb = new Size(25, 25);
+					// Cria um png com as imagens lá colocadas nas suas posições de acordo com a árvore
+					// Altura > luminancia ; Largura > saturação
+					System.Drawing.Bitmap pg = new System.Drawing.Bitmap(canvas.Width, canvas.Height);
+					Graphics gr = Graphics.FromImage(pg);
 
-			// Cria um png com as imagens lá colocadas nas suas posições de acordo com a árvore
-			// Altura > luminancia ; Largura > saturação
-			System.Drawing.Bitmap pg = new System.Drawing.Bitmap(canvas.Width, canvas.Height);
-			Graphics gr = Graphics.FromImage(pg);
+					// paint the canvas black
+					Rectangle pgRect = new Rectangle(0, 0, pg.Width, pg.Height);
+					SolidBrush solidWhite = new SolidBrush(Color.Black);
+					gr.FillRectangle(solidWhite, pgRect);
 
-			// paint the canvas black
-			Rectangle pgRect = new Rectangle(0, 0, pg.Width, pg.Height);
-			SolidBrush solidWhite = new SolidBrush(Color.Black);
-			gr.FillRectangle(solidWhite, pgRect);
-
-			int x, y;
-			int xMax = 360;
-			int marginX = thumb.Width / 2, marginY = thumb.Height / 2;
-			Rectangle rect = new Rectangle();
-			double totalItems = MappedImages.Count;
-			double itemCount = 0;
-			foreach (KeyValuePair<double, SortedDictionary<double, List<long>>> col in ColorMap) {
-				x = Convert.ToInt16(col.Key * canvas.Width / xMax);
-				foreach (KeyValuePair<double, List<long>> row in col.Value) {
-					y = Convert.ToInt16(row.Key * canvas.Height);
-					foreach (long item in row.Value) {
-						System.Drawing.Bitmap img = thumbs.GetThumbnail(item);
-						rect.X = x - marginX;
-						rect.Y = canvas.Height - y - marginY;
-						rect.Size = thumb;
-						rect.Height = img.Height * thumb.Width / img.Width;
-						gr.DrawImage(img, rect);
-						itemCount++;
-						Console.Write("\r{0:0%}    ", itemCount / totalItems);
+					int x, y;
+					int xMax = 360;
+					int marginX = thumb.Width / 2, marginY = thumb.Height / 2;
+					Rectangle rect = new Rectangle();
+					double totalItems = MappedImages.Count;
+					double itemCount = 0;
+					foreach (KeyValuePair<double, SortedDictionary<double, List<long>>> col in ColorMap) {
+						x = Convert.ToInt16(col.Key * canvas.Width / xMax);
+						foreach (KeyValuePair<double, List<long>> row in col.Value) {
+							y = Convert.ToInt16(row.Key * canvas.Height);
+							foreach (long item in row.Value) {
+								System.Drawing.Bitmap img = thumbs.GetThumbnail(item);
+								rect.X = x - marginX;
+								rect.Y = canvas.Height - y - marginY;
+								rect.Size = thumb;
+								rect.Height = img.Height * thumb.Width / img.Width;
+								gr.DrawImage(img, rect);
+								itemCount++;
+								Console.Write("\r{0:0%}    ", itemCount / totalItems);
+							}
+						}
 					}
+					Console.WriteLine();
+					pg.Save(Path.GetFullPath("colormap.png"));
 				}
-			}
-			Console.WriteLine();
-			pg.Save(Path.GetFullPath("colormap.png"));
-		}
 
-		private void DrawMap2() {
-			// Figure out what do we have to split
-			Dictionary<int, int> image_counts = new Dictionary<int, int>();
-			foreach (KeyValuePair<double, SortedDictionary<double, List<long>>> col_kv in ColorMap) {
-				int k = Convert.ToInt32(col_kv.Key);
-				if (image_counts.ContainsKey(k)) {
-					image_counts[k] += col_kv.Value.Count;
-				} else {
-					image_counts.Add(k, col_kv.Value.Count);
-				}
-			}
-
-			int destination_min = 0, destination_max = 1000;
-			int[] destination = new int[destination_max];
-			destination[destination_min] = image_counts.Keys.First<int>();
-			destination[destination_max - 1] = image_counts.Keys.Last<int>();
-
-			int arr_min = destination[destination_min];
-			int arr_max = destination[destination_max - 1];
-
-			Distribute(image_counts, arr_min, arr_max, ref destination, destination_min, destination_max);
-			#region hide
-
-			Size canvas = new Size(3000, 1000);
-			Size thumb = new Size(25, 25);
-
-			// Cria um png com as imagens lá colocadas nas suas posições de acordo com a árvore
-			// Altura > luminancia ; Largura > saturação
-			System.Drawing.Bitmap pg = new System.Drawing.Bitmap(canvas.Width, canvas.Height);
-			Graphics gr = Graphics.FromImage(pg);
-
-			// paint the canvas black
-			Rectangle pgRect = new Rectangle(0, 0, pg.Width, pg.Height);
-			SolidBrush solidWhite = new SolidBrush(Color.Black);
-			gr.FillRectangle(solidWhite, pgRect);
-
-			int x, y;
-			int xMax = 360;
-			int marginX = thumb.Width / 2, marginY = thumb.Height / 2;
-			Rectangle rect = new Rectangle();
-			double totalItems = MappedImages.Count;
-			double itemCount = 0;
-			foreach (KeyValuePair<double, SortedDictionary<double, List<long>>> col in ColorMap) {
-				x = Convert.ToInt16(col.Key * canvas.Width / xMax);
-				foreach (KeyValuePair<double, List<long>> row in col.Value) {
-					y = Convert.ToInt16(row.Key * canvas.Height);
-					foreach (long item in row.Value) {
-						System.Drawing.Bitmap img = thumbs.GetThumbnail(item);
-						rect.X = x - marginX;
-						rect.Y = canvas.Height - y - marginY;
-						rect.Size = thumb;
-						rect.Height = img.Height * thumb.Width / img.Width;
-						gr.DrawImage(img, rect);
-						itemCount++;
-						Console.Write("\r{0:0%}    ", itemCount / totalItems);
+				private void DrawMap2() {
+					// Figure out what do we have to split
+					Dictionary<int, int> image_counts = new Dictionary<int, int>();
+					foreach (KeyValuePair<double, SortedDictionary<double, List<long>>> col_kv in ColorMap) {
+						int k = Convert.ToInt32(col_kv.Key);
+						if (image_counts.ContainsKey(k)) {
+							image_counts[k] += col_kv.Value.Count;
+						} else {
+							image_counts.Add(k, col_kv.Value.Count);
+						}
 					}
+
+					int destination_min = 0, destination_max = 1000;
+					int[] destination = new int[destination_max];
+					destination[destination_min] = image_counts.Keys.First<int>();
+					destination[destination_max - 1] = image_counts.Keys.Last<int>();
+
+					int arr_min = destination[destination_min];
+					int arr_max = destination[destination_max - 1];
+
+					Distribute(image_counts, arr_min, arr_max, ref destination, destination_min, destination_max);
+					#region hide
+
+					Size canvas = new Size(3000, 1000);
+					Size thumb = new Size(25, 25);
+
+					// Cria um png com as imagens lá colocadas nas suas posições de acordo com a árvore
+					// Altura > luminancia ; Largura > saturação
+					System.Drawing.Bitmap pg = new System.Drawing.Bitmap(canvas.Width, canvas.Height);
+					Graphics gr = Graphics.FromImage(pg);
+
+					// paint the canvas black
+					Rectangle pgRect = new Rectangle(0, 0, pg.Width, pg.Height);
+					SolidBrush solidWhite = new SolidBrush(Color.Black);
+					gr.FillRectangle(solidWhite, pgRect);
+
+					int x, y;
+					int xMax = 360;
+					int marginX = thumb.Width / 2, marginY = thumb.Height / 2;
+					Rectangle rect = new Rectangle();
+					double totalItems = MappedImages.Count;
+					double itemCount = 0;
+					foreach (KeyValuePair<double, SortedDictionary<double, List<long>>> col in ColorMap) {
+						x = Convert.ToInt16(col.Key * canvas.Width / xMax);
+						foreach (KeyValuePair<double, List<long>> row in col.Value) {
+							y = Convert.ToInt16(row.Key * canvas.Height);
+							foreach (long item in row.Value) {
+								System.Drawing.Bitmap img = thumbs.GetThumbnail(item);
+								rect.X = x - marginX;
+								rect.Y = canvas.Height - y - marginY;
+								rect.Size = thumb;
+								rect.Height = img.Height * thumb.Width / img.Width;
+								gr.DrawImage(img, rect);
+								itemCount++;
+								Console.Write("\r{0:0%}    ", itemCount / totalItems);
+							}
+						}
+					}
+					Console.WriteLine();
+					pg.Save(Path.GetFullPath("colormap.png"));
+					#endregion hid
 				}
-			}
-			Console.WriteLine();
-			pg.Save(Path.GetFullPath("colormap.png"));
-			#endregion hid
-		}
+		
 
 
 
+				private static void Distribute(Dictionary<int, int> image_counts, int arr_min, int arr_max,
+											   ref int[] destination, int destination_min, int destination_max) {
+					if (destination_min >= destination_max) return;
 
-		private static void Distribute(Dictionary<int, int> image_counts, int arr_min, int arr_max,
-									   ref int[] destination, int destination_min, int destination_max) {
-			if (destination_min >= destination_max) return;
+					int count = 0;
+					for (int i = arr_min; i <= arr_max; i++) {
+						if (image_counts.ContainsKey(i))
+							count += image_counts[i];
+					}
 
-			int count = 0;
-			for (int i = arr_min; i <= arr_max; i++) {
-				if (image_counts.ContainsKey(i))
-					count += image_counts[i];
-			}
-
-			int half_images = count / 2;
-			int destination_middle = (destination_max - destination_min) / 2;
-			int acc = 0;
-			int key;
-			for (key = arr_min; acc <= half_images; acc += image_counts[key++]) ;
-			destination[destination_middle] = key;
-			Distribute(image_counts, arr_min, key, ref destination, destination_min, destination_middle);
-			Distribute(image_counts, key + 1, arr_max, ref destination, destination_middle, destination_max);
-		}
-
+					int half_images = count / 2;
+					int destination_middle = (destination_max - destination_min) / 2;
+					int acc = 0;
+					int key;
+					for (key = arr_min; acc <= half_images; acc += image_counts[key++]) ;
+					destination[destination_middle] = key;
+					Distribute(image_counts, arr_min, key, ref destination, destination_min, destination_middle);
+					Distribute(image_counts, key + 1, arr_max, ref destination, destination_middle, destination_max);
+				}
+				*/
 
 		private Color RunDetection(string p) {
 			Bitmap img = new Bitmap(p);

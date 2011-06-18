@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
+using System.Linq;
 
 namespace EagleEye.Common {
 	public class SortedImageCollection : ImageCollection {
@@ -29,7 +30,16 @@ namespace EagleEye.Common {
 			foreach (Image i in collection) {
 				txt += i.id + "\t" + i.path + "\t>  ";
 				if (i.ContainsExif(key)) {
-					txt += i.Exif(key).ToString() + "\n";
+					object exifdata = i.Exif(key);
+					if (exifdata is List<object>) {
+						txt += "[";
+						((List<object>)exifdata).ForEach(delegate(object name) {
+							txt += name.ToString() + ",";
+						});
+						txt = txt.TrimEnd(",".ToCharArray())+"]\n";
+					} else {
+						txt += i.Exif(key).ToString() + "\n";
+					}
 				} else {
 					txt += "[no " + key + "]\n";
 				}
@@ -57,6 +67,8 @@ namespace EagleEye.Common {
 				ImageExifComparer c;
 				Console.WriteLine("Comparing by " + key);
 				c = new ImageExifComparer(key);
+				IEnumerable<Image> filtered = collection.Where(i => i.ContainsExif(key));
+				collection = filtered.ToList();
 				collection.Sort(c);
 			}
 			return this;

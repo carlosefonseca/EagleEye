@@ -20,7 +20,7 @@ namespace EagleEye.Common {
 		public Dictionary<string, object> exif;
 		private DateTime date;
 		private string thumbnail;
-		private Dictionary<string, string> pluginData = new Dictionary<string,string>();
+		private Dictionary<string, string> pluginData = new Dictionary<string, string>();
 		private bool dirty = false;
 
 		public Image(string path) {
@@ -132,7 +132,7 @@ namespace EagleEye.Common {
 		}
 
 		/// <summary>
-		/// Attaches the plugin generated data to the image.
+		/// Attaches the plugin generated data to the image. If data already exists, it will be overriden.
 		/// </summary>
 		/// <param name="pluginId">The unique plugin Id</param>
 		/// <param name="data">A string representing the generated data</param>
@@ -267,6 +267,18 @@ namespace EagleEye.Common {
 			return dirty;
 		}
 
+
+		public string Keywords() {
+			object kwdata = Exif("Keywords");
+			if (kwdata is List<object>) {
+				String kws = "";
+				((List<object>)kwdata).ForEach(delegate(object k) {
+					kws += (String)k + ",";
+				});
+				return kws.TrimEnd(new Char[] { ',' });
+			}
+			return (String)kwdata;
+		}
 	}
 
 

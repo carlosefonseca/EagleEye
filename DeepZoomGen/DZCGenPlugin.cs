@@ -15,7 +15,7 @@ using Newtonsoft.Json;
 
 namespace EEPlugin {
 	public class DZCGenerator : EEPluginInterface {
-		private Persistence persistence;
+		//private Persistence persistence;
 		private Dictionary<long, string> PluginData; //id > xml path
 		private string DZDir;
 
@@ -51,16 +51,16 @@ namespace EEPlugin {
 		}
 
 		public void Load() {
-			PluginData = persistence.Read<long, string>(Converters.ReadLong, Converters.ReadString);
+			//PluginData = persistence.Read<long, string>(Converters.ReadLong, Converters.ReadString);
 		}
 
 		public void Save() {
-			if (persistence == null)
-				persistence = new Persistence(this.Id() + ".eep.db");
+			//if (persistence == null)
+			//    persistence = new Persistence(this.Id() + ".eep.db");
 
-			foreach (KeyValuePair<long, string> kv in PluginData) {
-				persistence.Put(kv.Key.ToString(), kv.Value);
-			}
+			//foreach (KeyValuePair<long, string> kv in PluginData) {
+			//    persistence.Put(kv.Key.ToString(), kv.Value);
+			//}
 		}
 		#endregion EEPluginInterface Boring
 
@@ -68,14 +68,14 @@ namespace EEPlugin {
 		/// Plugin initialization (called from manager)
 		/// </summary>
 		public void Init() {
-			if (persistence == null) {
-				persistence = new Persistence(Id() + ".eep");
-			}
-			if (persistence.existed) {
-				Load();
-			} else {
+			//if (persistence == null) {
+			//    persistence = new Persistence(Id() + ".eep");
+			//}
+			//if (persistence.existed) {
+			//    Load();
+			//} else {
 				PluginData = new Dictionary<long, string>();
-			}
+			//}
 			DZDir = Persistence.RootFolder() + "DZC\\";
 		}
 
@@ -109,16 +109,18 @@ namespace EEPlugin {
 						PluginData.Add(i.id, relativeTarget);
 						collectionGenerationRequired = true;
 					}
-					Save();
+					//Save();
 				}
 			}
 			if (count > 0) {
 				Console.WriteLine(count + " images. Mean processing time of " + times / count + " ms.");
 			}
 
-			if (collectionGenerationRequired) {
+			if (collectionGenerationRequired || !File.Exists(DZDir + "collection.xml")) {
 				Console.WriteLine("Generating Collection...");
 				GenerateCollection();
+			} else {
+				Console.WriteLine("Generation not required.");
 			}
 
 			// DZ XML file
@@ -135,12 +137,17 @@ namespace EEPlugin {
 		private void IncludeMetadata(ImageCollection ic, string p) {
 			XElement xml = XElement.Load(p);
 			Console.WriteLine("Modifying the XML");
-			
+			Dictionary<string, string> tags;
+			EagleEye.Common.Image i;
 			foreach (XElement a in xml.Elements().First().Elements()) {
-				Dictionary<string, string> tags = new Dictionary<string, string>();
+				tags = new Dictionary<string, string>();
 				String id = a.Attribute("Source").Value.Split(new Char[] { '/', '.' })[1];
-
-				EagleEye.Common.Image i = ic.Get(Convert.ToInt32(id));
+				try {
+					 i = ic.Get(Convert.ToInt32(id));
+				} catch {
+					a.Remove();
+					continue;
+				}
 				tags.Add("id", id);
 				tags.Add("date", i.Date().ToString());
 

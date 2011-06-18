@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 
 namespace EagleEye.Common {
 	public class PersistedImageCollection : ImageCollection {
@@ -10,6 +11,13 @@ namespace EagleEye.Common {
 			persistence = new Persistence(filename);
 			if (persistence.existed) { // true if opened
 				Load();
+				persistence.Close();
+				File.Move(Persistence.FullFilename(filename), Persistence.FullFilename("old-"+ filename));
+				persistence = new Persistence(filename);
+				foreach (Image i in collection.Values) {
+					persistence.Put(i);
+				}
+				File.Delete(Persistence.FullFilename("old-" + filename));
 			}
 		}
 

@@ -91,12 +91,12 @@ namespace EagleEye {
 
 		public static void CommandLine() {
 			string command;
-			string cmds = "Commands: show | list | sort | adddir | plugin | thumbs | save | exit";
+			string cmds = "Commands: show | list | sort | adddir | plugin | thumbs | addgen | exit";
 			Console.WriteLine(cmds);
 			do {
 				command = Console.ReadLine();
-				char[] sep = {' '};
-				string[] split = command.Split(sep,2);
+				char[] sep = { ' ' };
+				string[] split = command.Split(sep, 2);
 				switch (split[0]) {
 					case "show": CmdShowImageInfo(split); break;
 					case "list": ListImages(); break;
@@ -106,7 +106,7 @@ namespace EagleEye {
 					case "thumbs": LibMan.GenerateThumbnails(); break;
 					case "save": LibMan.Save(); break;
 					case "exit": Console.WriteLine("Bye"); break;
-					case "addgen": AddDir(split); PlugMan.RunPlugin(images, "dzcg"); break;
+					case "addgen": AddDir(split); PlugMan.RunPlugin(images, "color"); PlugMan.RunPlugin(images, "exif"); PlugMan.RunPlugin(images, "dzcg"); break;
 					case "bigtest": BigTest(); break;
 					case "": Console.WriteLine(cmds); break;
 					default: Console.WriteLine("Unkown cmd. " + cmds); break;
@@ -127,15 +127,15 @@ namespace EagleEye {
 
 
 		private static void ListImages() {
-					Stopwatch SWCopy = Stopwatch.StartNew();
+			Stopwatch SWCopy = Stopwatch.StartNew();
 			SortedImageCollection sorted = images.ToSortable();
-					SWCopy.Stop();
-					Stopwatch SWSort = Stopwatch.StartNew();
+			SWCopy.Stop();
+			Stopwatch SWSort = Stopwatch.StartNew();
 			sorted.SortById();
-					SWSort.Stop();
-					Stopwatch SWString = Stopwatch.StartNew();
+			SWSort.Stop();
+			Stopwatch SWString = Stopwatch.StartNew();
 			string output = sorted.ToStringWithExif("CreateDate");
-					SWString.Stop();
+			SWString.Stop();
 			Console.WriteLine(output);
 			Console.WriteLine("Colection size: {0}", sorted.Count());
 			Console.WriteLine("Times | Copy: {0}ms | Sort: {1}ms | Generate Output: {2}ms", SWCopy.ElapsedMilliseconds, SWSort.ElapsedMilliseconds, SWString.ElapsedMilliseconds);
@@ -216,7 +216,14 @@ namespace EagleEye {
 
 
 		public static string ShowImageInfo(Image i) {
-			return i.Details() + "\nPlugins:\n" + PlugMan.PluginsInfoForImage(i);
+			String txt = i.Details() + Environment.NewLine + Environment.NewLine +
+							"PluginData stored in Image:" + Environment.NewLine;
+			foreach (KeyValuePair<string, string> kv in i.GetPluginData()) {
+				txt += kv.Key + ": " + kv.Value + Environment.NewLine;
+			}
+			txt += Environment.NewLine + Environment.NewLine +
+				"Plugins:" + Environment.NewLine + PlugMan.PluginsInfoForImage(i);
+			return txt;
 		}
 
 
@@ -227,7 +234,7 @@ namespace EagleEye {
 		}
 
 		public static void Log(String msg) {
-			logger.WriteLine(DateTime.Now.ToString("mm:ss ")+msg);
+			logger.WriteLine(DateTime.Now.ToString("mm:ss ") + msg);
 			logger.Flush();
 		}
 

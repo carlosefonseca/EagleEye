@@ -10,6 +10,7 @@ using System.Windows.Media.Animation;
 using System.Windows.Shapes;
 using System.Collections.Generic;
 using System.Linq;
+using System.Diagnostics;
 
 namespace DeepZoomView {
 	public class GroupDisplay {
@@ -53,7 +54,12 @@ namespace DeepZoomView {
 					foreach (Group g in groupsBeingPlaced) {
 						pos = p(x, y);
 						while (map.ContainsKey(pos)) {
-							x = x + (int)(map[pos].rectangle.Width - (x - map[pos].rectangle.X));
+							Rect r = map[pos].rectangle;
+							if (r.Top + r.Height - 1 == y) {
+								x++;
+							} else {
+								x = x + (int)(map[pos].rectangle.Width - (x - map[pos].rectangle.X));
+							}
 							if (x >= imgWidth) {
 								x = 0;
 								y++;
@@ -112,9 +118,7 @@ namespace DeepZoomView {
 					return false;
 				}
 			}
-			if (g.name == "10-04-2010") {
-				g.ToString();
-			}
+
 			List<string> mapTmp = new List<string>();
 			while (n > 0) {
 				if (x - ix < H) {
@@ -128,7 +132,7 @@ namespace DeepZoomView {
 				} else {
 					y++;
 					x = ix;
-					if (y > imgHeight || map.ContainsKey(p(x, y))) {
+					if (y > imgHeight || y > 2*H || map.ContainsKey(p(x, y))) {
 						return false;
 					}
 				}
@@ -173,7 +177,12 @@ namespace DeepZoomView {
 					if (!positions.ContainsKey(x + ";" + y)) {
 						positions.Add(x + ";" + y, id);
 						invertedGroups.Add(id, g);
-						msi.SubImages[id].ViewportOrigin = new Point(-x, -y);
+						try {
+							msi.SubImages[id].ViewportOrigin = new Point(-x, -y);
+						} catch {
+							Debug.WriteLine("On PositionImages, id " + id + " was not found on msi (which contains " + msi.SubImages.Count + ")");
+							continue;
+						}
 						max = new Point(Math.Max(max.X, x), Math.Max(max.Y, y));
 					}
 					if (++x >= g.rectangle.X + g.rectangle.Width) {

@@ -64,9 +64,10 @@ namespace EagleEye {
 				setts.ReadStrings();
 			}
 			collection = new PersistedImageCollection("Images");
+			Console.WriteLine("Collection Size: " + collection.Count());
 			PlugMan = PluginManager.Get();
 			Thumbs = Thumbnails.Get();
-			GenerateThumbnails();
+			//GenerateThumbnails();
 		}
 
 

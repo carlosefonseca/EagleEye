@@ -37,7 +37,7 @@ namespace EagleEye.Common {
 		/// </summary>
 		/// <param name="filename"></param>
 		/// <returns></returns>
-		public string FullFilename(string filename) {
+		public static string FullFilename(string filename) {
 			if (dir == null) {
 				throw new Exception("DB: Class var 'dir' must be set first");
 			}
@@ -75,7 +75,7 @@ namespace EagleEye.Common {
 
 		public void timer_Elapsed(object sender, ElapsedEventArgs e) {
 			timer = null;
-			Console.WriteLine("DB: Flushing... ");
+			Console.WriteLine("DB "+filename+": Flushing... ");
 			btreeDB.Sync();
 			//Save();
 			Console.WriteLine("Flushed.");
@@ -153,7 +153,9 @@ namespace EagleEye.Common {
 			// Acquire a cursor for the database.
 			BTreeCursor dbc;
 			dbc = btreeDB.Cursor();
-
+			List<DatabaseEntry> failedKeys = new List<DatabaseEntry>();
+			TK key;
+			TV val;
 			// Walk through the database and print out key/data pairs.
 			while (dbc.MoveNext()) {
 				if (dbc.Current.Value.Data == null) {
@@ -161,14 +163,33 @@ namespace EagleEye.Common {
 					dbc.Delete();
 				} else {
 					try {
-						TK key = DK(dbc.Current.Key.Data);
-						TV val = DV(dbc.Current.Value.Data);
-						output.Add(key, val);
+						key = DK(dbc.Current.Key.Data);
+						try {
+							val = DV(dbc.Current.Value.Data);
+							output.Add(key, val);
+						} catch {
+							Console.WriteLine("Error loading data with Key " + key.ToString() + "...");
+							failedKeys.Add(dbc.Current.Key);
+						}
 					} catch {
-						Console.WriteLine("Error loading data...");
+						Console.WriteLine("Error loading key...");
+						failedKeys.Add(dbc.Current.Key);
 					}
 				}
 			}
+			//Console.Write("Removing dead entries: ");
+			//foreach (DatabaseEntry k in failedKeys) {
+			//    Console.Write(DK(k.Data)+" ");
+			//    try {
+			//        btreeDB.Delete(k);
+			//    } catch {
+			//        Console.Write("??");
+			//    }
+			//}
+			//Console.WriteLine();
+			//Console.Write("Syncing...");
+			//btreeDB.Sync();
+			//Console.Write(" Done.");
 			return output;
 		}
 
@@ -243,6 +264,10 @@ namespace EagleEye.Common {
 			DatabaseEntry DbKey = new DatabaseEntry(key);
 
 			return btreeDB.Exists(DbKey);
+		}
+
+		public void Close() {
+			btreeDB.Dispose();
 		}
 	}
 

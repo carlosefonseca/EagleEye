@@ -25,9 +25,16 @@ namespace EEPlugin {
 		}
 
 		public ImageCollection processImageCollection(ImageCollection ic) {
+			List<Image> list = ic.ToList();
+			int total = list.Count;
+			double done = 0.0;
 			foreach (Image i in ic.ToList()) {
 				Device(i);
+				Keywords(i);
+				done++;
+				Console.Write("\r" + Math.Round((done / total)*100, 2).ToString().PadLeft(6) + "%");
 			}
+			Console.WriteLine();
 			return null;
 		}
 
@@ -42,6 +49,13 @@ namespace EEPlugin {
 				device += (String)i.Exif("Model");
 			}
 			i.SetPluginData("device", device);
+		}
+
+		private static void Keywords(Image i) {
+			String ks = i.Keywords();
+			if (ks.Length > 0) {
+				i.SetPluginData("Keywords", ks);
+			}
 		}
 
 		public String Id() {

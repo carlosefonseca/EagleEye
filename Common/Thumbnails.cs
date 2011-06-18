@@ -34,8 +34,13 @@ namespace EagleEye.Common {
 			myEncoderParameters.Param[0] = myEncoderParameter;
 		}
 
-		public System.Drawing.Bitmap GetThumbnail(long imgId) {
-			return persistence.Get<System.Drawing.Bitmap>(imgId, Converters.ReadBitmap);
+		public System.Drawing.Bitmap GetThumbnail(Image i) {
+			if (ThumbnailExists(i)) {
+				return persistence.Get<System.Drawing.Bitmap>(i.id, Converters.ReadBitmap);
+			} else {
+				GenerateAndSaveThumbnail(i);
+				return persistence.Get<System.Drawing.Bitmap>(i.id, Converters.ReadBitmap);
+			}
 		}
 
 
@@ -57,7 +62,7 @@ namespace EagleEye.Common {
 		/// <returns>Full path</returns>
 		public byte[] GenerateThumbnailData(Image i) {
 			int smallside = ThumbSize, newWidth, newHeight;
-			
+
 			if (!File.Exists(i.path)) return null;
 			Bitmap orig = new Bitmap(i.path);
 			if (orig.Size.Height < orig.Size.Width) {
@@ -69,7 +74,7 @@ namespace EagleEye.Common {
 			}
 			thumb = orig.GetThumbnailImage(newWidth, newHeight, abort, intptr);
 			if (thumb == null) { throw new Exception("The thumbnail is null :S "); }
-			
+
 			//Saving to byte[]
 			memStream = new MemoryStream();
 			thumb.Save(memStream, jpgEncoder, myEncoderParameters);
@@ -101,6 +106,10 @@ namespace EagleEye.Common {
 
 		public bool ThumbnailExists(Image i) {
 			return persistence.ExistsKey(i.id.ToString());
+		}
+
+		public bool ThumbnailExists(long id) {
+			return persistence.ExistsKey(id.ToString());
 		}
 	}
 }

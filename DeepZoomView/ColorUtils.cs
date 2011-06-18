@@ -7,14 +7,46 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Shapes;
+using System.Linq;
 
 namespace ColorUtils {
 	public class ColorUtil {
 		public static Color FromStringToColor(string txt) {
-			String[] p = txt.Split(new char[] { '[', ']', ',', ' ', '=' }, StringSplitOptions.RemoveEmptyEntries);
-			return Color.FromArgb(Convert.ToByte(p[2]), Convert.ToByte(p[4]), Convert.ToByte(p[6]), Convert.ToByte(p[8]));
+			if (txt.StartsWith("Color")) {
+				String[] p = txt.Split(new char[] { '[', ']', ',', ' ', '=' }, StringSplitOptions.RemoveEmptyEntries);
+				return Color.FromArgb(Convert.ToByte(p[2]), Convert.ToByte(p[4]), Convert.ToByte(p[6]), Convert.ToByte(p[8]));
+			} else {
+				Byte[] bytes = BitConverter.GetBytes(Convert.ToInt32(txt));
+				return Color.FromArgb(bytes[3], bytes[2], bytes[1], bytes[0]);
+			}
 		}
 	}
+
+	public struct HsbColor {
+		// value from 0 to 1 
+		public double A;
+		// value from 0 to 360 
+		public int H;
+		// value from 0 to 1 
+		public double S;
+		// value from 0 to 1 
+		public double B;
+
+		public static HsbColor Parse(String txt) {
+			String[] splitted = txt.Split(new Char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+			int h = Convert.ToInt16(splitted.First(x => x.StartsWith("H:")).Substring(2));
+			double s = Convert.ToDouble(splitted.First(x => x.StartsWith("S:")).Substring(2));
+			double b = Convert.ToDouble(splitted.First(x => x.StartsWith("B:")).Substring(2));
+
+			HsbColor c = new HsbColor();
+			c.A = 1;
+			c.H = h;
+			c.S = s;
+			c.B = b;
+			return c;
+		}
+	}
+
 
 	public struct HslColor {
 		// value from 0 to 1 

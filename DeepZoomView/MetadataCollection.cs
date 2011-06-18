@@ -45,8 +45,8 @@ namespace DeepZoomView {
 		/// <param name="type">The JSON type of the parameter (relevant when the name doesn't relate to a predefined type)</param>
 		private void CreateOrganizable(string k, JsonType type) {
 			Organizable o;
-			if (k == "color") o = new OrganizableByColor();
-			else if (k == "HSB") o = new OrganizableByColor(true);
+			if (k == "color" || k == "RGB") o = new OrganizableByColor();
+			else if (k == "HSB") o = new OrganizableByHSB();
 			else if (k == "date") o = new OrganizableByDate();
 			else {
 				Console.WriteLine("Unknown data type: '" + k + "'. Using base 'Organizable' type.");
@@ -77,6 +77,11 @@ namespace DeepZoomView {
 				AddImageMetadata(id, data);
 			}
 			//test();
+			foreach (String k in organizedMetadata.Keys.ToList()) {
+				if (organizedMetadata[k].Count() == 0) {
+					organizedMetadata.Remove(k);
+				}
+			}
 		}
 
 
