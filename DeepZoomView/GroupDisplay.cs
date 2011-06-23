@@ -13,6 +13,9 @@ using System.Linq;
 using System.Diagnostics;
 
 namespace DeepZoomView {
+	/// <summary>
+	/// Provides a TreeMap-sort-of-like view of a set of grouped images
+	/// </summary>
 	public class GroupDisplay {
 		private MultiScaleImage msi;
 		private List<KeyValuePair<string, List<int>>> groups;
@@ -24,6 +27,11 @@ namespace DeepZoomView {
 		List<Group> groupsNotPlaced = new List<Group>();
 		Rectangle groupBorder = null;
 
+		/// <summary>
+		/// Creates a new GroupDisplay
+		/// </summary>
+		/// <param name="msi">The MSI where the images should be displayed</param>
+		/// <param name="groups">The Groups to display</param>
 		public GroupDisplay(MultiScaleImage msi, List<KeyValuePair<string, List<int>>> groups) {
 			this.msi = msi;
 			this.groups = groups;
@@ -35,6 +43,137 @@ namespace DeepZoomView {
 			CalculateCanvas();
 		}
 
+		/// <summary>
+		/// Ordering using TreeMap
+		/// </summary>
+		/// <param name="groups">Groups to be ordered</param>
+		/// <param name="parentRect">The area where to distribute the groups</param>
+		/// <returns>???</returns>
+		internal RectWithRects TreeMap(IEnumerable<Group> groups, RectWithRects parentRect) {
+			// 1. if one group, return size for that group
+			if (groups.Count() == 1) {
+				parentRect.Group = groups.First();
+				parentRect.Adjust();
+				groups.First().rectangle = parentRect.Rect;
+				placedGroups.Add(groups.First());
+				return parentRect;
+			} else if (groups.Count() == 2) {
+				RectWithRects R1, R2;
+				if (parentRect.Height > parentRect.Width) {
+					R1 = new RectWithRects(0, 0, parentRect.Width, null, groups.First());
+					R2 = new RectWithRects(0, R1.Height, parentRect.Width, null, groups.Last());
+				} else {
+					R1 = new RectWithRects(0, 0, null, parentRect.Height, groups.First());
+					R2 = new RectWithRects(R1.Width, 0, null, parentRect.Height, groups.Last());
+				}
+				groups.First().rectangle = R1.Rect;
+				groups.Last().rectangle = R2.Rect;
+				placedGroups.AddRange(groups);
+				parentRect.Add(R1);
+				parentRect.Add(R2);
+				return parentRect;
+			}
+			// pick pivot and the lists before it and after it
+			int total = groups.Sum(g => g.images.Count);
+			int median = total / 2;
+			int sum = 0;
+			Group pivot = null;
+			List<Group> La = new List<Group>();
+			List<Group> Ltmp = groups.ToList();
+			List<Group> Lb = new List<Group>();
+			List<Group> Lc = new List<Group>();
+			{
+				Group firstG = groups.First();
+				if (firstG.images.Count >= median) {
+					La.Add(firstG);
+					Ltmp.Remove(firstG);
+					pivot = Ltmp.First();
+					Ltmp.Remove(pivot);
+				} else {
+					foreach (Group g in groups) {
+						sum += g.images.Count;
+						if (sum < median) {
+							La.Add(g);
+							Ltmp.Remove(g);
+							continue;
+						}
+						pivot = g;
+						Ltmp.Remove(g);
+						break;
+					}
+				}
+			}
+
+			// Distribute La on the available space
+			int LaCount = La.Sum(g => g.images.Count);
+
+			// Rects for Rp, Rb, Rc
+			RectWithRects Ra, Rp, Rb, Rc;
+			if (parentRect.Width >= parentRect.Height) { // Landscape
+				Ra = new RectWithRects(0, 0, LaCount / parentRect.Height, parentRect.Height);
+				// Rects for Rp, Rb, Rc
+				Rp = new RectWithRects(Ra.Width, 0, Math.Ceiling(Math.Sqrt(pivot.images.Count)), Math.Ceiling(Math.Sqrt(pivot.images.Count)));
+				Rb = new RectWithRects(Rp.X, Rp.Height, Rp.Width, parentRect.Height - Rp.Height);
+				Rc = new RectWithRects(Rp.X + Rp.Width, 0, parentRect.Width - Rp.X + Rp.Width, parentRect.Height);
+			} else {	// Portrait
+				Ra = new RectWithRects(0, 0, parentRect.Width, LaCount / parentRect.Width);
+				// Rects for Rp, Rb, Rc
+				Rp = new RectWithRects(Ra.Height, 0, Math.Ceiling(Math.Sqrt(pivot.images.Count)), Math.Ceiling(Math.Sqrt(pivot.images.Count)));
+				Rb = new RectWithRects(Rp.X, Rp.Height, Rp.Width, parentRect.Height - Rp.Height);
+				Rc = new RectWithRects(Rp.X + Rp.Width, 0, parentRect.Width - Rp.X + Rp.Width, parentRect.Height);
+			}
+			// Split Ltmp in Lb and Lc
+			double areaB = Rb.Width * Rb.Height;
+			double toFill = areaB;
+			foreach (Group g in Ltmp) {
+				if (g.images.Count <= toFill) {
+					toFill -= g.images.Count;
+					Lb.Add(g);
+				} else {
+					Lc.Add(g);
+				}
+			}
+			// 	Recursively apply the Ordered Treemap algorithm to LA in R1, LB in R2, and LC in R3.
+			Ra = TreeMap(La, Ra);
+			Rb = TreeMap(Lb, Rb);
+			Rp.Group = pivot;
+			placedGroups.Add(pivot);
+			if (Lc.Count > 0) {
+				Rc = TreeMap(Lc, Rc);
+			}
+			// Even out the rectangles in the sub-regions
+			if (Rp.Width != Rb.Width) {
+				double newWidth = Math.Max(Rp.Width, Rb.Width);
+				Rp.Width = newWidth;
+				Rb.Width = newWidth;
+			}
+
+			if (Ra.Height < Rp.Height + Rb.Height) {
+				Ra.Height = Rp.Height + Rb.Height;
+			} else {
+				Rb.Height = Ra.Height - Rp.Height;
+			}
+			if (Ra.Height >= Rc.Height) {
+				Rc.Height = Ra.Height;
+			} else {
+				Ra.Height = Rc.Height;
+				Rb.Height = Ra.Height - Rp.Height;
+			}
+
+			Rp.X = Ra.X + Ra.Width;
+			Rb.X = Ra.X + Ra.Width;
+			Rc.X = Rp.X + Rp.Width;
+			parentRect.Add(Ra);
+			parentRect.Add(Rp);
+			parentRect.Add(Rb);
+			Rp.Group.rectangle = Rp.Rect;
+			if (Lc.Count > 0) {
+				parentRect.Add(Rc);
+			}
+			return parentRect;
+		}
+
+
 
 		public Dictionary<string, int> DisplayGroupsOnScreen(out Point max) {
 			IOrderedEnumerable<KeyValuePair<string, List<int>>> orderedGroup = groups.OrderByDescending(kv => kv.Value.Count);
@@ -42,7 +181,13 @@ namespace DeepZoomView {
 				Group g = new Group(kv.Key, kv.Value);
 				groupsNotPlaced.Add(g);
 			}
+			RectWithRects result = TreeMap(groupsNotPlaced, new RectWithRects(0, 0, imgWidth, imgHeight));
+			Debug.WriteLine(result.TreeView());
+			groupsNotPlaced = groupsNotPlaced.Except(placedGroups).ToList();
+			HideNotPlacedImages();
+			return PositionImages(out max);
 
+			#region old
 			int x = 0, y = 0;
 			String pos;
 			int countGroupsPlaced = -1;
@@ -85,6 +230,7 @@ namespace DeepZoomView {
 			}
 			HideNotPlacedImages();
 			return PositionImages(out max);
+			#endregion old
 		}
 
 		private Boolean Fill(Group g, int ix, int iy) {
@@ -132,7 +278,7 @@ namespace DeepZoomView {
 				} else {
 					y++;
 					x = ix;
-					if (y > imgHeight || y > 2*H || map.ContainsKey(p(x, y))) {
+					if (y > imgHeight || y > 2 * H || map.ContainsKey(p(x, y))) {
 						return false;
 					}
 				}
@@ -140,7 +286,7 @@ namespace DeepZoomView {
 			foreach (string pos in mapTmp) {
 				map.Add(pos, g);
 			}
-			g.rectangle = new Rect(ix, iy, H, y-iy+1);
+			g.rectangle = new Rect(ix, iy, H, y - iy + 1);
 			return true;
 		}
 
@@ -157,12 +303,16 @@ namespace DeepZoomView {
 		}
 
 		private void CalculateDistribution(int amount, out int Hcells, out int Vcells) {
+			CalculateDistribution(amount, aspectRatio, out Hcells, out Vcells);
+		}
+
+		private void CalculateDistribution(int amount, double aR, out int Hcells, out int Vcells) {
 			int canHold = 1;
 			Hcells = 1;
 			Vcells = 1;
 			while (canHold < amount) {
 				Hcells++;
-				Vcells = Convert.ToInt32(Math.Floor(Hcells / aspectRatio));
+				Vcells = Convert.ToInt32(Math.Floor(Hcells / aR));
 				canHold = Convert.ToInt32(Hcells * Vcells);
 			}
 		}
@@ -271,7 +421,168 @@ namespace DeepZoomView {
 			images = l;
 		}
 
+		public override string ToString() {
+			return "Group Name=" + name + " Rect=" + rectangle.ToString() + " ImgCount=" + images.Count;
+		}
+	}
 
-		//public static List<Group> 
+	internal class RectWithRects {
+		public double X { get; set; }
+		public double Y { get; set; }
+		public double Width { get; set; }
+		public double Height { get; set; }
+		private List<RectWithRects> children;
+		public Boolean leaf;
+		public Group group;
+
+		public Group Group {
+			get {
+				return group;
+			}
+			set {
+				group = value;
+				children = null;
+				leaf = true;
+				Adjust();
+			}
+		}
+
+		public Rect Rect {
+			get {
+				return new Rect(X, Y, Width, Height);
+			}
+		}
+
+		public Boolean isLeaf() {
+			return leaf;
+		}
+
+
+		public RectWithRects(Rect r)
+			: this(r.X, r.Y, r.Width, r.Height) {
+		}
+
+		public RectWithRects(RectWithRects r)
+			: this(r.X, r.Y, r.Width, r.Height) {
+		}
+
+		public RectWithRects(int x, int y, int w, int h)
+			: this((double)x, (double)y, (double)w, (double)h) {
+		}
+
+		public RectWithRects(double x, double y, double w, double h) {
+			X = x;
+			Y = y;
+			Width = w;
+			Height = h;
+			group = null;
+			leaf = false;
+		}
+
+		public RectWithRects(Rect r, Group g)
+			: this(r) {
+			group = g;
+			leaf = true;
+		}
+
+		public RectWithRects(RectWithRects r, Group g)
+			: this(r) {
+			group = g;
+			leaf = true;
+		}
+
+		public RectWithRects(int x, int y, int w, int h, Group g)
+			: this((double)x, (double)y, (double)w, (double)h, g) {
+		}
+
+		public RectWithRects(double x, double y, double w, double h, Group g)
+			: this(x, y, w, h) {
+			group = g;
+			leaf = true;
+		}
+
+		public RectWithRects(double x, double y, double? w, double h, Group g)
+			: this(x, y, (w.HasValue ? w.Value : (g.images.Count / h)), h) {
+			group = g;
+			leaf = true;
+		}
+
+		public RectWithRects(double x, double y, double w, double? h, Group g)
+			: this(x, y, w, (h.HasValue ? h.Value : (g.images.Count / w))) {
+			group = g;
+			leaf = true;
+		}
+
+		public Boolean Fits(double count) {
+			return (Width * Height >= count);
+		}
+
+		public Boolean Fits(int count) {
+			return Fits((double)count);
+		}
+
+		public void Adjust() {
+			if (leaf) {
+				if (!Fits(Group.images.Count)) {
+					Adjust(this.Group.images.Count);
+				}
+			} else {
+				throw new Exception("Adjust() only works on leaf nodes");
+			}
+		}
+
+		public void Adjust(int count) {
+			double aR = Width / Height;
+			int canHold = 1;
+			double Hcells = 1;
+			double Vcells = 1;
+			while (canHold < count) {
+				Hcells++;
+				Vcells = Convert.ToInt32(Math.Floor(Hcells / aR));
+				canHold = Convert.ToInt32(Hcells * Vcells);
+			}
+			Width = Hcells;
+			Height = Vcells;
+		}
+
+		public override String ToString() {
+			if (children != null) {
+				return new Rect(X, Y, Width, Height).ToString() + " Count=" + children.Count;
+			} else if (leaf && group != null) {
+				return new Rect(X, Y, Width, Height).ToString() + " Group=" + group.ToString();
+			} else {
+				return new Rect(X, Y, Width, Height).ToString() + " No Children or Group";
+			}
+		}
+
+		public void Add(RectWithRects r) {
+			if (children == null) {
+				children = new List<RectWithRects>();
+			}
+			children.Add(r);
+			Width = Math.Max(r.X + r.Width, Width);
+			Height = Math.Max(r.Y + r.Height, Height);
+		}
+
+		public List<RectWithRects> Children() {
+			return children;
+		}
+
+		public String TreeView() {
+			int level = 0;
+			return TreeView(level);
+		}
+
+		public String TreeView(int level) {
+			String ident = "∟";
+			ident = ident.PadLeft(level * 2 + 1);
+			String str = ToString();
+			if (children != null) {
+				foreach (RectWithRects r in children) {
+					str += Environment.NewLine + ident + r.TreeView(level + 1);
+				}
+			}
+			return str;
+		}
 	}
 }
