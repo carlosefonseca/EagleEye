@@ -54,7 +54,7 @@ namespace DeepZoomView {
 			if (groups.Count() == 1) {
 				parentRect.Group = groups.First();
 				parentRect.Adjust();
-				groups.First().rectangle = parentRect.Rect;
+				groups.First().rectangle = parentRect;
 				placedGroups.Add(groups.First());
 				return parentRect;
 			} else if (groups.Count() == 2) {
@@ -66,8 +66,8 @@ namespace DeepZoomView {
 					R1 = new RectWithRects(0, 0, null, parentRect.Height, groups.First());
 					R2 = new RectWithRects(R1.Width, 0, null, parentRect.Height, groups.Last());
 				}
-				groups.First().rectangle = R1.Rect;
-				groups.Last().rectangle = R2.Rect;
+				groups.First().rectangle = R1;
+				groups.Last().rectangle = R2;
 				placedGroups.AddRange(groups);
 				parentRect.Add(R1);
 				parentRect.Add(R2);
@@ -109,39 +109,55 @@ namespace DeepZoomView {
 
 			// Rects for Rp, Rb, Rc
 			RectWithRects Ra, Rp, Rb, Rc;
+
 			if (parentRect.Width >= parentRect.Height) { // Landscape
-				Ra = new RectWithRects(0, 0, LaCount / parentRect.Height, parentRect.Height);
+				Ra = new RectWithRects(0, 0, LaCount / parentRect.Height + (int)(La.Count * 0.5), parentRect.Height);
 				// Rects for Rp, Rb, Rc
-				Rp = new RectWithRects(Ra.Width, 0, Math.Ceiling(Math.Sqrt(pivot.images.Count)), Math.Ceiling(Math.Sqrt(pivot.images.Count)));
-				Rb = new RectWithRects(Rp.X, Rp.Height, Rp.Width, parentRect.Height - Rp.Height);
-				Rc = new RectWithRects(Rp.X + Rp.Width, 0, parentRect.Width - Rp.X + Rp.Width, parentRect.Height);
+				int RpW, RpH;
+				CalculateDistribution(pivot.images.Count, parentRect.Width / parentRect.Height, new Point(parentRect.Width - Ra.Width, parentRect.Height), out RpW, out RpH);
+				Rp = new RectWithRects(Ra.Width, 0, RpW, RpH);
+				Rb = new RectWithRects(Rp.X, Rp.Height, Rp.Width, Math.Max(1, parentRect.Height - Rp.Height));
+				Rc = new RectWithRects(Rp.X + Rp.Width, 0, Math.Max(1, parentRect.Width - Rp.X - Rp.Width), parentRect.Height);
 			} else {	// Portrait
-				Ra = new RectWithRects(0, 0, parentRect.Width, LaCount / parentRect.Width);
+				Ra = new RectWithRects(0, 0, parentRect.Width, LaCount / parentRect.Width + (int)(La.Count * 0.5));
 				// Rects for Rp, Rb, Rc
-				Rp = new RectWithRects(Ra.Height, 0, Math.Ceiling(Math.Sqrt(pivot.images.Count)), Math.Ceiling(Math.Sqrt(pivot.images.Count)));
-				Rb = new RectWithRects(Rp.X, Rp.Height, Rp.Width, parentRect.Height - Rp.Height);
-				Rc = new RectWithRects(Rp.X + Rp.Width, 0, parentRect.Width - Rp.X + Rp.Width, parentRect.Height);
+				int RpW, RpH;
+				CalculateDistribution(pivot.images.Count, parentRect.Width / parentRect.Height, new Point(parentRect.Width, parentRect.Height - Ra.Height), out RpW, out RpH);
+				Rp = new RectWithRects(0, Ra.Height, RpW, RpH);
+				Rb = new RectWithRects(Rp.Width, Rp.Y, Math.Max(1, parentRect.Width - Rp.Width), Rp.Height);
+				Rc = new RectWithRects(0, Rp.Y + Rp.Height, parentRect.Width, Math.Max(1, parentRect.Height - Ra.Height - Rp.Height));
 			}
 			// Split Ltmp in Lb and Lc
-			double areaB = Rb.Width * Rb.Height;
-			double toFill = areaB;
+			double toFill = Rb.Width * Rb.Height;
+			Lb.Clear();
+			Lc.Clear();
+			int LcCount = 0;
 			foreach (Group g in Ltmp) {
 				if (g.images.Count <= toFill) {
 					toFill -= g.images.Count;
 					Lb.Add(g);
-				} else {
+				} else if (Rc.Fits(LcCount + g.images.Count)) {
 					Lc.Add(g);
+					LcCount += g.images.Count;
 				}
 			}
+
 			// 	Recursively apply the Ordered Treemap algorithm to LA in R1, LB in R2, and LC in R3.
+			if (La.Count == 0 || Lb.Count == 0)
+				Debug.WriteLine("A list was found empty.");
 			Ra = TreeMap(La, Ra);
-			Rb = TreeMap(Lb, Rb);
+			if (Lb.Count > 0) {
+				Rb = TreeMap(Lb, Rb);
+			}
 			Rp.Group = pivot;
 			placedGroups.Add(pivot);
 			if (Lc.Count > 0) {
 				Rc = TreeMap(Lc, Rc);
 			}
+			/*
 			// Even out the rectangles in the sub-regions
+			if (parentRect.Width >= parentRect.Height) { // Landscape
+			
 			if (Rp.Width != Rb.Width) {
 				double newWidth = Math.Max(Rp.Width, Rb.Width);
 				Rp.Width = newWidth;
@@ -163,17 +179,21 @@ namespace DeepZoomView {
 			Rp.X = Ra.X + Ra.Width;
 			Rb.X = Ra.X + Ra.Width;
 			Rc.X = Rp.X + Rp.Width;
+			*/
 			parentRect.Add(Ra);
 			parentRect.Add(Rp);
 			parentRect.Add(Rb);
-			Rp.Group.rectangle = Rp.Rect;
+			Rp.Group.rectangle = Rp;
 			if (Lc.Count > 0) {
 				parentRect.Add(Rc);
 			}
 			return parentRect;
 		}
 
-
+		internal void Output(RectWithRects Ra, RectWithRects Rb, RectWithRects Rc, RectWithRects Rp, RectWithRects P) {
+			System.Globalization.CultureInfo c = new System.Globalization.CultureInfo("en-US");
+			Debug.WriteLine("property RaO : {" + Ra.X.ToString("0.00", c) + ", " + Ra.Y.ToString("0.00", c) + "} \r\n  property RaS : {" + Ra.Width.ToString("0.00", c) + ", " + Ra.Height.ToString("0.00", c) + "} \r\n   property RbO : {" + Rb.X.ToString("0.00", c) + ", " + Rb.Y.ToString("0.00", c) + "} \r\n property RbS : {" + Rb.Width.ToString("0.00", c) + ", " + Rb.Height.ToString("0.00", c) + "}  \r\n  property RcO : {" + Rc.X.ToString("0.00", c) + ", " + Rc.Y.ToString("0.00", c) + "} \r\n property RcS : {" + Rc.Width.ToString("0.00", c) + ", " + Rc.Height.ToString("0.00", c) + "}  \r\n  property RpO : {" + Rp.X.ToString("0.00", c) + ", " + Rp.Y.ToString("0.00", c) + "} \r\n property RpS : {" + Rp.Width.ToString("0.00", c) + ", " + Rp.Height.ToString("0.00", c) + "}  \r\n  property PO : {" + P.X.ToString("0.00", c) + ", " + P.Y.ToString("0.00", c) + "} \r\n  property PS : {" + P.Width.ToString("0.00", c) + ", " + P.Height.ToString("0.00", c) + "}  ");
+		}
 
 		public Dictionary<string, int> DisplayGroupsOnScreen(out Point max) {
 			IOrderedEnumerable<KeyValuePair<string, List<int>>> orderedGroup = groups.OrderByDescending(kv => kv.Value.Count);
@@ -183,10 +203,11 @@ namespace DeepZoomView {
 			}
 			RectWithRects result = TreeMap(groupsNotPlaced, new RectWithRects(0, 0, imgWidth, imgHeight));
 			Debug.WriteLine(result.TreeView());
+			PositionCorrection(result);
 			groupsNotPlaced = groupsNotPlaced.Except(placedGroups).ToList();
 			HideNotPlacedImages();
 			return PositionImages(out max);
-
+			
 			#region old
 			int x = 0, y = 0;
 			String pos;
@@ -199,7 +220,7 @@ namespace DeepZoomView {
 					foreach (Group g in groupsBeingPlaced) {
 						pos = p(x, y);
 						while (map.ContainsKey(pos)) {
-							Rect r = map[pos].rectangle;
+							Rect r = map[pos].rectangle.Rect;
 							if (r.Top + r.Height - 1 == y) {
 								x++;
 							} else {
@@ -231,6 +252,19 @@ namespace DeepZoomView {
 			HideNotPlacedImages();
 			return PositionImages(out max);
 			#endregion old
+		}
+
+
+		private void PositionCorrection(RectWithRects node) {
+			foreach (RectWithRects r in node.Children()) {
+				r.X += node.X;
+				r.Y += node.Y;
+				if (r.isLeaf()) {
+					r.group.rectangle = r;
+				} else {
+					PositionCorrection(r);
+				}
+			}
 		}
 
 		private Boolean Fill(Group g, int ix, int iy) {
@@ -286,7 +320,7 @@ namespace DeepZoomView {
 			foreach (string pos in mapTmp) {
 				map.Add(pos, g);
 			}
-			g.rectangle = new Rect(ix, iy, H, y - iy + 1);
+			g.rectangle = new RectWithRects(ix, iy, H, y - iy + 1);
 			return true;
 		}
 
@@ -303,16 +337,32 @@ namespace DeepZoomView {
 		}
 
 		private void CalculateDistribution(int amount, out int Hcells, out int Vcells) {
-			CalculateDistribution(amount, aspectRatio, out Hcells, out Vcells);
+			CalculateDistribution(amount, aspectRatio, null, out Hcells, out Vcells);
 		}
 
 		private void CalculateDistribution(int amount, double aR, out int Hcells, out int Vcells) {
+			CalculateDistribution(amount, aR, null, out Hcells, out Vcells);
+		}
+
+		private void CalculateDistribution(int amount, double aR, Point? max, out int Hcells, out int Vcells) {
 			int canHold = 1;
 			Hcells = 1;
 			Vcells = 1;
 			while (canHold < amount) {
-				Hcells++;
-				Vcells = Convert.ToInt32(Math.Floor(Hcells / aR));
+				if (!max.HasValue) {
+					Hcells++;
+					Vcells = Convert.ToInt32(Math.Floor(Hcells / aR));
+				} else {
+					if (Hcells < max.Value.X) {
+						Hcells++;
+						Vcells = Convert.ToInt32(Math.Min(Math.Floor(Hcells / aR), max.Value.Y));
+					} else if (Vcells < max.Value.Y) {
+						Vcells++;
+					} else {
+						Hcells++;
+						Vcells = Convert.ToInt32(Math.Floor(Hcells / aR));
+					}
+				}
 				canHold = Convert.ToInt32(Hcells * Vcells);
 			}
 		}
@@ -321,8 +371,8 @@ namespace DeepZoomView {
 			Dictionary<string, int> positions = new Dictionary<string, int>();
 			max = new Point(0, 0);
 			foreach (Group g in placedGroups) {
-				double x = g.rectangle.X;
-				double y = g.rectangle.Y;
+				int x = (int)Math.Round(g.rectangle.X);
+				int y = (int)Math.Round(g.rectangle.Y);
 				foreach (int id in g.images) {
 					if (!positions.ContainsKey(x + ";" + y)) {
 						positions.Add(x + ";" + y, id);
@@ -336,7 +386,7 @@ namespace DeepZoomView {
 						max = new Point(Math.Max(max.X, x), Math.Max(max.Y, y));
 					}
 					if (++x >= g.rectangle.X + g.rectangle.Width) {
-						x = g.rectangle.X;
+						x = (int)Math.Round(g.rectangle.X);
 						y++;
 					}
 				}
@@ -367,8 +417,11 @@ namespace DeepZoomView {
 			if (!invertedGroups.ContainsKey(img)) return;
 
 			//			element.Children.Remove(groupBorder);
+			element.Children.Clear();
 			if (element.Children.Count > 0) {
 				groupBorder = (Rectangle)element.Children.First(x => (((String)x.GetValue(Canvas.TagProperty)) == "Group"));
+			} else {
+				groupBorder = null;
 			}
 
 			double cellHeight = pxHeight / imgHeight;
@@ -389,7 +442,22 @@ namespace DeepZoomView {
 			groupBorder.Width = g.rectangle.Width * cellHeight;
 			groupBorder.Height = g.rectangle.Height * cellWidth;
 
-			//g.rectangle;
+			Color[] cs = new Color[] { Colors.Black, Colors.Blue, Colors.Cyan, Colors.Green, Colors.Yellow, Colors.Orange, Colors.Red, Colors.Magenta, Colors.Purple, Colors.Brown };
+			RectWithRects p = g.rectangle.Parent;
+			int n = 1;
+			while (p != null) {
+				Rectangle pBorder = new Rectangle();
+				pBorder.SetValue(Canvas.TagProperty, "ParentGroup");
+				element.Children.Add(pBorder);
+				pBorder.SetValue(Canvas.TopProperty, p.Y * cellHeight - n);
+				pBorder.SetValue(Canvas.LeftProperty, p.X * cellWidth - n);
+				pBorder.Stroke = new SolidColorBrush(cs[n]);
+				pBorder.StrokeThickness = 1.0;
+				pBorder.Width = p.Width * cellHeight + 2 * n;
+				pBorder.Height = p.Height * cellWidth + 2 * n;
+				p = p.Parent;
+				n++;
+			}
 		}
 
 		public void Test(Canvas element) {
@@ -408,7 +476,7 @@ namespace DeepZoomView {
 
 	public class Group {
 		internal String name { get; set; }
-		internal Rect rectangle { get; set; }
+		internal RectWithRects rectangle { get; set; }
 		internal List<int> images { get; set; }
 
 		public Group(String n, Rect r, List<int> l)
@@ -422,7 +490,7 @@ namespace DeepZoomView {
 		}
 
 		public override string ToString() {
-			return "Group Name=" + name + " Rect=" + rectangle.ToString() + " ImgCount=" + images.Count;
+			return "Group Name=" + name + " Rect=" + rectangle.Rect.ToString() + " ImgCount=" + images.Count;
 		}
 	}
 
@@ -434,6 +502,7 @@ namespace DeepZoomView {
 		private List<RectWithRects> children;
 		public Boolean leaf;
 		public Group group;
+		public RectWithRects Parent { get; set; }
 
 		public Group Group {
 			get {
@@ -450,6 +519,12 @@ namespace DeepZoomView {
 		public Rect Rect {
 			get {
 				return new Rect(X, Y, Width, Height);
+			}
+			set {
+				X = value.X;
+				Y = value.Y;
+				Width = value.Width;
+				Height = value.Height;
 			}
 		}
 
@@ -471,6 +546,8 @@ namespace DeepZoomView {
 		}
 
 		public RectWithRects(double x, double y, double w, double h) {
+			if (w < 0) throw new Exception("Width can't be less than zero");
+			if (h < 0) throw new Exception("Height can't be less than zero");
 			X = x;
 			Y = y;
 			Width = w;
@@ -560,11 +637,14 @@ namespace DeepZoomView {
 				children = new List<RectWithRects>();
 			}
 			children.Add(r);
+			r.Parent = this;
 			Width = Math.Max(r.X + r.Width, Width);
 			Height = Math.Max(r.Y + r.Height, Height);
 		}
 
 		public List<RectWithRects> Children() {
+			if (children == null)
+				children = new List<RectWithRects>();
 			return children;
 		}
 
