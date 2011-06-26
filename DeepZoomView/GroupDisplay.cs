@@ -111,7 +111,7 @@ namespace DeepZoomView {
 			RectWithRects Ra, Rp, Rb, Rc;
 
 			if (parentRect.Width >= parentRect.Height) { // Landscape
-				Ra = new RectWithRects(0, 0, LaCount / parentRect.Height + (int)(La.Count * 0.5), parentRect.Height);
+				Ra = new RectWithRects(0, 0, Math.Ceiling(LaCount / parentRect.Height + (int)(La.Count * 0.5)), parentRect.Height);
 				// Rects for Rp, Rb, Rc
 				int RpW, RpH;
 				CalculateDistribution(pivot.images.Count, parentRect.Width / parentRect.Height, new Point(parentRect.Width - Ra.Width, parentRect.Height), out RpW, out RpH);
@@ -119,7 +119,7 @@ namespace DeepZoomView {
 				Rb = new RectWithRects(Rp.X, Rp.Height, Rp.Width, Math.Max(1, parentRect.Height - Rp.Height));
 				Rc = new RectWithRects(Rp.X + Rp.Width, 0, Math.Max(1, parentRect.Width - Rp.X - Rp.Width), parentRect.Height);
 			} else {	// Portrait
-				Ra = new RectWithRects(0, 0, parentRect.Width, LaCount / parentRect.Width + (int)(La.Count * 0.5));
+				Ra = new RectWithRects(0, 0, parentRect.Width, Math.Ceiling(LaCount / parentRect.Width + (int)(La.Count * 0.5)));
 				// Rects for Rp, Rb, Rc
 				int RpW, RpH;
 				CalculateDistribution(pivot.images.Count, parentRect.Width / parentRect.Height, new Point(parentRect.Width, parentRect.Height - Ra.Height), out RpW, out RpH);
@@ -154,32 +154,32 @@ namespace DeepZoomView {
 			if (Lc.Count > 0) {
 				Rc = TreeMap(Lc, Rc);
 			}
-			/*
-			// Even out the rectangles in the sub-regions
-			if (parentRect.Width >= parentRect.Height) { // Landscape
 			
-			if (Rp.Width != Rb.Width) {
-				double newWidth = Math.Max(Rp.Width, Rb.Width);
-				Rp.Width = newWidth;
-				Rb.Width = newWidth;
-			}
+			// Even out the rectangles in the sub-regions
+			if (false && parentRect.Width >= parentRect.Height) { // Landscape
 
-			if (Ra.Height < Rp.Height + Rb.Height) {
-				Ra.Height = Rp.Height + Rb.Height;
-			} else {
-				Rb.Height = Ra.Height - Rp.Height;
-			}
-			if (Ra.Height >= Rc.Height) {
-				Rc.Height = Ra.Height;
-			} else {
-				Ra.Height = Rc.Height;
-				Rb.Height = Ra.Height - Rp.Height;
-			}
+				if (Rp.Width != Rb.Width) {
+					double newWidth = Math.Max(Rp.Width, Rb.Width);
+					Rp.Width = newWidth;
+					Rb.Width = newWidth;
+				}
 
-			Rp.X = Ra.X + Ra.Width;
-			Rb.X = Ra.X + Ra.Width;
-			Rc.X = Rp.X + Rp.Width;
-			*/
+				if (Ra.Height < Rp.Height + Rb.Height) {
+					Ra.Height = Rp.Height + Rb.Height;
+				} else {
+					Rb.Height = Ra.Height - Rp.Height;
+				}
+				if (Ra.Height >= Rc.Height) {
+					Rc.Height = Ra.Height;
+				} else {
+					Ra.Height = Rc.Height;
+					Rb.Height = Ra.Height - Rp.Height;
+				}
+
+				Rp.X = Ra.X + Ra.Width;
+				Rb.X = Ra.X + Ra.Width;
+				Rc.X = Rp.X + Rp.Width;
+			}
 			parentRect.Add(Ra);
 			parentRect.Add(Rp);
 			parentRect.Add(Rb);
