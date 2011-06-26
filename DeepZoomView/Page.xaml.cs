@@ -47,6 +47,7 @@ namespace DeepZoomView {
 		ObservableCollection<String> CbItems = null;
 		GroupDisplay gd = null;
 		//MultiScaleImage msi;
+		Boolean dontZoom = false;
 
 		public Double ZoomFactor {
 			get { return zoom; }
@@ -84,8 +85,8 @@ namespace DeepZoomView {
 				} else {
 					int index = GetSubImageIndex(e.GetPosition(msi));
 
-					MouseTitle.Parent.SetValue(Canvas.TopProperty, e.GetPosition(msi).Y + 20);
-					MouseTitle.Parent.SetValue(Canvas.LeftProperty, e.GetPosition(msi).X + 20);
+					MouseTitle.Parent.SetValue(Canvas.TopProperty, e.GetPosition(msi).Y + 40);
+					MouseTitle.Parent.SetValue(Canvas.LeftProperty, e.GetPosition(msi).X + 40);
 
 
 					//updateOverlay();
@@ -119,14 +120,14 @@ namespace DeepZoomView {
 					bool shiftDown = (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift;
 					Double newzoom = zoom;
 
-					if (!shiftDown) {
+					if (dontZoom) {
+						dontZoom = false;
+					} else if (!shiftDown) {
 						int index = GetSubImageIndex(e.GetPosition(msi));
 						if (index != -1) {
 							msi.ViewportWidth = 1.5;
 							msi.ViewportOrigin = new Point(-msi.SubImages[index].ViewportOrigin.X, -msi.SubImages[index].ViewportOrigin.Y);
 						}
-						//zoom = Hcells / msi.ViewportWidth;
-						//						updateOverlay();
 					} else if (shiftDown) {
 						newzoom /= 2;
 					} else {
@@ -239,10 +240,10 @@ namespace DeepZoomView {
 
 		private void MakeTooltipText(int index) {
 			String tooltipTxt = "";
-			foreach(String oName in metadataCollection.GetOrganizationOptions()) {
+			foreach (String oName in metadataCollection.GetOrganizationOptions()) {
 				Organizable o = metadataCollection.GetOrganized(oName);
 				if (o.ContainsId(index)) {
-					tooltipTxt += o.Name + ": "+ o.Id(index)+ Environment.NewLine;
+					tooltipTxt += o.Name + ": " + o.Id(index) + Environment.NewLine;
 				}
 			}
 			MouseTitle.Text = tooltipTxt.TrimEnd(Environment.NewLine.ToCharArray());
@@ -977,6 +978,7 @@ namespace DeepZoomView {
 			}
 			CbItems.Clear();
 			CbItems.Add("-None-");
+			CbItems.Add("Random");
 			foreach (String s in metadataCollection.GetOrganizationOptions()) {
 				CbItems.Add(s);
 			}
@@ -987,36 +989,30 @@ namespace DeepZoomView {
 
 		private void Vorganize_SelectionChanged(object sender, SelectionChangedEventArgs e) {
 			String selected = (String)Vorganize.SelectedItem;
-			if (selected == null || selected == "-None-") {
+			if (selected == null) {
 				return;
-			}
-			if (selected == "Import Metadata") {
+			} else if (selected == "-None-") {
+				resetbtn_Click(null, null);
+			} else if (selected == "Import Metadata") {
 				AskForMetadata();
 				Vorganize_Update();
-			} else if (selected == "Not Sorted") {
+			} else if (selected == "Random") {
+				random_Click(null, null);
 			} else {
 				gd = new GroupDisplay(msi, metadataCollection.GetOrganized(selected).GetGroups());
 				Point max;
 				canvasIndex = gd.DisplayGroupsOnScreen(out max);
 				Hcells = max.X;
-				/*
-				if (selected == "Color") {
-					gd = new GroupDisplay(msi, metadataCollection.GetOrganized("Color").GetGroups());
-					canvasIndex = gd.DisplayGroupsOnScreen();
-				} else if (selected == "HSB") {
-					gd = new GroupDisplay(msi, metadataCollection.GetOrganized("HSB").GetGroups());
-					canvasIndex = gd.DisplayGroupsOnScreen();
-				} else {
-
-//					orderByGroupsVertically(metadataCollection.GetOrganized(selected).GetGroups());
-				}*/
 				Vorganize.IsDropDownOpen = false;
 				GoHomeClick(null, null);
+				dontZoom = true;
 			}
 		}
 
 		private void LoadMetadata(object sender, RoutedEventArgs e) {
-			AskForMetadata();
+			if (AskForMetadata()) {
+				load.Visibility = Visibility.Collapsed;
+			}
 		}
 
 		private void showgroups_Click(object sender, RoutedEventArgs e) {

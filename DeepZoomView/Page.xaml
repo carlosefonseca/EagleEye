@@ -232,14 +232,11 @@
             </Grid.ColumnDefinitions>
 
             <StackPanel Grid.Column="1" Grid.Row="0" Orientation="Horizontal">
-                <Button x:Name="load" Content="Load" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="7" Margin="0,0,10,0" Click="LoadMetadata"></Button>
-                <Button x:Name="ghDate" Content="Group Horizontally by Date" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="7" Margin="0,0,10,0" Click="ghDate_Click"></Button>
-                <TextBlock Text="Vertical Sort:" VerticalAlignment="Center" Foreground="White" Margin="0,0,10,0"></TextBlock>
+                <Button x:Name="load" Content="Load Metadata" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="7" Margin="0,0,10,0" Click="LoadMetadata"></Button>
+                <TextBlock Text="Sort by:" VerticalAlignment="Center" Foreground="White" Margin="0,0,10,0"></TextBlock>
                 <ComboBox Name="Vorganize" VerticalAlignment="Center" Margin="0,0,10,0" DropDownOpened="Vorganize_DropDownOpened" SelectionChanged="Vorganize_SelectionChanged" ></ComboBox>
-                <Button x:Name="random" Content="Random" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="7" Margin="0,0,10,0" Click="random_Click"></Button>
                 <ToggleButton x:Name="showgroups" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="7" Margin="0,0,10,0" Click="showgroups_Click" Content="Two State" IsThreeState="False" />
                 <Button x:Name="OnlySelected" Content="Only Selected" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="7" Margin="0,0,10,0" Click="OnlySelected_Click"></Button>
-                <Button x:Name="resetbtn" Content="Reset Filters" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="7"   Margin="0,0,10,0" Click="resetbtn_Click"></Button>
                 <TextBlock x:Name="LogBlock"></TextBlock>
             </StackPanel>
 
@@ -311,7 +308,7 @@
             </Canvas>
 -->
                 <Canvas x:Name="Mouse" Grid.Row="1" Grid.Column="1">
-                    <Border Background="White" Opacity="0.5">
+                    <Border Background="White" Opacity="0.7">
                         <TextBlock x:Name="MouseTitle" MaxWidth="200"></TextBlock>
                     </Border>
                 </Canvas>
