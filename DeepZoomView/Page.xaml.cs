@@ -1000,6 +1000,7 @@ namespace DeepZoomView {
 				random_Click(null, null);
 			} else {
 				gd = new GroupDisplay(msi, metadataCollection.GetOrganized(selected).GetGroups());
+				gd.Display = (String)Vorganize.SelectedItem;
 				Point max;
 				canvasIndex = gd.DisplayGroupsOnScreen(out max);
 				Hcells = max.X;
@@ -1012,11 +1013,29 @@ namespace DeepZoomView {
 		private void LoadMetadata(object sender, RoutedEventArgs e) {
 			if (AskForMetadata()) {
 				load.Visibility = Visibility.Collapsed;
+				dontZoom = true;
 			}
 		}
 
 		private void showgroups_Click(object sender, RoutedEventArgs e) {
 
+		}
+
+
+
+		private void DisplayTypeCombo_SelectionChanged(object sender, SelectionChangedEventArgs e) {
+			String selected = (String)Vorganize.SelectedItem;
+			if (gd != null) {
+				gd.Display = selected;
+			}
+			dontZoom = true;
+		}
+
+		private void DisplayTypeCombo_Loaded(object sender, RoutedEventArgs e) {
+			foreach (String s in GroupDisplay.DisplayOptions) {
+				DisplayTypeCombo.Items.Add(s);
+			}
+			DisplayTypeCombo.SelectedIndex = 0;
 		}
 	}
 }

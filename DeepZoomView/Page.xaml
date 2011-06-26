@@ -233,8 +233,13 @@
 
             <StackPanel Grid.Column="1" Grid.Row="0" Orientation="Horizontal">
                 <Button x:Name="load" Content="Load Metadata" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="7" Margin="0,0,10,0" Click="LoadMetadata"></Button>
+                <TextBlock Text="Display:" VerticalAlignment="Center" Foreground="White" Margin="0,0,10,0"></TextBlock>
+                <ComboBox Name="DisplayTypeCombo" VerticalAlignment="Center" Margin="0,0,10,0" SelectionChanged="DisplayTypeCombo_SelectionChanged" Loaded="DisplayTypeCombo_Loaded"></ComboBox>
+
                 <TextBlock Text="Sort by:" VerticalAlignment="Center" Foreground="White" Margin="0,0,10,0"></TextBlock>
                 <ComboBox Name="Vorganize" VerticalAlignment="Center" Margin="0,0,10,0" DropDownOpened="Vorganize_DropDownOpened" SelectionChanged="Vorganize_SelectionChanged" ></ComboBox>
+
+
                 <ToggleButton x:Name="showgroups" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="7" Margin="0,0,10,0" Click="showgroups_Click" Content="Two State" IsThreeState="False" />
                 <Button x:Name="OnlySelected" Content="Only Selected" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="7" Margin="0,0,10,0" Click="OnlySelected_Click"></Button>
                 <TextBlock x:Name="LogBlock"></TextBlock>
