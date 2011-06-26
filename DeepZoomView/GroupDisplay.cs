@@ -17,6 +17,8 @@ namespace DeepZoomView {
 	/// Provides a TreeMap-sort-of-like view of a set of grouped images
 	/// </summary>
 	public class GroupDisplay {
+		public static List<String> DisplayOptions = new List<string>() { "Linear", "Groups" };
+		public String Display;
 		private MultiScaleImage msi;
 		private List<KeyValuePair<string, List<int>>> groups;
 		private double pxHeight, pxWidth, aspectRatio;
@@ -44,11 +46,11 @@ namespace DeepZoomView {
 		}
 
 		/// <summary>
-		/// Ordering using TreeMap
+		/// Image distribution using the Quantum TreeMap algorithm
 		/// </summary>
 		/// <param name="groups">Groups to be ordered</param>
 		/// <param name="parentRect">The area where to distribute the groups</param>
-		/// <returns>???</returns>
+		/// <returns>A RectWithRects containing all the rects and associated groups</returns>
 		internal RectWithRects TreeMap(IEnumerable<Group> groups, RectWithRects parentRect) {
 			// 1. if one group, return size for that group
 			if (groups.Count() == 1) {
@@ -190,11 +192,26 @@ namespace DeepZoomView {
 			return parentRect;
 		}
 
+
+		/// <summary>
+		/// For debugging pourposes. Outputs the Rects as a set of Applescript properties.
+		/// </summary>
+		/// <param name="Ra"></param>
+		/// <param name="Rb"></param>
+		/// <param name="Rc"></param>
+		/// <param name="Rp"></param>
+		/// <param name="P"></param>
 		internal void Output(RectWithRects Ra, RectWithRects Rb, RectWithRects Rc, RectWithRects Rp, RectWithRects P) {
 			System.Globalization.CultureInfo c = new System.Globalization.CultureInfo("en-US");
 			Debug.WriteLine("property RaO : {" + Ra.X.ToString("0.00", c) + ", " + Ra.Y.ToString("0.00", c) + "} \r\n  property RaS : {" + Ra.Width.ToString("0.00", c) + ", " + Ra.Height.ToString("0.00", c) + "} \r\n   property RbO : {" + Rb.X.ToString("0.00", c) + ", " + Rb.Y.ToString("0.00", c) + "} \r\n property RbS : {" + Rb.Width.ToString("0.00", c) + ", " + Rb.Height.ToString("0.00", c) + "}  \r\n  property RcO : {" + Rc.X.ToString("0.00", c) + ", " + Rc.Y.ToString("0.00", c) + "} \r\n property RcS : {" + Rc.Width.ToString("0.00", c) + ", " + Rc.Height.ToString("0.00", c) + "}  \r\n  property RpO : {" + Rp.X.ToString("0.00", c) + ", " + Rp.Y.ToString("0.00", c) + "} \r\n property RpS : {" + Rp.Width.ToString("0.00", c) + ", " + Rp.Height.ToString("0.00", c) + "}  \r\n  property PO : {" + P.X.ToString("0.00", c) + ", " + P.Y.ToString("0.00", c) + "} \r\n  property PS : {" + P.Width.ToString("0.00", c) + ", " + P.Height.ToString("0.00", c) + "}  ");
 		}
 
+
+		/// <summary>
+		/// Takes the set of groups and arranges them on the MSI using a the Quantum TreeMap algorithm
+		/// </summary>
+		/// <param name="max">This contains the width and height of the display</param>
+		/// <returns>A list of "X,Y"=>ImgID for the mouse-over identification</returns>
 		public Dictionary<string, int> DisplayGroupsOnScreen(out Point max) {
 			IOrderedEnumerable<KeyValuePair<string, List<int>>> orderedGroup = groups.OrderByDescending(kv => kv.Value.Count);
 			foreach (KeyValuePair<string, List<int>> kv in orderedGroup) {
@@ -255,6 +272,10 @@ namespace DeepZoomView {
 		}
 
 
+		/// <summary>
+		/// Changes the positions of child rects to be related to the outter rect instead of its parent.
+		/// </summary>
+		/// <param name="node">The root Rect whose childs need fixing.</param>
 		private void PositionCorrection(RectWithRects node) {
 			foreach (RectWithRects r in node.Children()) {
 				r.X += node.X;
@@ -267,6 +288,13 @@ namespace DeepZoomView {
 			}
 		}
 
+		/// <summary>
+		/// Distributes images of a group on the canvas.
+		/// </summary>
+		/// <param name="g">The group whose images need distribution</param>
+		/// <param name="ix">Initial X position</param>
+		/// <param name="iy">Initial Y position</param>
+		/// <returns>True if the group was succefully placed. False otherwise.</returns>
 		private Boolean Fill(Group g, int ix, int iy) {
 			int H, V,
 				x = ix, y = iy,
@@ -324,49 +352,85 @@ namespace DeepZoomView {
 			return true;
 		}
 
+		/// <summary>
+		/// Returns a String identifying a coordinate
+		/// </summary>
+		/// <param name="x">X coordinate</param>
+		/// <param name="y">Y coordinate</param>
+		/// <returns>A string in the format "X-Y"</returns>
 		private String p(int x, int y) {
 			return x + "-" + y;
 		}
 
+		/// <summary>
+		/// Used by the constructor to determine an aproximation to the rows and columns need to display the images.
+		/// </summary>
 		private void CalculateCanvas() {
-			int Hcells;
-			int Vcells;
-			CalculateDistribution((int)Math.Ceiling(imgCount * 1.1), out Hcells, out Vcells);
-			imgWidth = Hcells;
-			imgHeight = Vcells;
+			int cols;
+			int rows;
+			CalculateDistribution((int)Math.Ceiling(imgCount * 1.1), out cols, out rows);
+			imgWidth = cols;
+			imgHeight = rows;
 		}
 
-		private void CalculateDistribution(int amount, out int Hcells, out int Vcells) {
-			CalculateDistribution(amount, aspectRatio, null, out Hcells, out Vcells);
+		/// <summary>
+		/// Discovers a rectangle that can hold "amount" elements. Uses the aspect ratio set in the instance.
+		/// </summary>
+		/// <param name="amount">The number of elements to hold</param>
+		/// <param name="max">Maximum width and height values. Ignored if the amout of elements can't fit.</param>
+		/// <param name="cols">Out: The number of columns</param>
+		/// <param name="rows">Out: The number of rows</param>
+		private void CalculateDistribution(int amount, out int cols, out int rows) {
+			CalculateDistribution(amount, aspectRatio, null, out cols, out rows);
 		}
 
-		private void CalculateDistribution(int amount, double aR, out int Hcells, out int Vcells) {
-			CalculateDistribution(amount, aR, null, out Hcells, out Vcells);
+		/// <summary>
+		/// Discovers a rectangle that can hold "amount" elements.
+		/// </summary>
+		/// <param name="amount">The number of elements to hold</param>
+		/// <param name="aR">The aspect ratio of the rectangle</param>
+		/// <param name="cols">Out: The number of columns</param>
+		/// <param name="rows">Out: The number of rows</param>
+		private void CalculateDistribution(int amount, double aR, out int cols, out int rows) {
+			CalculateDistribution(amount, aR, null, out cols, out rows);
 		}
 
-		private void CalculateDistribution(int amount, double aR, Point? max, out int Hcells, out int Vcells) {
+		/// <summary>
+		/// Discovers a rectangle that can hold "amount" elements.
+		/// </summary>
+		/// <param name="amount">The number of elements to hold</param>
+		/// <param name="aR">The aspect ratio of the rectangle</param>
+		/// <param name="max">Maximum width and height values. Ignored if the amout of elements can't fit.</param>
+		/// <param name="cols">Out: The number of columns</param>
+		/// <param name="rows">Out: The number of rows</param>
+		private void CalculateDistribution(int amount, double aR, Point? max, out int cols, out int rows) {
 			int canHold = 1;
-			Hcells = 1;
-			Vcells = 1;
+			cols = 1;
+			rows = 1;
 			while (canHold < amount) {
 				if (!max.HasValue) {
-					Hcells++;
-					Vcells = Convert.ToInt32(Math.Floor(Hcells / aR));
+					cols++;
+					rows = Convert.ToInt32(Math.Floor(cols / aR));
 				} else {
-					if (Hcells < max.Value.X) {
-						Hcells++;
-						Vcells = Convert.ToInt32(Math.Min(Math.Floor(Hcells / aR), max.Value.Y));
-					} else if (Vcells < max.Value.Y) {
-						Vcells++;
+					if (cols < max.Value.X) {
+						cols++;
+						rows = Convert.ToInt32(Math.Min(Math.Floor(cols / aR), max.Value.Y));
+					} else if (rows < max.Value.Y) {
+						rows++;
 					} else {
-						Hcells++;
-						Vcells = Convert.ToInt32(Math.Floor(Hcells / aR));
+						cols++;
+						rows = Convert.ToInt32(Math.Floor(cols / aR));
 					}
 				}
-				canHold = Convert.ToInt32(Hcells * Vcells);
+				canHold = Convert.ToInt32(cols * rows);
 			}
 		}
 
+		/// <summary>
+		/// Transverses the set of groups that were correctly placed and assigns each image to a position of the MSI
+		/// </summary>
+		/// <param name="max">This contains the width and height of the display</param>
+		/// <returns>A list of "X,Y"=>ImgID for the mouse-over identification</returns>
 		public Dictionary<string, int> PositionImages(out Point max) {
 			Dictionary<string, int> positions = new Dictionary<string, int>();
 			max = new Point(0, 0);
@@ -376,6 +440,7 @@ namespace DeepZoomView {
 				foreach (int id in g.images) {
 					if (!positions.ContainsKey(x + ";" + y)) {
 						positions.Add(x + ";" + y, id);
+						msi.SubImages[id].Opacity = 1;
 						invertedGroups.Add(id, g);
 						try {
 							msi.SubImages[id].ViewportOrigin = new Point(-x, -y);
@@ -402,7 +467,9 @@ namespace DeepZoomView {
 			imgHeight = (int)max.Y;
 			return positions;
 		}
-
+		/// <summary>
+		/// Transverses the set of groups that where not placed and moves the images out of the view.
+		/// </summary>
 		private void HideNotPlacedImages() {
 			foreach (Group g in groupsNotPlaced) {
 				foreach (int id in g.images) {
@@ -413,6 +480,13 @@ namespace DeepZoomView {
 			}
 		}
 
+		/// <summary>
+		/// Given an image id, discovers in which group the images belongs,
+		/// obtains the rectangle of that group and displays it inside the "element".
+		/// Currently also displays the parents of the selected group's rectangle
+		/// </summary>
+		/// <param name="img">Image id</param>
+		/// <param name="element">Canvas element which will receive the Rectangle</param>
 		public void ShowGroupBorderFromImg(int img, Canvas element) {
 			if (!invertedGroups.ContainsKey(img)) return;
 
@@ -457,19 +531,6 @@ namespace DeepZoomView {
 				pBorder.Height = p.Height * cellWidth + 2 * n;
 				p = p.Parent;
 				n++;
-			}
-		}
-
-		public void Test(Canvas element) {
-			double cellHeight = pxHeight / imgHeight;
-			double cellWidth = pxWidth / imgWidth;
-			foreach (Group g in placedGroups) {
-				Rectangle r = new Rectangle();
-				r.Stroke = new SolidColorBrush(Colors.Red);
-				r.SetValue(Canvas.LeftProperty, g.rectangle.X);
-				r.SetValue(Canvas.TopProperty, g.rectangle.Y);
-				r.Width = cellWidth;
-				r.Height = cellHeight;
 			}
 		}
 	} // closes GroupDisplay
