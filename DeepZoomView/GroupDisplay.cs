@@ -78,6 +78,12 @@ namespace DeepZoomView {
 			// pick pivot and the lists before it and after it
 			int total = groups.Sum(g => g.images.Count);
 			int median = total / 2;
+			// Adjust median to the size of the nearest rectangle (future Ra)
+			if (parentRect.Width >= parentRect.Height) { // Landscape
+				median = (int)(Math.Round(median / parentRect.Height) * parentRect.Height);
+			} else {	// Portrait
+				median = (int)(Math.Round(median / parentRect.Width) * parentRect.Width);
+			}
 			int sum = 0;
 			Group pivot = null;
 			List<Group> La = new List<Group>();
@@ -93,16 +99,17 @@ namespace DeepZoomView {
 					Ltmp.Remove(pivot);
 				} else {
 					foreach (Group g in groups) {
-						sum += g.images.Count;
-						if (sum < median) {
+						if (sum + g.images.Count <= median) {
+							sum += g.images.Count;
 							La.Add(g);
 							Ltmp.Remove(g);
 							continue;
+						} else if (sum == median) {
+							break;
 						}
-						pivot = g;
-						Ltmp.Remove(g);
-						break;
 					}
+					pivot = Ltmp.First();
+					Ltmp.Remove(Ltmp.First());
 				}
 			}
 
@@ -110,53 +117,60 @@ namespace DeepZoomView {
 			int LaCount = La.Sum(g => g.images.Count);
 
 			// Rects for Rp, Rb, Rc
-			RectWithRects Ra, Rp, Rb, Rc;
+			RectWithRects Ra = null, Rp = null, Rb = null, Rc = null;
 
 			if (parentRect.Width >= parentRect.Height) { // Landscape
-				Ra = new RectWithRects(0, 0, Math.Ceiling(LaCount / parentRect.Height + (int)(La.Count * 0.5)), parentRect.Height);
+				Ra = new RectWithRects(0, 0, Math.Ceiling(LaCount / parentRect.Height/* + (int)(La.Count * 0.5)*/), parentRect.Height);
 				// Rects for Rp, Rb, Rc
 				int RpW, RpH;
 				CalculateDistribution(pivot.images.Count, parentRect.Width / parentRect.Height, new Point(parentRect.Width - Ra.Width, parentRect.Height), out RpW, out RpH);
 				Rp = new RectWithRects(Ra.Width, 0, RpW, RpH);
-				Rb = new RectWithRects(Rp.X, Rp.Height, Rp.Width, Math.Max(1, parentRect.Height - Rp.Height));
-				Rc = new RectWithRects(Rp.X + Rp.Width, 0, Math.Max(1, parentRect.Width - Rp.X - Rp.Width), parentRect.Height);
+				if (Rp.Height + Rp.Y < parentRect.Height) {
+					Rb = new RectWithRects(Rp.X, Rp.Height, Rp.Width, Math.Max(1, parentRect.Height - Rp.Height));
+				}
+				if (Rp.X + Rp.Width < parentRect.Width) {
+					Rc = new RectWithRects(Rp.X + Rp.Width, 0, Math.Max(1, parentRect.Width - Rp.X - Rp.Width), parentRect.Height);
+				}
 			} else {	// Portrait
-				Ra = new RectWithRects(0, 0, parentRect.Width, Math.Ceiling(LaCount / parentRect.Width + (int)(La.Count * 0.5)));
+				Ra = new RectWithRects(0, 0, parentRect.Width, Math.Ceiling(LaCount / parentRect.Width/* + (int)(La.Count * 0.5)*/));
 				// Rects for Rp, Rb, Rc
 				int RpW, RpH;
 				CalculateDistribution(pivot.images.Count, parentRect.Width / parentRect.Height, new Point(parentRect.Width, parentRect.Height - Ra.Height), out RpW, out RpH);
 				Rp = new RectWithRects(0, Ra.Height, RpW, RpH);
-				Rb = new RectWithRects(Rp.Width, Rp.Y, Math.Max(1, parentRect.Width - Rp.Width), Rp.Height);
-				Rc = new RectWithRects(0, Rp.Y + Rp.Height, parentRect.Width, Math.Max(1, parentRect.Height - Ra.Height - Rp.Height));
+				if (Rp.X + Rp.Width < parentRect.Width) {
+					Rb = new RectWithRects(Rp.Width, Rp.Y, Math.Max(1, parentRect.Width - Rp.Width), Rp.Height);
+				}
+				if (Rp.Y + Rp.Height < parentRect.Height) {
+					Rc = new RectWithRects(0, Rp.Y + Rp.Height, parentRect.Width, Math.Max(1, parentRect.Height - Ra.Height - Rp.Height));
+				}
 			}
 			// Split Ltmp in Lb and Lc
-			double toFill = Rb.Width * Rb.Height;
-			Lb.Clear();
-			Lc.Clear();
-			int LcCount = 0;
-			foreach (Group g in Ltmp) {
-				if (g.images.Count <= toFill) {
-					toFill -= g.images.Count;
-					Lb.Add(g);
-				} else if (Rc.Fits(LcCount + g.images.Count)) {
-					Lc.Add(g);
-					LcCount += g.images.Count;
+			List<Group> Lrest, Lrest2;
+			if (Rb != null) {
+				FillWhileFits(out Lb, Rb.Width * Rb.Height, Ltmp, out Lrest);
+				if (Rc != null) {
+					FillWhileFits(out Lc, Rc.Width * Rc.Height, Lrest, out Lrest2);
+				} else {
+					groupsNotPlaced.AddRange(Lrest);
 				}
+			} else if (Rc != null) {
+				FillWhileFits(out Lc, Rc.Width * Rc.Height, Ltmp, out Lrest);
+				groupsNotPlaced.AddRange(Lrest);
+			} else {
+				groupsNotPlaced.AddRange(Ltmp);
 			}
 
 			// 	Recursively apply the Ordered Treemap algorithm to LA in R1, LB in R2, and LC in R3.
-			if (La.Count == 0 || Lb.Count == 0)
-				Debug.WriteLine("A list was found empty.");
 			Ra = TreeMap(La, Ra);
-			if (Lb.Count > 0) {
+			if (Rb != null && Lb.Count > 0) {
 				Rb = TreeMap(Lb, Rb);
 			}
 			Rp.Group = pivot;
 			placedGroups.Add(pivot);
-			if (Lc.Count > 0) {
+			if (Rc != null && Lc.Count > 0) {
 				Rc = TreeMap(Lc, Rc);
 			}
-			
+
 			// Even out the rectangles in the sub-regions
 			if (false && parentRect.Width >= parentRect.Height) { // Landscape
 
@@ -184,13 +198,36 @@ namespace DeepZoomView {
 			}
 			parentRect.Add(Ra);
 			parentRect.Add(Rp);
-			parentRect.Add(Rb);
+			if (Rb != null && Lb.Count > 0) {
+				parentRect.Add(Rb);
+			}
 			Rp.Group.rectangle = Rp;
-			if (Lc.Count > 0) {
+			if (Rc != null && Lc.Count > 0) {
 				parentRect.Add(Rc);
 			}
 			return parentRect;
 		}
+
+		/// <summary>
+		/// Tries to add Groups from Source to Dest, as long as they fit on the available space given by ToFill.
+		/// Runs the source list sequentially. Does not try to maximize the elements that fit on the destination.
+		/// The Groups that didn't fit are on Rest.
+		/// </summary>
+		/// <param name="dest">Destination List</param>
+		/// <param name="toFill">Available space</param>
+		/// <param name="source">Source List</param>
+		/// <param name="rest">List containing the groups that didn't fit</param>
+		private void FillWhileFits(out List<Group> dest, double toFill, List<Group> source, out List<Group> rest) {
+			dest = new List<Group>();
+			foreach (Group g in source) {
+				if (g.images.Count <= toFill) {
+					toFill -= g.images.Count;
+					dest.Add(g);
+				}
+			}
+			rest = source.Except(dest).ToList();
+		}
+
 
 
 		/// <summary>
@@ -202,8 +239,40 @@ namespace DeepZoomView {
 		/// <param name="Rp"></param>
 		/// <param name="P"></param>
 		internal void Output(RectWithRects Ra, RectWithRects Rb, RectWithRects Rc, RectWithRects Rp, RectWithRects P) {
+			if (Rb == null) Rb = new RectWithRects(-1, -1, 0, 0);
+			if (Rc == null) Rc = new RectWithRects(-1, -1, 0, 0);
 			System.Globalization.CultureInfo c = new System.Globalization.CultureInfo("en-US");
-			Debug.WriteLine("property RaO : {" + Ra.X.ToString("0.00", c) + ", " + Ra.Y.ToString("0.00", c) + "} \r\n  property RaS : {" + Ra.Width.ToString("0.00", c) + ", " + Ra.Height.ToString("0.00", c) + "} \r\n   property RbO : {" + Rb.X.ToString("0.00", c) + ", " + Rb.Y.ToString("0.00", c) + "} \r\n property RbS : {" + Rb.Width.ToString("0.00", c) + ", " + Rb.Height.ToString("0.00", c) + "}  \r\n  property RcO : {" + Rc.X.ToString("0.00", c) + ", " + Rc.Y.ToString("0.00", c) + "} \r\n property RcS : {" + Rc.Width.ToString("0.00", c) + ", " + Rc.Height.ToString("0.00", c) + "}  \r\n  property RpO : {" + Rp.X.ToString("0.00", c) + ", " + Rp.Y.ToString("0.00", c) + "} \r\n property RpS : {" + Rp.Width.ToString("0.00", c) + ", " + Rp.Height.ToString("0.00", c) + "}  \r\n  property PO : {" + P.X.ToString("0.00", c) + ", " + P.Y.ToString("0.00", c) + "} \r\n  property PS : {" + P.Width.ToString("0.00", c) + ", " + P.Height.ToString("0.00", c) + "}  ");
+			Double mult = 10;
+			Double RaX = mult * (P.X + Ra.X);
+			Double RbX = mult * (P.X + Rb.X);
+			Double RcX = mult * (P.X + Rc.X);
+			Double RpX = mult * (P.X + Rp.X);
+
+			Double RaY = mult * (P.Y + Ra.Y);
+			Double RbY = mult * (P.Y + Rb.Y);
+			Double RcY = mult * (P.Y + Rc.Y);
+			Double RpY = mult * (P.Y + Rp.Y);
+
+			Double RaW = mult * Ra.Width;
+			Double RbW = mult * Rb.Width;
+			Double RcW = mult * Rc.Width;
+			Double RpW = mult * Rp.Width;
+
+			Double RaH = mult * Ra.Height;
+			Double RbH = mult * Rb.Height;
+			Double RcH = mult * Rc.Height;
+			Double RpH = mult * Rp.Height;
+
+			Double PX = mult * P.X;
+			Double PY = mult * P.Y;
+			Double PW = mult * P.Width;
+			Double PH = mult * P.Height;
+
+			Debug.WriteLine("property RaO : {" + RaX.ToString("0.00", c) + ", " + RaY.ToString("0.00", c) + "} \r\n  property RaS : {" + RaW.ToString("0.00", c) + ", " + RaH.ToString("0.00", c) +
+				"} \r\n   property RbO : {" + RbX.ToString("0.00", c) + ", " + RbY.ToString("0.00", c) + "} \r\n property RbS : {" + RbW.ToString("0.00", c) + ", " + RbH.ToString("0.00", c) +
+				"}  \r\n  property RcO : {" + RcX.ToString("0.00", c) + ", " + RcY.ToString("0.00", c) + "} \r\n property RcS : {" + RcW.ToString("0.00", c) + ", " + RcH.ToString("0.00", c) +
+				"}  \r\n  property RpO : {" + RpX.ToString("0.00", c) + ", " + RpY.ToString("0.00", c) + "} \r\n property RpS : {" + RpW.ToString("0.00", c) + ", " + RpH.ToString("0.00", c) +
+				"}  \r\n  property PO : {" + PX.ToString("0.00", c) + ", " + PY.ToString("0.00", c) + "} \r\n  property PS : {" + PW.ToString("0.00", c) + ", " + PH.ToString("0.00", c) + "}  ");
 		}
 
 
@@ -213,18 +282,25 @@ namespace DeepZoomView {
 		/// <param name="max">This contains the width and height of the display</param>
 		/// <returns>A list of "X,Y"=>ImgID for the mouse-over identification</returns>
 		public Dictionary<string, int> DisplayGroupsOnScreen(out Point max) {
-			IOrderedEnumerable<KeyValuePair<string, List<int>>> orderedGroup = groups.OrderByDescending(kv => kv.Value.Count);
-			foreach (KeyValuePair<string, List<int>> kv in orderedGroup) {
-				Group g = new Group(kv.Key, kv.Value);
-				groupsNotPlaced.Add(g);
+			if (Display == DisplayOptions[0]) {
+				Dictionary<String, int> canvasIndex;
+				int cols, rows;
+				orderByGroupsVertically(out canvasIndex, out cols, out rows);
+				max = new Point(cols, rows);
+				return canvasIndex;
+			} else {
+				IOrderedEnumerable<KeyValuePair<string, List<int>>> orderedGroup = groups.OrderByDescending(kv => kv.Value.Count);
+				foreach (KeyValuePair<string, List<int>> kv in orderedGroup) {
+					Group g = new Group(kv.Key, kv.Value);
+					groupsNotPlaced.Add(g);
+				}
+				RectWithRects result = TreeMap(groupsNotPlaced, new RectWithRects(0, 0, imgWidth, imgHeight));
+				Debug.WriteLine(result.TreeView());
+				PositionCorrection(result);
+				groupsNotPlaced = groupsNotPlaced.Except(placedGroups).ToList();
+				HideNotPlacedImages();
+				return PositionImages(out max);
 			}
-			RectWithRects result = TreeMap(groupsNotPlaced, new RectWithRects(0, 0, imgWidth, imgHeight));
-			Debug.WriteLine(result.TreeView());
-			PositionCorrection(result);
-			groupsNotPlaced = groupsNotPlaced.Except(placedGroups).ToList();
-			HideNotPlacedImages();
-			return PositionImages(out max);
-			
 			#region old
 			int x = 0, y = 0;
 			String pos;
@@ -269,6 +345,98 @@ namespace DeepZoomView {
 			HideNotPlacedImages();
 			return PositionImages(out max);
 			#endregion old
+		}
+
+		/// <summary>
+		/// Takes the set of groups and arranges them on the MSI vertically
+		/// </summary>
+		/// <param name="Groups"></param>
+		private void orderByGroupsVertically(out Dictionary<String, int> canvasIndex, out int cols, out int rows) {
+			List<int> groupSizes = new List<int>();
+			List<string> groupNames = new List<string>();
+			int total = 0;
+			foreach (KeyValuePair<String, List<int>> group in this.groups) {
+				groupNames.Add(group.Key);
+				groupSizes.Add(group.Value.Count);
+				total += group.Value.Count;
+			}
+
+			cols = 1;
+			rows = 1;
+
+			foreach (int row in groupSizes) {
+				if (row > rows) {
+					rows = row;
+				}
+			}
+
+			cols = groupSizes.Count;
+			cols = Convert.ToInt32(Math.Floor(msi.ActualHeight * cols / msi.ActualWidth));
+			double rowsNeeded = 0;
+
+			while (true) {
+				rowsNeeded = 0;
+				// Determina o que acontece ao reduzir a largura
+				foreach (int row in groupSizes) {
+					rowsNeeded += Math.Ceiling(row / (rows - 1));
+				}
+
+				// se for viavel reduzir a largura, faz isso mesmo.
+				cols = Convert.ToInt32(Math.Floor(msi.ActualWidth * (rows - 1) / msi.ActualHeight));
+				if (rowsNeeded <= cols) {
+					rows--;
+				} else {
+					cols = Convert.ToInt32(Math.Floor(msi.ActualWidth * rows / msi.ActualHeight));
+					break;
+				}
+			}
+
+
+
+			// put images in canvas
+			double imgSize = msi.ActualHeight / rows;
+			var x = 0.0;
+			var y = 0.0;
+			// era fixe guardar o anterior para repor
+			canvasIndex = new Dictionary<string, int>();
+
+			foreach (KeyValuePair<String, List<int>> group in this.groups) {
+				foreach (int id in group.Value) {
+					try {
+						msi.SubImages[id].ViewportOrigin = new Point(-x, -y);
+					} catch {
+						continue;
+					}
+					canvasIndex.Add(x + ";" + y, id);
+					y++;
+
+					if (y >= rows) {
+						x += 1;
+						y = 0.0;
+					}
+				}
+				y = 0;
+				x++;
+			}
+
+			double HcellsTmp = msi.ActualWidth * rows / msi.ActualHeight;
+			cols = (int)Math.Max(cols, HcellsTmp);
+			msi.ViewportWidth = cols;
+			double zoom = 1;
+			//ShowAllContent();
+
+			//makeAnAxis("X", groups);
+			//makeAnAxis("Y", Vcells);
+			return;
+		}
+
+
+		public List<KeyValuePair<string, int>> GetGroupsForAxis(int cols) {
+			List<KeyValuePair<string, int>> theSet = new List<KeyValuePair<string, int>>();
+			foreach (KeyValuePair<string, List<int>> g in groups) {
+				theSet.Add(new KeyValuePair<string, int>(g.Key, Convert.ToInt32(Math.Ceiling(g.Value.Count / cols))));
+			}
+			return theSet;
 		}
 
 
@@ -367,8 +535,8 @@ namespace DeepZoomView {
 		/// </summary>
 		private void CalculateCanvas() {
 			int cols;
-			int rows;
-			CalculateDistribution((int)Math.Ceiling(imgCount * 1.1), out cols, out rows);
+			int rows;	////////////////////////////////////////\
+			CalculateDistribution((int)Math.Ceiling(imgCount * 1.0), out cols, out rows);
 			imgWidth = cols;
 			imgHeight = rows;
 		}
@@ -440,11 +608,12 @@ namespace DeepZoomView {
 				foreach (int id in g.images) {
 					if (!positions.ContainsKey(x + ";" + y)) {
 						positions.Add(x + ";" + y, id);
-						msi.SubImages[id].Opacity = 1;
 						invertedGroups.Add(id, g);
 						try {
 							msi.SubImages[id].ViewportOrigin = new Point(-x, -y);
+							msi.SubImages[id].Opacity = 1;
 						} catch {
+							//g.images.Remove(id);
 							Debug.WriteLine("On PositionImages, id " + id + " was not found on msi (which contains " + msi.SubImages.Count + ")");
 							continue;
 						}
@@ -525,7 +694,7 @@ namespace DeepZoomView {
 				element.Children.Add(pBorder);
 				pBorder.SetValue(Canvas.TopProperty, p.Y * cellHeight - n);
 				pBorder.SetValue(Canvas.LeftProperty, p.X * cellWidth - n);
-				pBorder.Stroke = new SolidColorBrush(cs[n]);
+				pBorder.Stroke = new SolidColorBrush(cs[n % cs.Count()]);
 				pBorder.StrokeThickness = 1.0;
 				pBorder.Width = p.Width * cellHeight + 2 * n;
 				pBorder.Height = p.Height * cellWidth + 2 * n;
