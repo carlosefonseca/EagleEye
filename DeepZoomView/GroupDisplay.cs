@@ -17,7 +17,7 @@ namespace DeepZoomView {
 	/// Provides a TreeMap-sort-of-like view of a set of grouped images
 	/// </summary>
 	public class GroupDisplay {
-		public static List<String> DisplayOptions = new List<string>() { "Linear", "Groups" };
+		public static List<String> DisplayOptions = new List<string>() { "Groups", "Linear" };
 		public String Display;
 		private MultiScaleImage msi;
 		private List<KeyValuePair<string, List<int>>> groups;
@@ -660,19 +660,15 @@ namespace DeepZoomView {
 			if (!invertedGroups.ContainsKey(img)) return;
 
 			//			element.Children.Remove(groupBorder);
-			element.Children.Clear();
-			if (element.Children.Count > 0) {
-				groupBorder = (Rectangle)element.Children.First(x => (((String)x.GetValue(Canvas.TagProperty)) == "Group"));
-			} else {
-				groupBorder = null;
-			}
+			groupBorder = (Rectangle)element.Children.FirstOrDefault(x => (((String)x.GetValue(Canvas.TagProperty)) == "Group"));
+
 
 			double cellHeight = pxHeight / imgHeight;
 			double cellWidth = pxWidth / imgWidth;
 			cellHeight = cellWidth;
 
 			Group g = invertedGroups[img];
-			if (groupBorder == null) {
+			if (groupBorder == null || (String)groupBorder.Tag == "") {
 				groupBorder = new Rectangle();
 				groupBorder.SetValue(Canvas.TagProperty, "Group");
 				element.Children.Add(groupBorder);
@@ -684,6 +680,10 @@ namespace DeepZoomView {
 			//groupBorder.Fill = new SolidColorBrush(Colors.Red);
 			groupBorder.Width = g.rectangle.Width * cellHeight;
 			groupBorder.Height = g.rectangle.Height * cellWidth;
+
+
+			return;
+
 
 			Color[] cs = new Color[] { Colors.Black, Colors.Blue, Colors.Cyan, Colors.Green, Colors.Yellow, Colors.Orange, Colors.Red, Colors.Magenta, Colors.Purple, Colors.Brown };
 			RectWithRects p = g.rectangle.Parent;
@@ -716,20 +716,31 @@ namespace DeepZoomView {
 			}
 		}
 
-		internal void DisplayAllGroupNames(Canvas destination) {
+		public void DisplayAllGroupNames(Canvas destination) {
+			destination.Children.Clear();
 			Border border;
 			Rect bounds;
 			TextBlock txt;
 			Random rand = new Random();
+			double cellSide = pxWidth / imgWidth;
+			destination.Width = this.pxWidth;
+			destination.Height = this.pxHeight;
+
 			foreach (Group g in placedGroups) {
 				border = new Border();
 				bounds = g.rectangle.Rect;
-				border.Background = new SolidColorBrush(Color.FromArgb((byte)100, (byte)rand.Next(255), (byte)rand.Next(255), (byte)rand.Next(255)));
+				border.Background = new SolidColorBrush(Color.FromArgb((byte)150, (byte)rand.Next(255), (byte)rand.Next(255), (byte)rand.Next(255)));
 				txt = new TextBlock();
 				txt.Text = g.name;
 				txt.TextAlignment = TextAlignment.Center;
+				txt.TextWrapping = TextWrapping.Wrap;
 				txt.VerticalAlignment = VerticalAlignment.Center;
-				SetFrameworkElementBoundsFromRect(txt, bounds);
+				txt.FontWeight = FontWeights.Bold;
+				txt.Foreground = new SolidColorBrush(Colors.White);
+				border.Width = bounds.Width * cellSide;
+				border.Height = bounds.Height * cellSide;
+				Canvas.SetLeft(border, bounds.X * cellSide);
+				Canvas.SetTop(border, bounds.Y * cellSide);
 				border.Child = txt;
 				destination.Children.Add(border);
 			}
@@ -742,10 +753,14 @@ namespace DeepZoomView {
 			e.Height = r.Height;
 		}
 		public static void SetFrameworkElementBoundsFromRect(FrameworkElement e, Rect r) {
-			Canvas.SetLeft(e, r.X);
-			Canvas.SetTop(e, r.Y);
-			e.Width = r.Width;
-			e.Height = r.Height;
+			SetFrameworkElementBoundsFromRect(e, r, 1.0);
+		}
+		
+		public static void SetFrameworkElementBoundsFromRect(FrameworkElement e, Rect r, double multiplier) {
+			Canvas.SetLeft(e, r.X * multiplier);
+			Canvas.SetTop(e, r.Y * multiplier);
+			e.Width = r.Width * multiplier;
+			e.Height = r.Height * multiplier;
 		}
 	} // closes GroupDisplay
 
