@@ -702,6 +702,51 @@ namespace DeepZoomView {
 				n++;
 			}
 		}
+
+		public void Test(Canvas element) {
+			double cellHeight = pxHeight / imgHeight;
+			double cellWidth = pxWidth / imgWidth;
+			foreach (Group g in placedGroups) {
+				Rectangle r = new Rectangle();
+				r.Stroke = new SolidColorBrush(Colors.Red);
+				r.SetValue(Canvas.LeftProperty, g.rectangle.X);
+				r.SetValue(Canvas.TopProperty, g.rectangle.Y);
+				r.Width = cellWidth;
+				r.Height = cellHeight;
+			}
+		}
+
+		internal void DisplayAllGroupNames(Canvas destination) {
+			Border border;
+			Rect bounds;
+			TextBlock txt;
+			Random rand = new Random();
+			foreach (Group g in placedGroups) {
+				border = new Border();
+				bounds = g.rectangle.Rect;
+				border.Background = new SolidColorBrush(Color.FromArgb((byte)100, (byte)rand.Next(255), (byte)rand.Next(255), (byte)rand.Next(255)));
+				txt = new TextBlock();
+				txt.Text = g.name;
+				txt.TextAlignment = TextAlignment.Center;
+				txt.VerticalAlignment = VerticalAlignment.Center;
+				SetFrameworkElementBoundsFromRect(txt, bounds);
+				border.Child = txt;
+				destination.Children.Add(border);
+			}
+		}
+
+		public static void SetFrameworkElementBoundsFromOther(FrameworkElement e, FrameworkElement r) {
+			Canvas.SetLeft(e, Canvas.GetLeft(r));
+			Canvas.SetTop(e, Canvas.GetTop(r));
+			e.Width = r.Width;
+			e.Height = r.Height;
+		}
+		public static void SetFrameworkElementBoundsFromRect(FrameworkElement e, Rect r) {
+			Canvas.SetLeft(e, r.X);
+			Canvas.SetTop(e, r.Y);
+			e.Width = r.Width;
+			e.Height = r.Height;
+		}
 	} // closes GroupDisplay
 
 	public class Group {

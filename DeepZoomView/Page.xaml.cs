@@ -1018,7 +1018,12 @@ namespace DeepZoomView {
 		}
 
 		private void showgroups_Click(object sender, RoutedEventArgs e) {
-
+			if (showgroups.IsChecked.HasValue && showgroups.IsChecked.Value && gd != null) {
+				gd.DisplayAllGroupNames(GroupNamesOverlay);
+				GroupNamesOverlay.Visibility = Visibility.Visible;
+			} else {
+				GroupNamesOverlay.Visibility = Visibility.Collapsed;
+			}
 		}
 
 
