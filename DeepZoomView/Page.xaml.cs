@@ -993,6 +993,9 @@ namespace DeepZoomView {
 				return;
 			} else if (selected == "-None-") {
 				resetbtn_Click(null, null);
+				gd = null;
+				Overlays.Children.Remove(Overlays.Children.FirstOrDefault(x => (((String)x.GetValue(Canvas.TagProperty)) == "Group")));
+
 			} else if (selected == "Import Metadata") {
 				AskForMetadata();
 				Vorganize_Update();
@@ -1007,6 +1010,8 @@ namespace DeepZoomView {
 				Vorganize.IsDropDownOpen = false;
 				GoHomeClick(null, null);
 				dontZoom = true;
+				showgroups.IsChecked = false;
+				showgroups_Click(null, null);
 			}
 		}
 
@@ -1019,7 +1024,7 @@ namespace DeepZoomView {
 
 		private void showgroups_Click(object sender, RoutedEventArgs e) {
 			if (showgroups.IsChecked.HasValue && showgroups.IsChecked.Value && gd != null) {
-				gd.DisplayAllGroupNames(GroupNamesOverlay);
+				gd.SetGroupNamesOverlay(GroupNamesOverlay);
 				GroupNamesOverlay.Visibility = Visibility.Visible;
 			} else {
 				GroupNamesOverlay.Visibility = Visibility.Collapsed;

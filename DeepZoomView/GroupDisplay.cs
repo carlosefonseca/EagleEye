@@ -28,6 +28,7 @@ namespace DeepZoomView {
 		List<Group> placedGroups = new List<Group>();
 		List<Group> groupsNotPlaced = new List<Group>();
 		Rectangle groupBorder = null;
+		private Canvas groupNamesOverlay = null;
 
 		/// <summary>
 		/// Creates a new GroupDisplay
@@ -282,13 +283,13 @@ namespace DeepZoomView {
 		/// <param name="max">This contains the width and height of the display</param>
 		/// <returns>A list of "X,Y"=>ImgID for the mouse-over identification</returns>
 		public Dictionary<string, int> DisplayGroupsOnScreen(out Point max) {
-			if (Display == DisplayOptions[0]) {
-				Dictionary<String, int> canvasIndex;
+			groupNamesOverlay = null;
+			Dictionary<string, int> canvasIndex = null;
+			if (Display == "Linear") {
 				int cols, rows;
 				orderByGroupsVertically(out canvasIndex, out cols, out rows);
 				max = new Point(cols, rows);
-				return canvasIndex;
-			} else {
+			} else if (Display == "Groups") {
 				IOrderedEnumerable<KeyValuePair<string, List<int>>> orderedGroup = groups.OrderByDescending(kv => kv.Value.Count);
 				foreach (KeyValuePair<string, List<int>> kv in orderedGroup) {
 					Group g = new Group(kv.Key, kv.Value);
@@ -299,8 +300,12 @@ namespace DeepZoomView {
 				PositionCorrection(result);
 				groupsNotPlaced = groupsNotPlaced.Except(placedGroups).ToList();
 				HideNotPlacedImages();
-				return PositionImages(out max);
+				canvasIndex = PositionImages(out max);
+			} else {
+				throw new Exception("Incorrect display method");
 			}
+			return canvasIndex;
+			//////////////// (temporarily) DEAD CODE
 			#region old
 			int x = 0, y = 0;
 			String pos;
@@ -536,7 +541,7 @@ namespace DeepZoomView {
 		private void CalculateCanvas() {
 			int cols;
 			int rows;	////////////////////////////////////////\
-			CalculateDistribution((int)Math.Ceiling(imgCount * 1.0), out cols, out rows);
+			CalculateDistribution((int)Math.Ceiling(imgCount * 1.02), out cols, out rows);
 			imgWidth = cols;
 			imgHeight = rows;
 		}
@@ -716,34 +721,39 @@ namespace DeepZoomView {
 			}
 		}
 
-		public void DisplayAllGroupNames(Canvas destination) {
-			destination.Children.Clear();
-			Border border;
-			Rect bounds;
-			TextBlock txt;
-			Random rand = new Random();
-			double cellSide = pxWidth / imgWidth;
-			destination.Width = this.pxWidth;
-			destination.Height = this.pxHeight;
 
-			foreach (Group g in placedGroups) {
-				border = new Border();
-				bounds = g.rectangle.Rect;
-				border.Background = new SolidColorBrush(Color.FromArgb((byte)150, (byte)rand.Next(255), (byte)rand.Next(255), (byte)rand.Next(255)));
-				txt = new TextBlock();
-				txt.Text = g.name;
-				txt.TextAlignment = TextAlignment.Center;
-				txt.TextWrapping = TextWrapping.Wrap;
-				txt.VerticalAlignment = VerticalAlignment.Center;
-				txt.FontWeight = FontWeights.Bold;
-				txt.Foreground = new SolidColorBrush(Colors.White);
-				border.Width = bounds.Width * cellSide;
-				border.Height = bounds.Height * cellSide;
-				Canvas.SetLeft(border, bounds.X * cellSide);
-				Canvas.SetTop(border, bounds.Y * cellSide);
-				border.Child = txt;
-				destination.Children.Add(border);
+		public void SetGroupNamesOverlay(Canvas destination) {
+			if (groupNamesOverlay == null) {
+				groupNamesOverlay = new Canvas();
+				groupNamesOverlay.Width = this.pxWidth;
+
+				Border border;
+				Rect bounds;
+				TextBlock txt;
+				Random rand = new Random();
+				double cellSide = pxWidth / imgWidth;
+
+				foreach (Group g in placedGroups) {
+					border = new Border();
+					bounds = g.rectangle.Rect;
+					border.Background = new SolidColorBrush(Color.FromArgb((byte)150, (byte)rand.Next(255), (byte)rand.Next(255), (byte)rand.Next(255)));
+					txt = new TextBlock();
+					txt.Text = g.name;
+					txt.TextAlignment = TextAlignment.Center;
+					txt.TextWrapping = TextWrapping.Wrap;
+					txt.VerticalAlignment = VerticalAlignment.Center;
+					txt.FontWeight = FontWeights.Bold;
+					txt.Foreground = new SolidColorBrush(Colors.White);
+					border.Width = bounds.Width * cellSide;
+					border.Height = bounds.Height * cellSide;
+					Canvas.SetLeft(border, bounds.X * cellSide);
+					Canvas.SetTop(border, bounds.Y * cellSide);
+					border.Child = txt;
+					groupNamesOverlay.Children.Add(border);
+				}
 			}
+			destination.Children.Clear();
+			destination.Children.Add(groupNamesOverlay);
 		}
 
 		public static void SetFrameworkElementBoundsFromOther(FrameworkElement e, FrameworkElement r) {
@@ -755,7 +765,7 @@ namespace DeepZoomView {
 		public static void SetFrameworkElementBoundsFromRect(FrameworkElement e, Rect r) {
 			SetFrameworkElementBoundsFromRect(e, r, 1.0);
 		}
-		
+
 		public static void SetFrameworkElementBoundsFromRect(FrameworkElement e, Rect r, double multiplier) {
 			Canvas.SetLeft(e, r.X * multiplier);
 			Canvas.SetTop(e, r.Y * multiplier);
