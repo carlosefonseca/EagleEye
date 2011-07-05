@@ -1037,6 +1037,9 @@ namespace DeepZoomView {
 			String selected = (String)DisplayTypeCombo.SelectedItem;
 			if (gd != null) {
 				gd.Display = selected;
+				Point max;
+				canvasIndex = gd.DisplayGroupsOnScreen(out max);
+				Hcells = max.X;
 			}
 			dontZoom = true;
 		}
