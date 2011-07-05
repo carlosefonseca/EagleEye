@@ -366,32 +366,32 @@ namespace DeepZoomView {
 				total += group.Value.Count;
 			}
 
-			cols = 1;
-			rows = 1;
+			int Hcells = 1;
+			int Vcells = 1;
 
 			foreach (int row in groupSizes) {
-				if (row > rows) {
-					rows = row;
+				if (row > Vcells) {
+					Vcells = row;
 				}
 			}
 
-			cols = groupSizes.Count;
-			cols = Convert.ToInt32(Math.Floor(msi.ActualHeight * cols / msi.ActualWidth));
+			Hcells = groupSizes.Count;
+			Hcells = Convert.ToInt32(Math.Floor(msi.ActualHeight * Hcells / msi.ActualWidth));
 			double rowsNeeded = 0;
 
 			while (true) {
 				rowsNeeded = 0;
 				// Determina o que acontece ao reduzir a largura
 				foreach (int row in groupSizes) {
-					rowsNeeded += Math.Ceiling(row / (rows - 1));
+					rowsNeeded += Math.Ceiling(row / (Vcells - 1));
 				}
 
 				// se for viavel reduzir a largura, faz isso mesmo.
-				cols = Convert.ToInt32(Math.Floor(msi.ActualWidth * (rows - 1) / msi.ActualHeight));
-				if (rowsNeeded <= cols) {
-					rows--;
+				Hcells = Convert.ToInt32(Math.Floor(msi.ActualWidth * (Vcells - 1) / msi.ActualHeight));
+				if (rowsNeeded <= Hcells) {
+					Vcells--;
 				} else {
-					cols = Convert.ToInt32(Math.Floor(msi.ActualWidth * rows / msi.ActualHeight));
+					Hcells = Convert.ToInt32(Math.Floor(msi.ActualWidth * Vcells / msi.ActualHeight));
 					break;
 				}
 			}
@@ -399,7 +399,7 @@ namespace DeepZoomView {
 
 
 			// put images in canvas
-			double imgSize = msi.ActualHeight / rows;
+			double imgSize = msi.ActualHeight / Vcells;
 			var x = 0.0;
 			var y = 0.0;
 			// era fixe guardar o anterior para repor
@@ -407,15 +407,11 @@ namespace DeepZoomView {
 
 			foreach (KeyValuePair<String, List<int>> group in this.groups) {
 				foreach (int id in group.Value) {
-					try {
-						msi.SubImages[id].ViewportOrigin = new Point(-x, -y);
-					} catch {
-						continue;
-					}
+					msi.SubImages[id].ViewportOrigin = new Point(-x, -y);
 					canvasIndex.Add(x + ";" + y, id);
 					y++;
 
-					if (y >= rows) {
+					if (y >= Vcells) {
 						x += 1;
 						y = 0.0;
 					}
@@ -424,14 +420,20 @@ namespace DeepZoomView {
 				x++;
 			}
 
-			double HcellsTmp = msi.ActualWidth * rows / msi.ActualHeight;
-			cols = (int)Math.Max(cols, HcellsTmp);
-			msi.ViewportWidth = cols;
-			double zoom = 1;
+			double HcellsTmp = msi.ActualWidth * Vcells / msi.ActualHeight;
+			Hcells = (int)Math.Max(Hcells, HcellsTmp);
+			msi.ViewportWidth = Hcells;
+			//zoom = 1;
 			//ShowAllContent();
 
+			List<KeyValuePair<string, int>> groups = new List<KeyValuePair<string, int>>();
+			for (int i = 0; i < groupNames.Count; i++) {
+				groups.Add(new KeyValuePair<string, int>(groupNames[i], Convert.ToInt32(Math.Ceiling(groupSizes[i] / Hcells))));
+			}
 			//makeAnAxis("X", groups);
 			//makeAnAxis("Y", Vcells);
+			cols = Hcells;
+			rows = Vcells;
 			return;
 		}
 
