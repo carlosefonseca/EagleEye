@@ -27,7 +27,7 @@ namespace DeepZoomView {
 		Dictionary<string, Group> map = new Dictionary<string, Group>();
 		List<Group> placedGroups = new List<Group>();
 		List<Group> groupsNotPlaced = new List<Group>();
-		Rectangle groupBorder = null;
+		Shape groupBorder = null;
 		private Canvas groupNamesOverlay = null;
 
 		/// <summary>
@@ -285,9 +285,23 @@ namespace DeepZoomView {
 		public Dictionary<string, int> DisplayGroupsOnScreen(out Point max) {
 			groupNamesOverlay = null;
 			Dictionary<string, int> canvasIndex = null;
+
+			groupsNotPlaced.Clear();
+			placedGroups.Clear();
+			invertedGroups.Clear();
+			if (groupBorder != null && groupBorder.Parent != null) {
+				((Canvas)groupBorder.Parent).Children.Remove(groupBorder);
+				groupBorder = null;
+			}
 			if (Display == "Linear") {
+				IOrderedEnumerable<KeyValuePair<string, List<int>>> orderedGroup = groups.OrderBy(kv => kv.Key);
+				foreach (KeyValuePair<string, List<int>> kv in orderedGroup) {
+					Group g = new Group(kv.Key, kv.Value);
+					groupsNotPlaced.Add(g);
+				}
+				Group.DisplayType = Display;
 				int cols, rows;
-				orderByGroupsVertically(out canvasIndex, out cols, out rows);
+				orderByGroupsVertically(groupsNotPlaced, out canvasIndex, out cols, out rows);
 				max = new Point(cols, rows);
 			} else if (Display == "Groups") {
 				IOrderedEnumerable<KeyValuePair<string, List<int>>> orderedGroup = groups.OrderByDescending(kv => kv.Value.Count);
@@ -295,6 +309,7 @@ namespace DeepZoomView {
 					Group g = new Group(kv.Key, kv.Value);
 					groupsNotPlaced.Add(g);
 				}
+				Group.DisplayType = Display;
 				RectWithRects result = TreeMap(groupsNotPlaced, new RectWithRects(0, 0, imgWidth, imgHeight));
 				Debug.WriteLine(result.TreeView());
 				PositionCorrection(result);
@@ -352,11 +367,137 @@ namespace DeepZoomView {
 			#endregion old
 		}
 
+
+		private void orderByGroupsVertically(List<Group> groupsNotPlaced, out Dictionary<String, int> canvasIndex, out int cols, out int rows) {
+			int height = imgHeight;
+			int previousHeight = -1;
+			Boolean heightIsIncreasing;
+
+			placedGroups.Clear();
+
+			double prevPAR = 0;
+			int width = TestVerticalGroupDistribution(groupsNotPlaced, height), prevWidth = 0;
+
+			double pAR = 1.0 * width / height;
+
+			if (aspectRatio < pAR) {
+				heightIsIncreasing = true;
+			} else {
+				heightIsIncreasing = false;
+			}
+
+			while (true) {
+				if ((heightIsIncreasing && aspectRatio > pAR) || (!heightIsIncreasing && aspectRatio < pAR))
+					break;
+
+				if (heightIsIncreasing) height++;
+				else height--;
+
+				prevWidth = width;
+				width = TestVerticalGroupDistribution(groupsNotPlaced, height);
+
+				prevPAR = pAR;
+				pAR = 1.0 * width / height;
+			}
+
+			if (Math.Abs(aspectRatio - pAR) > Math.Abs(aspectRatio - prevPAR)) {
+				pAR = prevPAR;
+				width = prevWidth;
+				if (heightIsIncreasing) {
+					height--;
+				} else {
+					height++;
+				}
+			}
+			canvasIndex = DistributeGroupsVertically(groupsNotPlaced, height, width);
+			cols = (int)Math.Ceiling(height * pAR);
+			rows = height;
+		}
+
+		private Dictionary<string, int> DistributeGroupsVertically(List<Group> groupsNotPlaced, int height, int width) {
+			int x = 0, sx = 0;
+			int y = 0, sy = 0;
+			double cellSide = pxWidth / width;
+			//double cellSide = pxHeight / height;
+			invertedGroups.Clear();
+			Polygon p;
+			Dictionary<string, int> canvasIndex = new Dictionary<string, int>();
+			foreach (Group g in groupsNotPlaced) {
+				if (y != 0 && g.images.Count > height - y) {
+					x++;
+					y = 0;
+				}
+
+				p = new Polygon();
+				Canvas.SetTop(p, 0);
+				Canvas.SetLeft(p, 0);
+				p.Points.Add(new Point(x * cellSide, y * cellSide));
+				sx = x;
+				sy = y;
+
+				int fx = x + g.images.Count / height;
+				int fy = y + g.images.Count % height;
+
+				foreach (int id in g.images) {
+					try {
+						msi.SubImages[id].ViewportOrigin = new Point(-x, -y);
+						canvasIndex.Add(x + ";" + y, id);
+						invertedGroups.Add(id, g);
+					} catch (Exception e) {
+						Debug.WriteLine("ERRO!!!!!!!1 " + e.Message);
+					}
+					y++;
+					if (y >= height) {
+						y = 0;
+						x++;
+					}
+				}
+
+				if (fx != x || fy != y) {
+					Debug.WriteLine("ERRO!!!!!!!1 fx=" + fx + " x=" + x + " fy=" + fy + " y=" + y);
+				}
+
+				p.Points.Add(new Point((x + 1) * cellSide, sy * cellSide));
+				p.Points.Add(new Point((x + 1) * cellSide, y * cellSide));
+				p.Points.Add(new Point(x * cellSide, y * cellSide));
+
+				if (x > sx) {
+					p.Points.Add(new Point(x * cellSide, height * cellSide));
+					p.Points.Add(new Point(sx * cellSide, height * cellSide));
+				}
+				g.shape = p;
+				y = (y + 1) % height;
+				placedGroups.Add(g);
+			}
+			return canvasIndex;
+		}
+
+		private static int TestVerticalGroupDistribution(List<Group> groupsNotPlaced, int height) {
+			int x = 0;
+			int y = 0;
+			foreach (Group g in groupsNotPlaced) {
+				if (y != 0 && g.images.Count > height - y) {
+					x++;
+					y = 0;
+				}
+				x += g.images.Count / height;
+				y += g.images.Count % height;
+				y = (y + 1) % height;
+			}
+			return x;
+		}
+
+		//public Rectangle RectangleWithPositions(int X, int Y, int W, int H) {
+		//    Rectangle r = new Rectangle();
+
+		//}
+
+
 		/// <summary>
 		/// Takes the set of groups and arranges them on the MSI vertically
 		/// </summary>
 		/// <param name="Groups"></param>
-		private void orderByGroupsVertically(out Dictionary<String, int> canvasIndex, out int cols, out int rows) {
+		private void OLDorderByGroupsVertically(List<Group> groupsNotPlaced, out Dictionary<String, int> canvasIndex, out int cols, out int rows) {
 			List<int> groupSizes = new List<int>();
 			List<string> groupNames = new List<string>();
 			int total = 0;
@@ -369,13 +510,17 @@ namespace DeepZoomView {
 			int Hcells = 1;
 			int Vcells = 1;
 
-			foreach (int row in groupSizes) {
+			// Greatest group size
+			Vcells = groupsNotPlaced.Max(g => g.images.Count);
+			/*foreach (int row in groupSizes) {
 				if (row > Vcells) {
 					Vcells = row;
 				}
-			}
+			}*/
 
-			Hcells = groupSizes.Count;
+			// cols = group count
+			//Hcells = groupSizes.Count;
+			Hcells = groupsNotPlaced.Count;
 			Hcells = Convert.ToInt32(Math.Floor(msi.ActualHeight * Hcells / msi.ActualWidth));
 			double rowsNeeded = 0;
 
@@ -667,27 +812,33 @@ namespace DeepZoomView {
 			if (!invertedGroups.ContainsKey(img)) return;
 
 			//			element.Children.Remove(groupBorder);
-			groupBorder = (Rectangle)element.Children.FirstOrDefault(x => (((String)x.GetValue(Canvas.TagProperty)) == "Group"));
-
+			groupBorder = (Shape)element.Children.FirstOrDefault(x => (((String)x.GetValue(Canvas.TagProperty)) == "Group"));
 
 			double cellHeight = pxHeight / imgHeight;
 			double cellWidth = pxWidth / imgWidth;
 			cellHeight = cellWidth;
-
+element.Children.Remove(groupBorder);
 			Group g = invertedGroups[img];
-			if (groupBorder == null || (String)groupBorder.Tag == "") {
-				groupBorder = new Rectangle();
-				groupBorder.SetValue(Canvas.TagProperty, "Group");
-				element.Children.Add(groupBorder);
+			if (Display == "Linear") {
+				
+				g.shape.Stroke = new SolidColorBrush(Colors.White);
+				g.shape.StrokeThickness = 1.0;
+				g.shape.Tag = "Group";
+				element.Children.Add(g.shape);
+			} else if (Display == "Groups") {
+				//if (groupBorder == null || (String)groupBorder.Tag == "") {
+					groupBorder = new Rectangle();
+					groupBorder.SetValue(Canvas.TagProperty, "Group");
+					element.Children.Add(groupBorder);
+				//}
+				groupBorder.SetValue(Canvas.TopProperty, g.rectangle.Y * cellHeight);
+				groupBorder.SetValue(Canvas.LeftProperty, g.rectangle.X * cellWidth);
+				groupBorder.Stroke = new SolidColorBrush(Colors.White);
+				groupBorder.StrokeThickness = 1.0;
+				//groupBorder.Fill = new SolidColorBrush(Colors.Red);
+				groupBorder.Width = g.rectangle.Width * cellHeight;
+				groupBorder.Height = g.rectangle.Height * cellWidth;
 			}
-			groupBorder.SetValue(Canvas.TopProperty, g.rectangle.Y * cellHeight);
-			groupBorder.SetValue(Canvas.LeftProperty, g.rectangle.X * cellWidth);
-			groupBorder.Stroke = new SolidColorBrush(Colors.White);
-			groupBorder.StrokeThickness = 1.0;
-			//groupBorder.Fill = new SolidColorBrush(Colors.Red);
-			groupBorder.Width = g.rectangle.Width * cellHeight;
-			groupBorder.Height = g.rectangle.Height * cellWidth;
-
 
 			return;
 
@@ -730,15 +881,13 @@ namespace DeepZoomView {
 				groupNamesOverlay.Width = this.pxWidth;
 
 				Border border;
+				Polygon pBorder;
 				Rect bounds;
 				TextBlock txt;
 				Random rand = new Random();
 				double cellSide = pxWidth / imgWidth;
 
 				foreach (Group g in placedGroups) {
-					border = new Border();
-					bounds = g.rectangle.Rect;
-					border.Background = new SolidColorBrush(Color.FromArgb((byte)150, (byte)rand.Next(255), (byte)rand.Next(255), (byte)rand.Next(255)));
 					txt = new TextBlock();
 					txt.Text = g.name;
 					txt.TextAlignment = TextAlignment.Center;
@@ -746,12 +895,33 @@ namespace DeepZoomView {
 					txt.VerticalAlignment = VerticalAlignment.Center;
 					txt.FontWeight = FontWeights.Bold;
 					txt.Foreground = new SolidColorBrush(Colors.White);
-					border.Width = bounds.Width * cellSide;
-					border.Height = bounds.Height * cellSide;
-					Canvas.SetLeft(border, bounds.X * cellSide);
-					Canvas.SetTop(border, bounds.Y * cellSide);
-					border.Child = txt;
-					groupNamesOverlay.Children.Add(border);
+					if (Group.DisplayType == "Groups") {
+						border = new Border();
+						bounds = g.rectangle.Rect;
+						border.Background = new SolidColorBrush(Color.FromArgb((byte)150, (byte)rand.Next(255), (byte)rand.Next(255), (byte)rand.Next(255)));
+						border.Width = bounds.Width * cellSide;
+						border.Height = bounds.Height * cellSide;
+						Canvas.SetLeft(border, bounds.X * cellSide);
+						Canvas.SetTop(border, bounds.Y * cellSide);
+						border.Child = txt;
+						groupNamesOverlay.Children.Add(border);
+					} else if (Group.DisplayType == "Linear") {
+						pBorder = DuplicatePolygon((Polygon)g.shape);
+						pBorder.Fill = new SolidColorBrush(Color.FromArgb((byte)150, (byte)rand.Next(255), (byte)rand.Next(255), (byte)rand.Next(255)));
+						Canvas.SetLeft(txt, pBorder.Points[0].X);
+						Canvas.SetTop(txt, pBorder.Points[0].Y);
+
+						txt.Width = pBorder.Width;
+						txt.Height = pBorder.Height;
+
+						RotateTransform rt = new RotateTransform();
+						rt.Angle = 90;
+						//rt.CenterY = -txt.Height;
+						//txt.RenderTransformOrigin = new Point(0, -txt.Height);
+						//txt.RenderTransform = rt;
+						groupNamesOverlay.Children.Add(pBorder);
+						groupNamesOverlay.Children.Add(txt);
+					}
 				}
 			}
 			destination.Children.Clear();
@@ -774,12 +944,47 @@ namespace DeepZoomView {
 			e.Width = r.Width * multiplier;
 			e.Height = r.Height * multiplier;
 		}
+
+		public static Polygon DuplicatePolygon(Polygon o) {
+			Polygon newP = new Polygon();
+			foreach (Point p in o.Points) {
+				newP.Points.Add(p);
+			}
+			return newP;
+		}
 	} // closes GroupDisplay
 
+
+
+
 	public class Group {
+		public static String DisplayType;
+
 		internal String name { get; set; }
-		internal RectWithRects rectangle { get; set; }
+		//internal RectWithRects rectangle { get; set; }
+		internal Dictionary<String, Object> rectangles = new Dictionary<string, Object>();
+		internal RectWithRects rect;
 		internal List<int> images { get; set; }
+
+		internal RectWithRects rectangle {
+			get {
+				return rect;
+				//return (RectWithRects)rectangles[DisplayType];
+			}
+			set {
+				//rectangles[DisplayType] = value;
+				rect = value;
+			}
+		}
+
+		internal Shape shape {
+			get {
+				return (Shape)rectangles[DisplayType];
+			}
+			set {
+				rectangles[DisplayType] = value;
+			}
+		}
 
 		public Group(String n, Rect r, List<int> l)
 			: this(n, l) {
@@ -792,7 +997,13 @@ namespace DeepZoomView {
 		}
 
 		public override string ToString() {
-			return "Group Name=" + name + " Rect=" + rectangle.Rect.ToString() + " ImgCount=" + images.Count;
+			if (rectangles.ContainsKey("Lienar")) {
+				return "Group '" + name + "' Polygon=" + shape.ToString() + " ImgCount=" + images.Count;
+			} else if (rectangles.ContainsKey("Group")) {
+				return "Group '" + name + "' Rect=" + rectangle.Rect.ToString() + " ImgCount=" + images.Count;
+			} else {
+				return "Group '" + name + "' Shape=None ImgCount=" + images.Count;
+			}
 		}
 	}
 
