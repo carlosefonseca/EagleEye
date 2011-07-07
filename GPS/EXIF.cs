@@ -12,7 +12,7 @@ namespace EEPlugin {
 	public class Exif : EEPluginInterface {
 		private Persistence persistence;
 		private Dictionary<long, Boolean> PluginData;
-		
+
 		#region EEPluginInterface Members
 
 		public void Init() {
@@ -31,8 +31,9 @@ namespace EEPlugin {
 			foreach (Image i in ic.ToList()) {
 				Device(i);
 				Keywords(i);
+				Path(i);
 				done++;
-				Console.Write("\r" + Math.Round((done / total)*100, 2).ToString().PadLeft(6) + "%");
+				Console.Write("\r" + Math.Round((done / total) * 100, 2).ToString().PadLeft(6) + "%");
 			}
 			Console.WriteLine();
 			return null;
@@ -56,6 +57,10 @@ namespace EEPlugin {
 			if (ks.Length > 0) {
 				i.SetPluginData("Keywords", ks);
 			}
+		}
+
+		private static void Path(Image i) {
+			i.SetPluginData("Path", i.path);
 		}
 
 		public String Id() {
