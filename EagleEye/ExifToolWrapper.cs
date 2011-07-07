@@ -15,7 +15,7 @@ namespace EagleEye {
 
 		public static List<Image> CrawlDir(string dir) {
 			start = new ProcessStartInfo();
-			start.StandardOutputEncoding = Encoding.GetEncoding(1252);
+			start.StandardOutputEncoding = Encoding.UTF8;// .GetEncoding(1252);
 			start.FileName = @"exiftool.exe";
 			start.Arguments = "-j -q -r -ext jpg -L \"" + dir + "\"";
 			start.UseShellExecute = false;
