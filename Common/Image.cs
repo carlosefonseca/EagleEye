@@ -8,6 +8,7 @@ using System.Drawing.Imaging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Text.RegularExpressions;
+using System.Linq;
 
 
 namespace EagleEye.Common {
@@ -238,7 +239,11 @@ namespace EagleEye.Common {
 				switch (name) {
 					case "Newtonsoft.Json.Linq.JArray":
 						JArray jarr = (JArray)kv.Value;
-						itemsToChange[kv.Key] = JsonConvert.DeserializeObject<List<Object>>(jarr.ToString());
+						itemsToChange[kv.Key] = "";
+						foreach (JValue v in jarr) {
+							itemsToChange[kv.Key] += JsonConvert.DeserializeObject(v.ToString()).ToString() + ", ";
+						}
+						Console.WriteLine("  " + itemsToChange[kv.Key]);
 						break;
 					default: Console.WriteLine("Type " + name + " not implemented");
 						break;
