@@ -12,6 +12,9 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Xml;
 using System.Xml.Linq;
 using Newtonsoft.Json;
+using System.Drawing;
+using System.Drawing.Drawing2D;
+
 
 namespace EEPlugin {
 	public class DZCGenerator : EEPluginInterface {
@@ -74,9 +77,9 @@ namespace EEPlugin {
 			//if (persistence.existed) {
 			//    Load();
 			//} else {
-				PluginData = new Dictionary<long, string>();
+			PluginData = new Dictionary<long, string>();
 			//}
-			DZDir = Persistence.RootFolder() + "DZC\\";
+			DZDir = Persistence.RootFolder();// +"DZC\\";
 		}
 
 		/// <summary>
@@ -96,12 +99,13 @@ namespace EEPlugin {
 
 				if (File.Exists(target)) {
 					Console.WriteLine(i.id.ToString() + " " + i.path + "... ");
-						PluginData.Add(i.id, relativeTarget);
+					PluginData.Add(i.id, relativeTarget);
 				} else {
 					// Creation needed
 					Console.WriteLine(" >> " + i.id.ToString() + " " + i.path + "... ");
 					Stopwatch st = Stopwatch.StartNew();
-					generationOK = GenerateDZC(i.path, target);
+					// GERACAO DE CADA IMAGEM
+					generationOK = GenerateMSI(i, target);
 					st.Stop();
 					times += st.ElapsedMilliseconds;
 					count++;
@@ -139,11 +143,12 @@ namespace EEPlugin {
 			Console.WriteLine("Modifying the XML");
 			Dictionary<string, string> tags;
 			EagleEye.Common.Image i;
+			int count = 0;
 			foreach (XElement a in xml.Elements().First().Elements()) {
 				tags = new Dictionary<string, string>();
 				String id = a.Attribute("Source").Value.Split(new Char[] { '/', '.' })[1];
 				try {
-					 i = ic.Get(Convert.ToInt32(id));
+					i = ic.Get(Convert.ToInt32(id));
 				} catch {
 					a.Remove();
 					continue;
@@ -153,6 +158,7 @@ namespace EEPlugin {
 
 				Dictionary<string, string> plugins = i.GetPluginData();
 				if (plugins != null) {
+					count++;
 					foreach (KeyValuePair<string, string> kv in plugins) {
 						tags.Add(kv.Key, kv.Value);
 					}
@@ -162,6 +168,7 @@ namespace EEPlugin {
 					a.Elements("Tag").Remove();
 				}
 				a.Add(new XElement("Tag", JsonConvert.SerializeObject(tags)));
+				Console.WriteLine(JsonConvert.SerializeObject(tags));
 			}
 
 			Console.WriteLine(xml.Elements().Last().Elements().Last().ToString());
@@ -217,7 +224,7 @@ namespace EEPlugin {
 		/// </summary>
 		/// <param name="source">Image to process</param>
 		/// <param name="target">Destination for the processed stuff</param>
-		private Boolean GenerateDZC(string source, string target) {
+		private Boolean GenerateMSI(string source, string target) {
 			ImageCreator ic = new ImageCreator();
 			ic.TileSize = 256;
 			ic.TileFormat = ImageFormat.Jpg;
@@ -231,6 +238,37 @@ namespace EEPlugin {
 				Console.WriteLine("Error on DZGen... is the image smaller than 150px?");
 				return false;
 			}
+		}
+
+		private bool GenerateMSI(EagleEye.Common.Image i, string target) {
+			Int64 o = (Int64)i.Exif("Orientation");
+			if (o == 3 || o == 6 || o == 8) {
+				String path = null;
+				switch (o) {
+					case 3: path = GenerateRotatedImage(i.path, RotateFlipType.Rotate180FlipNone); break;
+					case 6: path = GenerateRotatedImage(i.path, RotateFlipType.Rotate90FlipNone); break;
+					case 8: path = GenerateRotatedImage(i.path, RotateFlipType.Rotate270FlipNone); break;
+				}
+				if (path != null) {
+					Boolean ret = GenerateMSI(path, target);
+					
+					return ret;
+				}
+			}
+			//File.Delete("tmp.jpg");
+			return GenerateMSI(i.path, target);
+		}
+
+		private string GenerateRotatedImage(string path, RotateFlipType r) {
+			Stream sr = new FileStream(path, FileMode.Open);
+			Bitmap b = new Bitmap(sr);
+			sr.Close();
+			b.RotateFlip(r);
+			Stream w = new FileStream("tmp.jpg", FileMode.Create);
+			b.Save(w, System.Drawing.Imaging.ImageFormat.Jpeg);
+			b.Dispose();
+			w.Close();
+			return "tmp.jpg";
 		}
 
 		/// <summary>
