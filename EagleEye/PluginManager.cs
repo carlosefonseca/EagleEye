@@ -68,6 +68,7 @@ namespace EagleEye {
 		}
 
 		public void RunPlugin(ImageCollection images, string pluginId) {
+			if (pluginId == null) { RunPlugin(images); return; }
 			if (plugins.ContainsKey(pluginId)) {
 				EEPluginInterface p = plugins[pluginId];
 				Console.WriteLine("Running plugin " + p.ToString());

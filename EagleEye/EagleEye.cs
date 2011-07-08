@@ -102,7 +102,7 @@ namespace EagleEye {
 					case "list": ListImages(); break;
 					case "sort": CmdSort(split); break;
 					case "adddir": AddDir(split); break;
-					case "plugin": PlugMan.RunPlugin(images); break;
+					case "plugin": PlugMan.RunPlugin(images, split.Count()>1?split[1]:null); break;
 					case "thumbs": LibMan.GenerateThumbnails(); break;
 					case "save": LibMan.Save(); break;
 					case "exit": Console.WriteLine("Bye"); break;
