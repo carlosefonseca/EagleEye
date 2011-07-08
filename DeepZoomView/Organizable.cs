@@ -14,21 +14,25 @@ using System.Linq;
 namespace DeepZoomView {
 	public class Organizable {
 		public readonly String Name;
-		public Boolean isNumber { get; set; }
+		public Boolean isNumber = false;
 		public Dictionary<string, List<int>> data = new Dictionary<string, List<int>>();
 		public Dictionary<int, string> invertedData = new Dictionary<int, string>();
+		public Boolean AvailableForGroupping = true;
+
+		public virtual int ItemCount {
+			get {
+				return invertedData.Count;
+			}
+		}
+
+		public virtual int GroupCount {
+			get {
+				return data.Count;
+			}
+		}
 
 		public Organizable(String name) {
 			this.Name = name;
-			this.isNumber = false;
-		}
-
-		/// <summary>
-		/// Returns the number of groups in this organizable
-		/// </summary>
-		/// <returns></returns>
-		public virtual int Count() {
-			return data.Count;
 		}
 
 		public Boolean Import(String s) { return false; }

@@ -18,6 +18,18 @@ namespace DeepZoomView {
 		public new Dictionary<int, List<int>> data = new Dictionary<int, List<int>>();
 		public new Dictionary<int, Color> invertedData = new Dictionary<int, Color>();
 
+		public override int ItemCount {
+			get {
+				return invertedData.Count;
+			}
+		}
+
+		public override int GroupCount {
+			get {
+				return data.Count;
+			}
+		}
+
 		/// <summary>
 		/// Constructor
 		/// </summary>
@@ -56,11 +68,6 @@ namespace DeepZoomView {
 			}
 			data[key].Add(k);
 			invertedData.Add(k, c);
-		}
-
-
-		public override int Count() {
-			return data.Count;
 		}
 
 

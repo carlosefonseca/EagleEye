@@ -13,8 +13,20 @@ using System.Linq;
 
 namespace DeepZoomView {
 	public class OrganizableByDate : Organizable {
-		public Dictionary<DateTime, List<int>> data = new Dictionary<DateTime, List<int>>();
-		public Dictionary<int, DateTime> invertedData = new Dictionary<int, DateTime>();
+		public new Dictionary<DateTime, List<int>> data = new Dictionary<DateTime, List<int>>();
+		public new Dictionary<int, DateTime> invertedData = new Dictionary<int, DateTime>();
+
+		public override int ItemCount {
+			get {
+				return invertedData.Count;
+			}
+		}
+
+		public override int GroupCount {
+			get {
+				return data.Count;
+			}
+		}
 
 		public OrganizableByDate() : base("Date") { }
 
@@ -42,9 +54,6 @@ namespace DeepZoomView {
 			throw new NotImplementedException();
 		}
 
-		public override int Count() {
-			return data.Count;
-		}
 
 		/// <summary>
 		/// Given an image id, returns its value for this organizable

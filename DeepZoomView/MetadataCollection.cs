@@ -48,6 +48,8 @@ namespace DeepZoomView {
 			if (k == "color" || k == "RGB") o = new OrganizableByColor();
 			else if (k == "HSB") o = new OrganizableByHSB();
 			else if (k == "date") o = new OrganizableByDate();
+			else if (k == "Keywords") o = new OrganizableByKeyword();
+			else if (k == "Path") o = new OrganizableByPath();
 			else {
 				Console.WriteLine("Unknown data type: '" + k + "'. Using base 'Organizable' type.");
 				o = new Organizable(k);
@@ -78,7 +80,7 @@ namespace DeepZoomView {
 			}
 			//test();
 			foreach (String k in organizedMetadata.Keys.ToList()) {
-				if (organizedMetadata[k].Count() == 0) {
+				if (organizedMetadata[k].GroupCount == 0) {
 					organizedMetadata.Remove(k);
 				}
 			}
@@ -86,13 +88,20 @@ namespace DeepZoomView {
 
 
 		/// <summary>
-		/// Listing of names of the available organized options
+		/// Listing of names of the available Organizables that can be used to group images
 		/// </summary>
 		/// <returns></returns>
 		public IEnumerable<String> GetOrganizationOptions() {
-			return (IEnumerable<String>)organizedMetadata.Select(x => x.Value.Name);
+			return (IEnumerable<String>)organizedMetadata.Where(x => x.Value.AvailableForGroupping).Select(x => x.Value.Name);
 		}
 
+		/// <summary>
+		/// Listing of names of all the available Organizables
+		/// </summary>
+		/// <returns></returns>
+		internal IEnumerable<string> GetOrganizables() {
+			return (IEnumerable<String>)organizedMetadata.Select(x => x.Value.Name);
+		}
 
 		/// <summary>
 		/// Returns the Organizable Object for the key

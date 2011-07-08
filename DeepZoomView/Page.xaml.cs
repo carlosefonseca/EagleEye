@@ -240,7 +240,7 @@ namespace DeepZoomView {
 
 		private void MakeTooltipText(int index) {
 			String tooltipTxt = "";
-			foreach (String oName in metadataCollection.GetOrganizationOptions()) {
+			foreach (String oName in metadataCollection.GetOrganizables()) {
 				Organizable o = metadataCollection.GetOrganized(oName);
 				if (o.ContainsId(index)) {
 					tooltipTxt += o.Name + ": " + o.Id(index) + Environment.NewLine;
