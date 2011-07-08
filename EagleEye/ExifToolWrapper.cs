@@ -17,7 +17,7 @@ namespace EagleEye {
 			start = new ProcessStartInfo();
 			start.StandardOutputEncoding = Encoding.UTF8;// .GetEncoding(1252);
 			start.FileName = @"exiftool.exe";
-			start.Arguments = "-j -q -r -ext jpg -L \"" + dir + "\"";
+			start.Arguments = "-j -q -r -n -ext jpg -L \"" + dir + "\"";
 			start.UseShellExecute = false;
 			start.RedirectStandardOutput = true;
 
