@@ -275,8 +275,9 @@ namespace DeepZoomView {
 			var y = 0.0;
 			int i = 0;
 			foreach (MultiScaleSubImage subImage in msi.SubImages) {
-				subImage.ViewportWidth = 1;
-				subImage.ViewportOrigin = new Point(-x, -y);
+				Page.PositionImageInMSI(msi, i, x, y);
+				subImage.ViewportWidth = Math.Max(1, 1 / subImage.AspectRatio);
+				//subImage.ViewportOrigin = new Point(-x, -y);
 				canvasIndex.Add(x + ";" + y, i++);
 				x += 1;
 
@@ -480,7 +481,8 @@ namespace DeepZoomView {
 
 			foreach (KeyValuePair<String, List<int>> group in Groups) {
 				foreach (int id in group.Value) {
-					msi.SubImages[id].ViewportOrigin = new Point(-x, -y);
+					Page.PositionImageInMSI(msi, id, x, y);
+					//msi.SubImages[id].ViewportOrigin = new Point(-x, -y);
 					canvasIndex.Add(x + ";" + y, id);
 					y++;
 
@@ -571,7 +573,8 @@ namespace DeepZoomView {
 				foreach (KeyValuePair<int, Dictionary<int, List<int>>> month in years.Value) {
 					foreach (KeyValuePair<int, List<int>> day in month.Value) {
 						foreach (int id in day.Value) {
-							msi.SubImages[id].ViewportOrigin = new Point(-x, -y);
+							Page.PositionImageInMSI(msi, id, x, y);
+							//msi.SubImages[id].ViewportOrigin = new Point(-x, -y);
 							canvasIndex.Add(x + ";" + y, id);
 							x++;
 
@@ -669,7 +672,8 @@ namespace DeepZoomView {
 					x++;
 					foreach (KeyValuePair<int, List<int>> day in month.Value) {
 						foreach (int id in day.Value) {
-							msi.SubImages[id].ViewportOrigin = new Point(-x, -y);
+							Page.PositionImageInMSI(msi, id, x, y);
+							//msi.SubImages[id].ViewportOrigin = new Point(-x, -y);
 							canvasIndex.Add(x + ";" + y, id);
 							x++;
 
@@ -758,36 +762,9 @@ namespace DeepZoomView {
 				for (int col = 0; col < totalColumns; col++) {
 					if (numberOfImages != totalImagesAdded) {
 						int imgId = imgList[totalImagesAdded];
-						MultiScaleSubImage currentImage = msi.SubImages[imgId];
-
-						Point currentPosition = currentImage.ViewportOrigin;
-						Point futurePosition = new Point(-col, -row);
 						canvasIndex.Add(col + ";" + row, imgId);
 
-						// Set up the animation to layout in grid
-						Storyboard moveStoryboard = new Storyboard();
-
-						// Create Animation
-						//PointAnimationUsingKeyFrames moveAnimation = new PointAnimationUsingKeyFrames();
-						PointAnimation moveAnimation = new PointAnimation();
-
-						QuadraticEase easeing = new QuadraticEase();
-						easeing.EasingMode = EasingMode.EaseInOut;
-						moveAnimation.EasingFunction = easeing;
-						moveAnimation.Duration = new Duration(TimeSpan.FromSeconds(1));
-						moveAnimation.To = futurePosition;
-
-						Storyboard.SetTarget(moveAnimation, currentImage);
-						Storyboard.SetTargetProperty(moveAnimation, new PropertyPath("ViewportOrigin"));
-
-						moveStoryboard.Children.Add(moveAnimation);
-						msi.Resources.Add("unique_id", moveStoryboard);
-
-						// Play Storyboard
-						moveStoryboard.Begin();
-
-						// Now that the Storyboard has done it's work, clear the MultiScaleImage resources.
-						msi.Resources.Clear();
+						PositionImageInMSI(msi, imgId, col, row);
 
 						totalImagesAdded++;
 					} else {
@@ -795,6 +772,53 @@ namespace DeepZoomView {
 					}
 				}
 			}
+		}
+
+		/// <summary>
+		/// Positions the image in the new coordinates using animation
+		/// </summary>
+		/// <param name="imgId">Image ID on the MSI</param>
+		/// <param name="row">New X</param>
+		/// <param name="col">New Y</param>
+		internal static void PositionImageInMSI(MultiScaleImage msi, int imgId, double x, double y) {
+			MultiScaleSubImage currentImage = msi.SubImages[imgId];
+
+			if (currentImage.AspectRatio < 1) {
+				x *= (1 / currentImage.AspectRatio);
+				x += ((1 / currentImage.AspectRatio) - 1) / 2;
+				y *= (1 / currentImage.AspectRatio);
+			} else {
+				y += (currentImage.AspectRatio - 1) / 2;
+			}
+				
+
+			Point currentPosition = currentImage.ViewportOrigin;
+			Point futurePosition = new Point(-x, -y);
+
+			// Set up the animation to layout in grid
+			Storyboard moveStoryboard = new Storyboard();
+
+			// Create Animation
+			//PointAnimationUsingKeyFrames moveAnimation = new PointAnimationUsingKeyFrames();
+			PointAnimation moveAnimation = new PointAnimation();
+
+			QuadraticEase easeing = new QuadraticEase();
+			easeing.EasingMode = EasingMode.EaseInOut;
+			moveAnimation.EasingFunction = easeing;
+			moveAnimation.Duration = new Duration(TimeSpan.FromSeconds(1));
+			moveAnimation.To = futurePosition;
+
+			Storyboard.SetTarget(moveAnimation, currentImage);
+			Storyboard.SetTargetProperty(moveAnimation, new PropertyPath("ViewportOrigin"));
+
+			moveStoryboard.Children.Add(moveAnimation);
+			msi.Resources.Add("unique_id", moveStoryboard);
+
+			// Play Storyboard
+			moveStoryboard.Begin();
+
+			// Now that the Storyboard has done it's work, clear the MultiScaleImage resources.
+			msi.Resources.Clear();
 		}
 
 		private List<int> RandomizedListOfImages(List<int> idList) {

@@ -552,7 +552,8 @@ namespace DeepZoomView {
 
 			foreach (KeyValuePair<String, List<int>> group in this.groups) {
 				foreach (int id in group.Value) {
-					msi.SubImages[id].ViewportOrigin = new Point(-x, -y);
+					Page.PositionImageInMSI(msi, id, x, y);
+					//msi.SubImages[id].ViewportOrigin = new Point(-x, -y);
 					canvasIndex.Add(x + ";" + y, id);
 					y++;
 
@@ -762,7 +763,8 @@ namespace DeepZoomView {
 						positions.Add(x + ";" + y, id);
 						invertedGroups.Add(id, g);
 						try {
-							msi.SubImages[id].ViewportOrigin = new Point(-x, -y);
+							Page.PositionImageInMSI(msi, id, x, y);
+							//msi.SubImages[id].ViewportOrigin = new Point(-x, -y);
 							msi.SubImages[id].Opacity = 1;
 						} catch {
 							//g.images.Remove(id);
@@ -795,7 +797,7 @@ namespace DeepZoomView {
 			foreach (Group g in groupsNotPlaced) {
 				foreach (int id in g.images) {
 					Point p = msi.SubImages[id].ViewportOrigin;
-					msi.SubImages[id].ViewportOrigin = new Point(-p.X, -p.Y);
+					Page.PositionImageInMSI(msi, id, p.X, p.Y);
 					msi.SubImages[id].Opacity = 0.5;
 				}
 			}
