@@ -851,8 +851,10 @@ namespace DeepZoomView {
 			if (Hcells == 0 || Vcells == 0) {
 				return;
 			}
-			zoom = Math.Round(Hcells) / msi.ViewportWidth;
-			Double newX = (msi.ViewportOrigin.X * (msi.ActualWidth / Math.Round(Hcells))) * zoom;
+			//zoom = Math.Round(Hcells) / msi.ViewportWidth;
+			zoom = Hcells / msi.ViewportWidth;
+			//Double newX = (msi.ViewportOrigin.X * (msi.ActualWidth / Math.Round(Hcells))) * zoom;
+			Double newX = (msi.ViewportOrigin.X * (msi.ActualWidth / Hcells)) * zoom;
 			Double newY = (msi.ViewportOrigin.Y * (((msi.ActualWidth / Hcells) * Vcells) / Vcells)) * zoom;
 			Double newH = msi.ActualHeight * zoom;
 			Double newW = msi.ActualWidth * zoom;

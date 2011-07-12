@@ -1,6 +1,6 @@
 ﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <StartArguments>C:\EagleEye</StartArguments>
+    <StartArguments>C:\Teste</StartArguments>
     <StartWorkingDirectory>C:\Dropbox\tese2\App\</StartWorkingDirectory>
     <StartAction>Program</StartAction>
     <StartProgram>C:\Dropbox\tese2\App\EagleEye.exe</StartProgram>
