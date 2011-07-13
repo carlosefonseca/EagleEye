@@ -122,89 +122,146 @@ namespace DeepZoomView {
 
 			int smallestGroupSizeOnLTemp = Ltmp.Min(g => g.images.Count);
 			int LtempCount = Ltmp.Sum(g => g.images.Count);
-			List<Group> Ltmp2 = new List<Group>(), Ltmp3= new List<Group>();
-			if (parentRect.Width >= parentRect.Height) { // Landscape
+			List<Group> Ltmp2 = new List<Group>(), Ltmp3 = new List<Group>();
 
-				do {
-					Ra = new RectWithRects(0, 0, Math.Ceiling(LaCount / parentRect.Height), parentRect.Height);
-					// Rects for Rp, Rb, Rc
+			RectWithRects StartingParent = new RectWithRects(parentRect);
 
-					// The objective of the following is to define Rp and Rb so that both fit in the parent.
-					// This is done by reducing one side of Rp until Rb can fit the smallest group destined for Rb or Rc
-					int RpW, RpH = (int)parentRect.Height;
-					do {
-						RpH--;
-						CalculateDistribution(pivot.images.Count,
-											  parentRect.Width / parentRect.Height,
-											  new Point(parentRect.Width - Ra.Width, RpH),
-											  out RpW, out RpH);
-						Rp = new RectWithRects(Ra.Width, 0, RpW, RpH);
-						Rb = new RectWithRects(Rp.X, Rp.Height, Rp.Width, Math.Max(1, parentRect.Height - Rp.Height));
-					} while (!Rb.Fits(smallestGroupSizeOnLTemp) || !Rp.Fits(pivot.images.Count));
-
-					Lb.Clear();
-					Ltmp2.Clear();
-					FillWhileFits(out Lb, Rb.Width * Rb.Height, Ltmp, out Ltmp2);
-					Rc = new RectWithRects(Rp.X + Rp.Width, 0, Math.Max(1, parentRect.Width - Ra.Width - Rp.Width), parentRect.Height);
-					if (!Rc.Fits(LtempCount - Lb.Sum(g => g.images.Count))) {
-						parentRect.IncreaseSize();
-						continue;
-					}
-					Lc.Clear();
-					Ltmp3.Clear();
-					FillWhileFits(out Lc, Rc.Width * Rc.Height, Ltmp2, out Ltmp3);
-					if (Ltmp3.Count > 0) {
-						parentRect.IncreaseSize();
-					} else {
-						break;
-					}
-				} while (true);
-			} else {	// Portrait
-				Ra = new RectWithRects(0, 0, parentRect.Width, Math.Ceiling(LaCount / parentRect.Width/* + (int)(La.Count * 0.5)*/));
-				// Rects for Rp, Rb, Rc
-				int RpH, RpW = (int)parentRect.Width;
-				{
-					RpW--;
-					CalculateDistribution(pivot.images.Count, parentRect.Width / parentRect.Height,
-											new Point(RpW, parentRect.Height - Ra.Height),
-											out RpW, out RpH);
-					Rp = new RectWithRects(0, Ra.Height, RpW, RpH);
-					Rb = new RectWithRects(Rp.Width, Rp.Y, Math.Max(1, parentRect.Width - Rp.Width), Rp.Height);
-				} while (!Rb.Fits(smallestGroupSizeOnLTemp) || !Rp.Fits(pivot.images.Count)) ;
-
-				if (Rp.Y + Rp.Height < parentRect.Height) {
-					Rc = new RectWithRects(0, Rp.Y + Rp.Height, parentRect.Width, Math.Max(1, parentRect.Height - Ra.Height - Rp.Height));
-				}
+			Boolean parentIsVertical = false;
+			if (parentRect.Width < parentRect.Height) { // Landscape
+				parentIsVertical = true;
+				parentRect.MakeHorizontal();
 			}
+
+			Boolean parentChanged;
+
+			do {
+				parentChanged = false;
+				Ra = new RectWithRects(0, 0, Math.Ceiling(LaCount / parentRect.Height), parentRect.Height);
+				Ra = TreeMap(La, Ra);
+				parentRect.AdjustSizeToFitRect(Ra);
+
+				// Rects for Rp, Rb, Rc
+
+				// The objective of the following is to define Rp and Rb so that both fit in the parent.
+				// This is done by reducing one side of Rp until Rb can fit the smallest group destined for Rb or Rc
+				int RpW, RpH = (int)parentRect.Height;
+				do {
+					if (RpH > 1) {
+						RpH--;
+					} else {
+						parentRect.IncreaseSize();
+						RpH = (int)parentRect.Height;
+					}
+					CalculateDistribution(pivot.images.Count,
+										  parentRect.Width / parentRect.Height,
+										  new Point(parentRect.Width - Ra.Width, RpH),
+										  out RpW, out RpH);
+					Rp = new RectWithRects(Ra.Width, 0, RpW, RpH);
+					Rb = new RectWithRects(Rp.X, Rp.Height, Rp.Width, Math.Max(1, parentRect.Height - Rp.Height));
+					//parentRect.Width = Math.Max(parentRect.Width, Rp.X + Rp.Width + 1);
+					if (!Rb.Fits(smallestGroupSizeOnLTemp) || !Rp.Fits(pivot.images.Count)) {
+						// doesn't fit... try again with a slightly different size
+						continue;
+					} else {
+						// at least the smallest group fits
+						Lb.Clear();
+						Ltmp2.Clear();
+						FillWhileFits(out Lb, Rb.Width * Rb.Height, Ltmp, out Ltmp2);
+						if (Lb.Count > 0) {
+							Rb = TreeMap(Lb, Rb);
+							parentChanged = parentRect.AdjustSizeToFitRect(Rb);
+							if (parentChanged) {
+								Debug.WriteLine("Rb made the parent change size");
+								goto STARTOVER; // countinue on the outter loop, to start over on the Ra
+							}
+							// shrink Rp & Rb to the smallest size possible, if Rb wasn't really treemapped
+							if (Rb.Children().Count <= 2) {
+								int LbSize = Lb.Sum(g => g.images.Count);
+								Rect newRb, newRp = Rp.Rect;
+								while (true) {
+									newRp.Width--;
+									newRp.Height = Math.Ceiling(pivot.images.Count / (Rp.Width - 1));
+									if (parentRect.Height - newRp.Height < 1) break;
+									newRb = new Rect(newRp.X,
+														newRp.Height,
+														newRp.Width,
+														parentRect.Height - newRp.Height);
+									if (Rb.Fits(LbSize) && newRb.Y + newRb.Height <= parentRect.Height) {
+										Rp.Rect = newRp;
+										Rb.Rect = newRb;
+										continue;
+									} else {
+										break;
+									}
+								}
+							}
+							break;
+						} else {
+							throw new Exception("This shouldn't happen! I couldn't fit any groups in Rb");
+						}
+					}
+				} while (true); // Rp & Rb passed
+
+				if (parentRect.Width - Ra.Width - Rp.Width < 1) {
+					parentRect.IncreaseSize();
+					parentChanged = true;
+					continue;
+				}
+				// Desnecessario -------------------------------.
+				Rc = new RectWithRects(Rp.X + Rp.Width, 0, Math.Max(1, parentRect.Width - Ra.Width - Rp.Width), parentRect.Height);
+				if (!Rc.Fits(LtempCount - Lb.Sum(g => g.images.Count))) {
+					parentRect.IncreaseSize();
+					parentChanged = true;
+					continue;
+				}
+				Lc.Clear();
+				Ltmp3.Clear();
+				FillWhileFits(out Lc, Rc.Width * Rc.Height, Ltmp2, out Ltmp3);
+				if (Ltmp3.Count > 0) {
+					parentRect.IncreaseSize();
+					parentChanged = true;
+					continue;
+				} else {
+					if (Lc.Count > 0)
+						Rc = TreeMap(Lc, Rc);
+					break;
+				}
+			STARTOVER:
+				;
+			} while (parentChanged);
+
+			/////////////////////////////////
+
 			Output(Ra, Rb, Rc, Rp, parentRect);
 
 			// Split Ltmp in Lb and Lc
-			List<Group> Lrest, Lrest2;
-			if (Rb != null) {
-				FillWhileFits(out Lb, Rb.Width * Rb.Height, Ltmp, out Lrest);
-				if (Rc != null) {
-					FillWhileFits(out Lc, Rc.Width * Rc.Height, Lrest, out Lrest2);
-					if (Lrest2.Count != 0) {
-						groupsNotPlaced.AddRange(Lrest2);
-						Debug.WriteLine("After adding stuff to Rb & Rc, " + Lrest2.Count + " groups still didn't fit.");
-					}
-				} else {
-					//throw new Exception("2small");
+			/*			List<Group> Lrest, Lrest2;
+						if (Rb != null) {
+							FillWhileFits(out Lb, Rb.Width * Rb.Height, Ltmp, out Lrest);
+							if (Rc != null) {
+								FillWhileFits(out Lc, Rc.Width * Rc.Height, Lrest, out Lrest2);
+								if (Lrest2.Count != 0) {
+									groupsNotPlaced.AddRange(Lrest2);
+									Debug.WriteLine("After adding stuff to Rb & Rc, " + Lrest2.Count + " groups still didn't fit.");
+								}
+							} else {
+								//throw new Exception("2small");
 
-					groupsNotPlaced.AddRange(Lrest);
-				}
-			} else if (Rc != null) {
-				FillWhileFits(out Lc, Rc.Width * Rc.Height, Ltmp, out Lrest);
-				//throw new Exception("2small");
-				groupsNotPlaced.AddRange(Lrest);
-			} else {
-				// Rb && Rc don't exist.
+								groupsNotPlaced.AddRange(Lrest);
+							}
+						} else if (Rc != null) {
+							FillWhileFits(out Lc, Rc.Width * Rc.Height, Ltmp, out Lrest);
+							//throw new Exception("2small");
+							groupsNotPlaced.AddRange(Lrest);
+						} else {
+							// Rb && Rc don't exist.
 
-				//throw new Exception("2small");
-				groupsNotPlaced.AddRange(Ltmp);
-			}
+							//throw new Exception("2small");
+							groupsNotPlaced.AddRange(Ltmp);
+						}
+			*/
 			// 	Recursively apply the Ordered Treemap algorithm to LA in R1, LB in R2, and LC in R3.
-			Ra = TreeMap(La, Ra);
+			/*Ra = TreeMap(La, Ra);
 			if (Rb != null && Lb.Count > 0) {
 				Rb = TreeMap(Lb, Rb);
 			}
@@ -238,15 +295,21 @@ namespace DeepZoomView {
 				Rp.X = Ra.X + Ra.Width;
 				Rb.X = Ra.X + Ra.Width;
 				Rc.X = Rp.X + Rp.Width;
-			}
+			}*/
 			parentRect.Add(Ra);
+			Rp.Group = pivot;
+			placedGroups.Add(pivot);
 			parentRect.Add(Rp);
-			if (Rb != null && Lb.Count > 0) {
-				parentRect.Add(Rb);
-			}
+			//if (Rb != null && Lb.Count > 0) {
+			parentRect.Add(Rb);
+			//}
 			Rp.Group.rectangle = Rp;
 			if (Rc != null && Lc.Count > 0) {
 				parentRect.Add(Rc);
+			}
+			parentRect.ResizeToChildren();
+			if (parentIsVertical) {
+				parentRect.MakeVertical();
 			}
 			return parentRect;
 		}
@@ -353,7 +416,7 @@ namespace DeepZoomView {
 				}
 				Group.DisplayType = Display;
 				RectWithRects result = TreeMap(groupsNotPlaced, new RectWithRects(0, 0, imgWidth, imgHeight));
-				Debug.WriteLine(result.TreeView());
+				Debug.WriteLine(result.TreeView2());
 				PositionCorrection(result);
 				groupsNotPlaced = groupsNotPlaced.Except(placedGroups).ToList();
 				HideNotPlacedImages();
@@ -361,7 +424,7 @@ namespace DeepZoomView {
 			} else {
 				throw new Exception("Incorrect display method");
 			}
-			max.X = Math.Max(max.Y * aspectRatio, max.X);
+			//max.X = Math.Max(max.Y * aspectRatio, max.X);
 			return canvasIndex;
 			//////////////// (temporarily) DEAD CODE
 			#region old

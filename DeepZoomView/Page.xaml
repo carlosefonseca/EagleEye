@@ -245,7 +245,7 @@
                 <TextBlock x:Name="LogBlock"></TextBlock>
             </StackPanel>
 
-            <MultiScaleImage x:Name="msi" Grid.Row="1" Grid.Column="1" Source="C:/SmallDB/collection.xml"/>
+            <MultiScaleImage x:Name="msi" Grid.Row="1" Grid.Column="1" Source="C:/EagleEye/collection.xml"/>
 
             <Canvas Grid.Row="1" Grid.Column="1">
                 <Canvas Name="Overlays">
