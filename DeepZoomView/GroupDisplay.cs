@@ -866,6 +866,7 @@ namespace DeepZoomView {
 		/// <param name="max">This contains the width and height of the display</param>
 		/// <returns>A list of "X,Y"=>ImgID for the mouse-over identification</returns>
 		public Dictionary<string, int> PositionImages(out Point max) {
+			invertedGroups.Clear();
 			Dictionary<string, int> positions = new Dictionary<string, int>();
 			max = new Point(0, 0);
 			foreach (Group g in placedGroups) {
