@@ -86,7 +86,7 @@ namespace EEPlugin {
 			// Obtem a cor mediana da imagem * Histograma RGB
 			foreach (EagleEye.Common.Image i in ic.ToList()) {
 				Color? result = null;
-				if (overrideData || !i.ContainsPluginData("color")) {
+				if (overrideData || !i.ContainsPluginData("RGB")) {
 					Console.WriteLine("Color Detecting " + i.path + "... ");
 /*					if (thumbs.ThumbnailExists(i)) {
 						continue;
@@ -99,11 +99,6 @@ namespace EEPlugin {
 					s2.Stop();
 					Console.WriteLine("Thumb: " + s1.ElapsedMilliseconds + "  Orig: " + s2.ElapsedMilliseconds);
 */					i.SetPluginData("RGB", result.Value.ToArgb().ToString());
-				}
-				if (overrideData || !i.ContainsPluginData("HSB")) {
-					if (!result.HasValue) {
-						result = (Color?)FromStringToColor(i.GetPluginData("color"));
-					}
 					i.SetPluginData("HSB", "H:" + (int)result.Value.GetHue()
 										+ " S:" + Math.Round(result.Value.GetSaturation(), 3)
 										+ " B:" + Math.Round(result.Value.GetBrightness(), 3));
@@ -113,8 +108,13 @@ namespace EEPlugin {
 		}
 
 		public static Color FromStringToColor(string txt) {
-			String[] p = txt.Split(new char[] { '[', ']', ',', ' ', '=' }, StringSplitOptions.RemoveEmptyEntries);
-			return Color.FromArgb(Convert.ToByte(p[2]), Convert.ToByte(p[4]), Convert.ToByte(p[6]), Convert.ToByte(p[8]));
+			if (txt.StartsWith("Color")) {
+				String[] p = txt.Split(new char[] { '[', ']', ',', ' ', '=' }, StringSplitOptions.RemoveEmptyEntries);
+				return Color.FromArgb(Convert.ToByte(p[2]), Convert.ToByte(p[4]), Convert.ToByte(p[6]), Convert.ToByte(p[8]));
+			} else {
+				Byte[] bytes = BitConverter.GetBytes(Convert.ToInt32(txt));
+				return Color.FromArgb(bytes[3], bytes[2], bytes[1], bytes[0]);
+			}
 		}
 
 		//    Console.WriteLine("\n-- Color detection completed. Now sorting.");

@@ -92,7 +92,7 @@ namespace EEPlugin {
 			int count = 0;
 			PluginData.Clear();
 			Boolean generationOK;
-			Boolean collectionGenerationRequired = false;
+			Boolean collectionGenerationRequired = true;
 			foreach (EagleEye.Common.Image i in ic.ToSortable().SortById().TheList()) {
 				string relativeTarget = "images\\" + i.id.ToString() + ".xml";
 				string target = DZDir + relativeTarget;
@@ -167,12 +167,13 @@ namespace EEPlugin {
 				if (a.Elements("Tag").Count() != 0) {
 					a.Elements("Tag").Remove();
 				}
-				a.Add(new XElement("Tag", JsonConvert.SerializeObject(tags)));
-				Console.WriteLine(JsonConvert.SerializeObject(tags));
+				String tagtext = JsonConvert.SerializeObject(tags);
+				a.Add(new XElement("Tag", tagtext));
+				Console.WriteLine(tagtext);
 			}
 
 			Console.WriteLine(xml.Elements().Last().Elements().Last().ToString());
-			xml.Save(p, SaveOptions.DisableFormatting);
+			xml.Save(p, SaveOptions.None);
 		}
 
 
@@ -241,20 +242,22 @@ namespace EEPlugin {
 		}
 
 		private bool GenerateMSI(EagleEye.Common.Image i, string target) {
-			Int64 o = (Int64)i.Exif("Orientation");
-			if (o == 3 || o == 6 || o == 8) {
-				String path = null;
-				switch (o) {
-					case 3: path = GenerateRotatedImage(i.path, RotateFlipType.Rotate180FlipNone); break;
-					case 6: path = GenerateRotatedImage(i.path, RotateFlipType.Rotate90FlipNone); break;
-					case 8: path = GenerateRotatedImage(i.path, RotateFlipType.Rotate270FlipNone); break;
+			try {
+				Int64 o = (Int64)i.Exif("Orientation");
+				if (o == 3 || o == 6 || o == 8) {
+					String path = null;
+					switch (o) {
+						case 3: path = GenerateRotatedImage(i.path, RotateFlipType.Rotate180FlipNone); break;
+						case 6: path = GenerateRotatedImage(i.path, RotateFlipType.Rotate90FlipNone); break;
+						case 8: path = GenerateRotatedImage(i.path, RotateFlipType.Rotate270FlipNone); break;
+					}
+					if (path != null) {
+						Boolean ret = GenerateMSI(path, target);
+
+						return ret;
+					}
 				}
-				if (path != null) {
-					Boolean ret = GenerateMSI(path, target);
-					
-					return ret;
-				}
-			}
+			} catch { }
 			//File.Delete("tmp.jpg");
 			return GenerateMSI(i.path, target);
 		}
