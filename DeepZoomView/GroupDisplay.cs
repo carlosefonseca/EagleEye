@@ -17,18 +17,8 @@ namespace DeepZoomView {
 	/// Provides a TreeMap-sort-of-like view of a set of grouped images
 	/// </summary>
 	public class GroupDisplay {
-		public static List<String> DisplayOptions = new List<string>() { "Groups", "Linear" };
 		public String Display;
-		private MultiScaleImage msi;
-		private List<KeyValuePair<string, List<int>>> groups;
-		private double pxHeight, pxWidth, aspectRatio;
-		private int imgHeight, imgWidth, imgCount;
-		Dictionary<int, Group> invertedGroups = new Dictionary<int, Group>();
-		Dictionary<string, Group> map = new Dictionary<string, Group>();
-		List<Group> placedGroups = new List<Group>();
-		List<Group> groupsNotPlaced = new List<Group>();
-		Shape groupBorder = null;
-		private Canvas groupNamesOverlay = null;
+		public static List<String> DisplayOptions = new List<string>() { "Groups", "Linear" };
 
 		/// <summary>
 		/// Creates a new GroupDisplay
@@ -46,13 +36,362 @@ namespace DeepZoomView {
 			CalculateCanvas();
 		}
 
+
+		/// <summary>
+		/// Takes the set of groups and arranges them on the MSI using a the Quantum TreeMap algorithm
+		/// </summary>
+		/// <param name="max">This contains the width and height of the display</param>
+		/// <returns>A list of "X,Y"=>ImgID for the mouse-over identification</returns>
+		public Dictionary<string, int> DisplayGroupsOnScreen(out Point max) {
+			groupNamesOverlay = null;
+			Dictionary<string, int> canvasIndex = null;
+
+			groupsNotPlaced.Clear();
+			placedGroups.Clear();
+			invertedGroups.Clear();
+			if (groupBorder != null && groupBorder.Parent != null) {
+				((Canvas)groupBorder.Parent).Children.Remove(groupBorder);
+				groupBorder = null;
+			}
+			if (Display == "Linear") {
+				IOrderedEnumerable<KeyValuePair<string, List<int>>> orderedGroup = groups.OrderBy(kv => kv.Key);
+				foreach (KeyValuePair<string, List<int>> kv in orderedGroup) {
+					Group g = new Group(kv.Key, kv.Value);
+					groupsNotPlaced.Add(g);
+				}
+				Group.DisplayType = Display;
+				int cols, rows;
+				orderByGroupsVertically(groupsNotPlaced, out canvasIndex, out cols, out rows);
+				max = new Point(cols, rows);
+			} else if (Display == "Groups") {
+				IOrderedEnumerable<KeyValuePair<string, List<int>>> orderedGroup = groups.OrderByDescending(kv => kv.Value.Count);
+				foreach (KeyValuePair<string, List<int>> kv in orderedGroup) {
+					Group g = new Group(kv.Key, kv.Value);
+					groupsNotPlaced.Add(g);
+				}
+				Group.DisplayType = Display;
+				RectWithRects result = TreeMap(groupsNotPlaced, new RectWithRects(0, 0, imgWidth, imgHeight));
+				Debug.WriteLine(result.TreeView2());
+				PositionCorrection(result);
+				groupsNotPlaced = groupsNotPlaced.Except(placedGroups).ToList();
+				HideNotPlacedImages();
+				canvasIndex = PositionImages(out max);
+			} else {
+				throw new Exception("Incorrect display method");
+			}
+			//max.X = Math.Max(max.Y * aspectRatio, max.X);
+			return canvasIndex;
+			//////////////// (temporarily) DEAD CODE
+			#region old
+			int x = 0, y = 0;
+			String pos;
+			int countGroupsPlaced = -1;
+			while (groupsNotPlaced.Count != 0 && (x < imgWidth && y < imgHeight)) {
+				countGroupsPlaced = -1;
+				while (placedGroups.Count > countGroupsPlaced) {
+					countGroupsPlaced = placedGroups.Count;
+					List<Group> groupsBeingPlaced = groupsNotPlaced.GetRange(0, groupsNotPlaced.Count);
+					foreach (Group g in groupsBeingPlaced) {
+						pos = p(x, y);
+						while (map.ContainsKey(pos)) {
+							Rect r = map[pos].rectangle.Rect;
+							if (r.Top + r.Height - 1 == y) {
+								x++;
+							} else {
+								x = x + (int)(map[pos].rectangle.Width - (x - map[pos].rectangle.X));
+							}
+							if (x >= imgWidth) {
+								x = 0;
+								y++;
+								if (y >= imgHeight) {
+									break;
+								}
+							}
+							pos = p(x, y);
+						}
+						if (Fill(g, x, y)) {
+							placedGroups.Add(g);
+							groupsNotPlaced.Remove(g);
+						} else {
+						}
+					}
+				}
+				// caso ele não consiga meter nenhum grupo do ponto livre, experimenta outro ponto
+				x++;
+				if (x >= imgWidth) {
+					x = 0;
+					y++;
+				}
+			}
+			HideNotPlacedImages();
+			return PositionImages(out max);
+			#endregion old
+		}
+
+		public static Polygon DuplicatePolygon(Polygon o) {
+			Polygon newP = new Polygon();
+			foreach (Point p in o.Points) {
+				newP.Points.Add(p);
+			}
+			return newP;
+		}
+
+
+		public List<KeyValuePair<string, int>> GetGroupsForAxis(int cols) {
+			List<KeyValuePair<string, int>> theSet = new List<KeyValuePair<string, int>>();
+			foreach (KeyValuePair<string, List<int>> g in groups) {
+				theSet.Add(new KeyValuePair<string, int>(g.Key, Convert.ToInt32(Math.Ceiling(g.Value.Count / cols))));
+			}
+			return theSet;
+		}
+
+		/// <summary>
+		/// Transverses the set of groups that were correctly placed and assigns each image to a position of the MSI
+		/// </summary>
+		/// <param name="max">This contains the width and height of the display</param>
+		/// <returns>A list of "X,Y"=>ImgID for the mouse-over identification</returns>
+		public Dictionary<string, int> PositionImages(out Point max) {
+			invertedGroups.Clear();
+			Dictionary<string, int> positions = new Dictionary<string, int>();
+			max = new Point(0, 0);
+			foreach (Group g in placedGroups) {
+				int x = (int)Math.Round(g.rectangle.X);
+				int y = (int)Math.Round(g.rectangle.Y);
+				foreach (int id in g.images) {
+					if (!positions.ContainsKey(x + ";" + y)) {
+						positions.Add(x + ";" + y, id);
+						invertedGroups.Add(id, g);
+						try {
+							Page.PositionImageInMSI(msi, id, x, y);
+							//msi.SubImages[id].ViewportOrigin = new Point(-x, -y);
+							msi.SubImages[id].Opacity = 1;
+						} catch {
+							//g.images.Remove(id);
+							Debug.WriteLine("On PositionImages, id " + id + " was not found on msi (which contains " + msi.SubImages.Count + ")");
+							continue;
+						}
+						max = new Point(Math.Max(max.X, x), Math.Max(max.Y, y));
+					}
+					if (++x >= g.rectangle.X + g.rectangle.Width) {
+						x = (int)Math.Round(g.rectangle.X);
+						y++;
+					}
+				}
+			}
+			if ((int)(max.X / aspectRatio) < max.Y) {
+				msi.ViewportWidth = max.Y * aspectRatio;
+			} else {
+				msi.ViewportWidth = max.X;
+			}
+			max.X++;
+			max.Y++;
+			imgWidth = (int)max.X;
+			imgHeight = (int)max.Y;
+			return positions;
+		}
+
+		public static void SetFrameworkElementBoundsFromOther(FrameworkElement e, FrameworkElement r) {
+			Canvas.SetLeft(e, Canvas.GetLeft(r));
+			Canvas.SetTop(e, Canvas.GetTop(r));
+			e.Width = r.Width;
+			e.Height = r.Height;
+		}
+		public static void SetFrameworkElementBoundsFromRect(FrameworkElement e, Rect r) {
+			SetFrameworkElementBoundsFromRect(e, r, 1.0);
+		}
+
+		public static void SetFrameworkElementBoundsFromRect(FrameworkElement e, Rect r, double multiplier) {
+			Canvas.SetLeft(e, r.X * multiplier);
+			Canvas.SetTop(e, r.Y * multiplier);
+			e.Width = r.Width * multiplier;
+			e.Height = r.Height * multiplier;
+		}
+
+
+		public void SetGroupNamesOverlay(Canvas destination) {
+			if (groupNamesOverlay == null) {
+				groupNamesOverlay = new Canvas();
+				groupNamesOverlay.Width = this.pxWidth;
+
+				Border border;
+				Polygon pBorder;
+				Rect bounds;
+				TextBlock txt;
+				Random rand = new Random();
+				double cellSide = pxWidth / imgWidth;
+
+				foreach (Group g in placedGroups) {
+					txt = new TextBlock();
+					txt.Text = g.name;
+					txt.TextAlignment = TextAlignment.Center;
+					txt.TextWrapping = TextWrapping.Wrap;
+					txt.VerticalAlignment = VerticalAlignment.Center;
+					txt.FontWeight = FontWeights.Bold;
+					txt.Foreground = new SolidColorBrush(Colors.White);
+					if (Group.DisplayType == "Groups") {
+						border = new Border();
+						bounds = g.rectangle.Rect;
+						border.Background = new SolidColorBrush(Color.FromArgb((byte)150, (byte)rand.Next(255), (byte)rand.Next(255), (byte)rand.Next(255)));
+						border.Width = bounds.Width * cellSide;
+						border.Height = bounds.Height * cellSide;
+						Canvas.SetLeft(border, bounds.X * cellSide);
+						Canvas.SetTop(border, bounds.Y * cellSide);
+						border.Child = txt;
+						groupNamesOverlay.Children.Add(border);
+					} else if (Group.DisplayType == "Linear") {
+						pBorder = DuplicatePolygon((Polygon)g.shape);
+						pBorder.Fill = new SolidColorBrush(Color.FromArgb((byte)150, (byte)rand.Next(255), (byte)rand.Next(255), (byte)rand.Next(255)));
+						Canvas.SetLeft(txt, pBorder.Points[0].X);
+						Canvas.SetTop(txt, pBorder.Points[0].Y);
+
+						txt.Width = pBorder.Width;
+						txt.Height = pBorder.Height;
+
+						RotateTransform rt = new RotateTransform();
+						rt.Angle = 90;
+						//rt.CenterY = -txt.Height;
+						//txt.RenderTransformOrigin = new Point(0, -txt.Height);
+						//txt.RenderTransform = rt;
+						groupNamesOverlay.Children.Add(pBorder);
+						groupNamesOverlay.Children.Add(txt);
+					}
+				}
+			}
+			destination.Children.Clear();
+			destination.Children.Add(groupNamesOverlay);
+		}
+
+		/// <summary>
+		/// Given an image id, discovers in which group the images belongs,
+		/// obtains the rectangle of that group and displays it inside the "element".
+		/// Currently also displays the parents of the selected group's rectangle
+		/// </summary>
+		/// <param name="img">Image id</param>
+		/// <param name="element">Canvas element which will receive the Rectangle</param>
+		public void ShowGroupBorderFromImg(int img, Canvas element) {
+			if (!invertedGroups.ContainsKey(img)) return;
+
+			//			element.Children.Remove(groupBorder);
+			groupBorder = (Shape)element.Children.FirstOrDefault(x => (((String)x.GetValue(Canvas.TagProperty)) == "Group"));
+
+			double cellHeight = pxHeight / imgHeight;
+			double cellWidth = pxWidth / imgWidth;
+			cellHeight = cellWidth;
+			element.Children.Remove(groupBorder);
+			Group g = invertedGroups[img];
+			if (Display == "Linear") {
+
+				g.shape.Stroke = new SolidColorBrush(Colors.White);
+				g.shape.StrokeThickness = 1.0;
+				g.shape.Tag = "Group";
+				element.Children.Add(g.shape);
+			} else if (Display == "Groups") {
+				//if (groupBorder == null || (String)groupBorder.Tag == "") {
+				groupBorder = new Rectangle();
+				groupBorder.SetValue(Canvas.TagProperty, "Group");
+				element.Children.Add(groupBorder);
+				//}
+				groupBorder.SetValue(Canvas.TopProperty, g.rectangle.Y * cellHeight);
+				groupBorder.SetValue(Canvas.LeftProperty, g.rectangle.X * cellWidth);
+				groupBorder.Stroke = new SolidColorBrush(Colors.White);
+				groupBorder.StrokeThickness = 1.0;
+				//groupBorder.Fill = new SolidColorBrush(Colors.Red);
+				groupBorder.Width = g.rectangle.Width * cellHeight;
+				groupBorder.Height = g.rectangle.Height * cellWidth;
+			}
+
+			//return;
+
+			List<UIElement> toRemove = element.Children.Where(x => (String)x.GetValue(Canvas.TagProperty) == "ParentGroup").ToList();
+			foreach (UIElement e in toRemove) {
+				element.Children.Remove(e);
+			}
+
+			Color[] cs = new Color[] { Colors.Black, Colors.Blue, Colors.Cyan, Colors.Green, Colors.Yellow, Colors.Orange, Colors.Red, Colors.Magenta, Colors.Purple, Colors.Brown };
+			RectWithRects p = g.rectangle.Parent;
+			int n = 1;
+			while (p != null) {
+				Rectangle pBorder = new Rectangle();
+				pBorder.SetValue(Canvas.TagProperty, "ParentGroup");
+				element.Children.Add(pBorder);
+				pBorder.SetValue(Canvas.TopProperty, p.Y * cellHeight - n);
+				pBorder.SetValue(Canvas.LeftProperty, p.X * cellWidth - n);
+				pBorder.Stroke = new SolidColorBrush(cs[n % cs.Count()]);
+				pBorder.StrokeThickness = 1.0;
+				pBorder.Width = p.Width * cellHeight + 2 * n;
+				pBorder.Height = p.Height * cellWidth + 2 * n;
+				p = p.Parent;
+				n++;
+			}
+		}
+
+		public void Test(Canvas element) {
+			double cellHeight = pxHeight / imgHeight;
+			double cellWidth = pxWidth / imgWidth;
+			foreach (Group g in placedGroups) {
+				Rectangle r = new Rectangle();
+				r.Stroke = new SolidColorBrush(Colors.Red);
+				r.SetValue(Canvas.LeftProperty, g.rectangle.X);
+				r.SetValue(Canvas.TopProperty, g.rectangle.Y);
+				r.Width = cellWidth;
+				r.Height = cellHeight;
+			}
+		}
+
+
+
+		/// <summary>
+		/// For debugging pourposes. Outputs the Rects as a set of Applescript properties.
+		/// </summary>
+		/// <param name="Ra"></param>
+		/// <param name="Rb"></param>
+		/// <param name="Rc"></param>
+		/// <param name="Rp"></param>
+		/// <param name="P"></param>
+		internal void Output(RectWithRects Ra, RectWithRects Rb, RectWithRects Rc, RectWithRects Rp, RectWithRects P) {
+			if (Rb == null) Rb = new RectWithRects(-1, -1, 0, 0);
+			if (Rc == null) Rc = new RectWithRects(-1, -1, 0, 0);
+			System.Globalization.CultureInfo c = new System.Globalization.CultureInfo("en-US");
+			Double mult = 10;
+			Double RaX = mult * (P.X + Ra.X);
+			Double RbX = mult * (P.X + Rb.X);
+			Double RcX = mult * (P.X + Rc.X);
+			Double RpX = mult * (P.X + Rp.X);
+
+			Double RaY = mult * (P.Y + Ra.Y);
+			Double RbY = mult * (P.Y + Rb.Y);
+			Double RcY = mult * (P.Y + Rc.Y);
+			Double RpY = mult * (P.Y + Rp.Y);
+
+			Double RaW = mult * Ra.Width;
+			Double RbW = mult * Rb.Width;
+			Double RcW = mult * Rc.Width;
+			Double RpW = mult * Rp.Width;
+
+			Double RaH = mult * Ra.Height;
+			Double RbH = mult * Rb.Height;
+			Double RcH = mult * Rc.Height;
+			Double RpH = mult * Rp.Height;
+
+			Double PX = mult * P.X;
+			Double PY = mult * P.Y;
+			Double PW = mult * P.Width;
+			Double PH = mult * P.Height;
+
+			Debug.WriteLine("property RaO : {" + RaX.ToString("0.00", c) + ", " + RaY.ToString("0.00", c) + "} \r\n  property RaS : {" + RaW.ToString("0.00", c) + ", " + RaH.ToString("0.00", c) +
+				"} \r\n   property RbO : {" + RbX.ToString("0.00", c) + ", " + RbY.ToString("0.00", c) + "} \r\n property RbS : {" + RbW.ToString("0.00", c) + ", " + RbH.ToString("0.00", c) +
+				"}  \r\n  property RcO : {" + RcX.ToString("0.00", c) + ", " + RcY.ToString("0.00", c) + "} \r\n property RcS : {" + RcW.ToString("0.00", c) + ", " + RcH.ToString("0.00", c) +
+				"}  \r\n  property RpO : {" + RpX.ToString("0.00", c) + ", " + RpY.ToString("0.00", c) + "} \r\n property RpS : {" + RpW.ToString("0.00", c) + ", " + RpH.ToString("0.00", c) +
+				"}  \r\n  property PO : {" + PX.ToString("0.00", c) + ", " + PY.ToString("0.00", c) + "} \r\n  property PS : {" + PW.ToString("0.00", c) + ", " + PH.ToString("0.00", c) + "}  ");
+		}
+
 		/// <summary>
 		/// Image distribution using the Quantum TreeMap algorithm
 		/// </summary>
 		/// <param name="groups">Groups to be ordered</param>
 		/// <param name="parentRect">The area where to distribute the groups</param>
 		/// <returns>A RectWithRects containing all the rects and associated groups</returns>
-		internal RectWithRects TreeMap(IEnumerable<Group> groups, RectWithRects parentRect) {
+		private RectWithRects TreeMap(IEnumerable<Group> groups, RectWithRects parentRect) {
 			// 1. if one group, return size for that group
 			if (groups.Count() == 1) {
 				parentRect.Group = groups.First();
@@ -69,6 +408,7 @@ namespace DeepZoomView {
 					R1 = new RectWithRects(0, 0, null, parentRect.Height, groups.First());
 					R2 = new RectWithRects(R1.Width, 0, null, parentRect.Height, groups.Last());
 				}
+
 				groups.First().rectangle = R1;
 				groups.Last().rectangle = R2;
 				placedGroups.AddRange(groups);
@@ -145,8 +485,10 @@ namespace DeepZoomView {
 				// The objective of the following is to define Rp and Rb so that both fit in the parent.
 				// This is done by reducing one side of Rp until Rb can fit the smallest group destined for Rb or Rc
 				int RpW, RpH = (int)parentRect.Height;
+				int oldRpH = -1;
 				do {
-					if (RpH > 1) {
+					if (RpH > 1 && RpH != oldRpH) {
+						oldRpH = RpH;
 						RpH--;
 					} else {
 						parentRect.IncreaseSize();
@@ -313,212 +655,79 @@ namespace DeepZoomView {
 			}
 			return parentRect;
 		}
+		Shape groupBorder = null;
+		private Canvas groupNamesOverlay = null;
+		private List<KeyValuePair<string, List<int>>> groups;
+		List<Group> groupsNotPlaced = new List<Group>();
+		private int imgHeight, imgWidth, imgCount;
+		Dictionary<int, Group> invertedGroups = new Dictionary<int, Group>();
+		Dictionary<string, Group> map = new Dictionary<string, Group>();
+		private MultiScaleImage msi;
+		List<Group> placedGroups = new List<Group>();
+		private double pxHeight, pxWidth, aspectRatio;
 
 		/// <summary>
-		/// Tries to add Groups from Source to Dest, as long as they fit on the available space given by ToFill.
-		/// Runs the source list sequentially. Does not try to maximize the elements that fit on the destination.
-		/// The Groups that didn't fit are on Rest.
+		/// Used by the constructor to determine an aproximation to the rows and columns need to display the images.
 		/// </summary>
-		/// <param name="dest">Destination List</param>
-		/// <param name="toFill">Available space</param>
-		/// <param name="source">Source List</param>
-		/// <param name="rest">List containing the groups that didn't fit</param>
-		private void FillWhileFits(out List<Group> dest, double toFill, List<Group> source, out List<Group> rest) {
-			dest = new List<Group>();
-			foreach (Group g in source) {
-				if (g.images.Count <= toFill) {
-					toFill -= g.images.Count;
-					dest.Add(g);
-				}
-			}
-			rest = source.Except(dest).ToList();
+		private void CalculateCanvas() {
+			int cols;
+			int rows;	////////////////////////////////////////\
+			CalculateDistribution((int)Math.Ceiling(imgCount * 1.02), out cols, out rows);
+			imgWidth = cols;
+			imgHeight = rows;
 		}
 
-
-
 		/// <summary>
-		/// For debugging pourposes. Outputs the Rects as a set of Applescript properties.
+		/// Discovers a rectangle that can hold "amount" elements.
 		/// </summary>
-		/// <param name="Ra"></param>
-		/// <param name="Rb"></param>
-		/// <param name="Rc"></param>
-		/// <param name="Rp"></param>
-		/// <param name="P"></param>
-		internal void Output(RectWithRects Ra, RectWithRects Rb, RectWithRects Rc, RectWithRects Rp, RectWithRects P) {
-			if (Rb == null) Rb = new RectWithRects(-1, -1, 0, 0);
-			if (Rc == null) Rc = new RectWithRects(-1, -1, 0, 0);
-			System.Globalization.CultureInfo c = new System.Globalization.CultureInfo("en-US");
-			Double mult = 10;
-			Double RaX = mult * (P.X + Ra.X);
-			Double RbX = mult * (P.X + Rb.X);
-			Double RcX = mult * (P.X + Rc.X);
-			Double RpX = mult * (P.X + Rp.X);
-
-			Double RaY = mult * (P.Y + Ra.Y);
-			Double RbY = mult * (P.Y + Rb.Y);
-			Double RcY = mult * (P.Y + Rc.Y);
-			Double RpY = mult * (P.Y + Rp.Y);
-
-			Double RaW = mult * Ra.Width;
-			Double RbW = mult * Rb.Width;
-			Double RcW = mult * Rc.Width;
-			Double RpW = mult * Rp.Width;
-
-			Double RaH = mult * Ra.Height;
-			Double RbH = mult * Rb.Height;
-			Double RcH = mult * Rc.Height;
-			Double RpH = mult * Rp.Height;
-
-			Double PX = mult * P.X;
-			Double PY = mult * P.Y;
-			Double PW = mult * P.Width;
-			Double PH = mult * P.Height;
-
-			Debug.WriteLine("property RaO : {" + RaX.ToString("0.00", c) + ", " + RaY.ToString("0.00", c) + "} \r\n  property RaS : {" + RaW.ToString("0.00", c) + ", " + RaH.ToString("0.00", c) +
-				"} \r\n   property RbO : {" + RbX.ToString("0.00", c) + ", " + RbY.ToString("0.00", c) + "} \r\n property RbS : {" + RbW.ToString("0.00", c) + ", " + RbH.ToString("0.00", c) +
-				"}  \r\n  property RcO : {" + RcX.ToString("0.00", c) + ", " + RcY.ToString("0.00", c) + "} \r\n property RcS : {" + RcW.ToString("0.00", c) + ", " + RcH.ToString("0.00", c) +
-				"}  \r\n  property RpO : {" + RpX.ToString("0.00", c) + ", " + RpY.ToString("0.00", c) + "} \r\n property RpS : {" + RpW.ToString("0.00", c) + ", " + RpH.ToString("0.00", c) +
-				"}  \r\n  property PO : {" + PX.ToString("0.00", c) + ", " + PY.ToString("0.00", c) + "} \r\n  property PS : {" + PW.ToString("0.00", c) + ", " + PH.ToString("0.00", c) + "}  ");
+		/// <param name="amount">The number of elements to hold</param>
+		/// <param name="aR">The aspect ratio of the rectangle</param>
+		/// <param name="cols">Out: The number of columns</param>
+		/// <param name="rows">Out: The number of rows</param>
+		private void CalculateDistribution(int amount, double aR, out int cols, out int rows) {
+			CalculateDistribution(amount, aR, null, out cols, out rows);
 		}
 
-
 		/// <summary>
-		/// Takes the set of groups and arranges them on the MSI using a the Quantum TreeMap algorithm
+		/// Discovers a rectangle that can hold "amount" elements.
 		/// </summary>
-		/// <param name="max">This contains the width and height of the display</param>
-		/// <returns>A list of "X,Y"=>ImgID for the mouse-over identification</returns>
-		public Dictionary<string, int> DisplayGroupsOnScreen(out Point max) {
-			groupNamesOverlay = null;
-			Dictionary<string, int> canvasIndex = null;
-
-			groupsNotPlaced.Clear();
-			placedGroups.Clear();
-			invertedGroups.Clear();
-			if (groupBorder != null && groupBorder.Parent != null) {
-				((Canvas)groupBorder.Parent).Children.Remove(groupBorder);
-				groupBorder = null;
-			}
-			if (Display == "Linear") {
-				IOrderedEnumerable<KeyValuePair<string, List<int>>> orderedGroup = groups.OrderBy(kv => kv.Key);
-				foreach (KeyValuePair<string, List<int>> kv in orderedGroup) {
-					Group g = new Group(kv.Key, kv.Value);
-					groupsNotPlaced.Add(g);
-				}
-				Group.DisplayType = Display;
-				int cols, rows;
-				orderByGroupsVertically(groupsNotPlaced, out canvasIndex, out cols, out rows);
-				max = new Point(cols, rows);
-			} else if (Display == "Groups") {
-				IOrderedEnumerable<KeyValuePair<string, List<int>>> orderedGroup = groups.OrderByDescending(kv => kv.Value.Count);
-				foreach (KeyValuePair<string, List<int>> kv in orderedGroup) {
-					Group g = new Group(kv.Key, kv.Value);
-					groupsNotPlaced.Add(g);
-				}
-				Group.DisplayType = Display;
-				RectWithRects result = TreeMap(groupsNotPlaced, new RectWithRects(0, 0, imgWidth, imgHeight));
-				Debug.WriteLine(result.TreeView2());
-				PositionCorrection(result);
-				groupsNotPlaced = groupsNotPlaced.Except(placedGroups).ToList();
-				HideNotPlacedImages();
-				canvasIndex = PositionImages(out max);
-			} else {
-				throw new Exception("Incorrect display method");
-			}
-			//max.X = Math.Max(max.Y * aspectRatio, max.X);
-			return canvasIndex;
-			//////////////// (temporarily) DEAD CODE
-			#region old
-			int x = 0, y = 0;
-			String pos;
-			int countGroupsPlaced = -1;
-			while (groupsNotPlaced.Count != 0 && (x < imgWidth && y < imgHeight)) {
-				countGroupsPlaced = -1;
-				while (placedGroups.Count > countGroupsPlaced) {
-					countGroupsPlaced = placedGroups.Count;
-					List<Group> groupsBeingPlaced = groupsNotPlaced.GetRange(0, groupsNotPlaced.Count);
-					foreach (Group g in groupsBeingPlaced) {
-						pos = p(x, y);
-						while (map.ContainsKey(pos)) {
-							Rect r = map[pos].rectangle.Rect;
-							if (r.Top + r.Height - 1 == y) {
-								x++;
-							} else {
-								x = x + (int)(map[pos].rectangle.Width - (x - map[pos].rectangle.X));
-							}
-							if (x >= imgWidth) {
-								x = 0;
-								y++;
-								if (y >= imgHeight) {
-									break;
-								}
-							}
-							pos = p(x, y);
-						}
-						if (Fill(g, x, y)) {
-							placedGroups.Add(g);
-							groupsNotPlaced.Remove(g);
-						} else {
-						}
+		/// <param name="amount">The number of elements to hold</param>
+		/// <param name="aR">The aspect ratio of the rectangle</param>
+		/// <param name="max">Maximum width and height values. Ignored if the amout of elements can't fit.</param>
+		/// <param name="cols">Out: The number of columns</param>
+		/// <param name="rows">Out: The number of rows</param>
+		private void CalculateDistribution(int amount, double aR, Point? max, out int cols, out int rows) {
+			int canHold = 1;
+			cols = 1;
+			rows = 1;
+			while (canHold < amount) {
+				if (!max.HasValue) {
+					cols++;
+					rows = Convert.ToInt32(Math.Floor(cols / aR));
+				} else {
+					if (cols < max.Value.X) {
+						cols++;
+						rows = Convert.ToInt32(Math.Min(Math.Floor(cols / aR), max.Value.Y));
+					} else if (rows < max.Value.Y) {
+						rows++;
+					} else {
+						cols++;
+						rows = Convert.ToInt32(Math.Floor(cols / aR));
 					}
 				}
-				// caso ele não consiga meter nenhum grupo do ponto livre, experimenta outro ponto
-				x++;
-				if (x >= imgWidth) {
-					x = 0;
-					y++;
-				}
+				canHold = Convert.ToInt32(cols * rows);
 			}
-			HideNotPlacedImages();
-			return PositionImages(out max);
-			#endregion old
 		}
 
-
-		private void orderByGroupsVertically(List<Group> groupsNotPlaced, out Dictionary<String, int> canvasIndex, out int cols, out int rows) {
-			int height = imgHeight;
-			int previousHeight = -1;
-			Boolean heightIsIncreasing;
-
-			placedGroups.Clear();
-
-			double prevPAR = 0;
-			int width = TestVerticalGroupDistribution(groupsNotPlaced, height), prevWidth = 0;
-
-			double pAR = 1.0 * width / height;
-
-			// TODO: Melhorar isto para que a ultima linha nao fique cortada
-			if (aspectRatio < pAR) {
-				heightIsIncreasing = true;
-			} else {
-				heightIsIncreasing = false;
-			}
-
-			while (true) {
-				if ((heightIsIncreasing && aspectRatio > pAR) || (!heightIsIncreasing && aspectRatio < pAR))
-					break;
-
-				if (heightIsIncreasing) height++;
-				else height--;
-
-				prevWidth = width;
-				width = TestVerticalGroupDistribution(groupsNotPlaced, height);
-
-				prevPAR = pAR;
-				pAR = 1.0 * width / height;
-			}
-
-			if (Math.Abs(aspectRatio - pAR) > Math.Abs(aspectRatio - prevPAR)) {
-				pAR = prevPAR;
-				width = prevWidth;
-				if (heightIsIncreasing) {
-					height--;
-				} else {
-					height++;
-				}
-			}
-			canvasIndex = DistributeGroupsVertically(groupsNotPlaced, height, width);
-			cols = width; // (int)Math.Ceiling(height * pAR);
-			rows = height;
+		/// <summary>
+		/// Discovers a rectangle that can hold "amount" elements. Uses the aspect ratio set in the instance.
+		/// </summary>
+		/// <param name="amount">The number of elements to hold</param>
+		/// <param name="max">Maximum width and height values. Ignored if the amout of elements can't fit.</param>
+		/// <param name="cols">Out: The number of columns</param>
+		/// <param name="rows">Out: The number of rows</param>
+		private void CalculateDistribution(int amount, out int cols, out int rows) {
+			CalculateDistribution(amount, aspectRatio, null, out cols, out rows);
 		}
 
 		private Dictionary<string, int> DistributeGroupsVertically(List<Group> groupsNotPlaced, int height, int width) {
@@ -585,19 +794,100 @@ namespace DeepZoomView {
 			return canvasIndex;
 		}
 
-		private static int TestVerticalGroupDistribution(List<Group> groupsNotPlaced, int height) {
-			int x = 0;
-			int y = 0;
-			foreach (Group g in groupsNotPlaced) {
-				if (y != 0 && g.images.Count > height - y) {
-					x++;
-					y = 0;
+		/// <summary>
+		/// Distributes images of a group on the canvas.
+		/// </summary>
+		/// <param name="g">The group whose images need distribution</param>
+		/// <param name="ix">Initial X position</param>
+		/// <param name="iy">Initial Y position</param>
+		/// <returns>True if the group was succefully placed. False otherwise.</returns>
+		private Boolean Fill(Group g, int ix, int iy) {
+			int H, V,
+				x = ix, y = iy,
+				n = g.images.Count;
+			CalculateDistribution(n, out H, out V);
+
+			// test against the canvas limits
+			if (V > imgHeight - iy) {
+				V = imgHeight - iy;
+				if (V < 1) {
+					return false;
 				}
-				x += g.images.Count / height;
-				y += g.images.Count % height;
-				y = (y + 1) % height;
+				H = (int)Math.Ceiling(g.images.Count / (1.0 * V));
+
+				if (H > imgWidth - ix) {
+					// it doesn't fit! what now? search for other space? for now let's just not add it
+					return false;
+				}
 			}
-			return x;
+			if (H > imgWidth - ix) {
+				H = imgWidth - ix;
+				if (H < 1) {
+					return false;
+				}
+				V = (int)Math.Ceiling(g.images.Count / (1.0 * H));
+
+				if (V > imgHeight - iy) {
+					// it doesn't fit! what now? search for other space? for now let's just not add it
+					return false;
+				}
+			}
+
+			List<string> mapTmp = new List<string>();
+			while (n > 0) {
+				if (x - ix < H) {
+					if (!map.ContainsKey(p(x, y))) {
+						mapTmp.Add(p(x, y));
+						n--;
+						x++;
+					} else {
+						H = x - ix;
+					}
+				} else {
+					y++;
+					x = ix;
+					if (y > imgHeight || y > 2 * H || map.ContainsKey(p(x, y))) {
+						return false;
+					}
+				}
+			}
+			foreach (string pos in mapTmp) {
+				map.Add(pos, g);
+			}
+			g.rectangle = new RectWithRects(ix, iy, H, y - iy + 1);
+			return true;
+		}
+
+		/// <summary>
+		/// Tries to add Groups from Source to Dest, as long as they fit on the available space given by ToFill.
+		/// Runs the source list sequentially. Does not try to maximize the elements that fit on the destination.
+		/// The Groups that didn't fit are on Rest.
+		/// </summary>
+		/// <param name="dest">Destination List</param>
+		/// <param name="toFill">Available space</param>
+		/// <param name="source">Source List</param>
+		/// <param name="rest">List containing the groups that didn't fit</param>
+		private void FillWhileFits(out List<Group> dest, double toFill, List<Group> source, out List<Group> rest) {
+			dest = new List<Group>();
+			foreach (Group g in source) {
+				if (g.images.Count <= toFill) {
+					toFill -= g.images.Count;
+					dest.Add(g);
+				}
+			}
+			rest = source.Except(dest).ToList();
+		}
+		/// <summary>
+		/// Transverses the set of groups that where not placed and moves the images out of the view.
+		/// </summary>
+		private void HideNotPlacedImages() {
+			foreach (Group g in groupsNotPlaced) {
+				foreach (int id in g.images) {
+					Point p = msi.SubImages[id].ViewportOrigin;
+					Page.PositionImageInMSI(msi, id, p.X, p.Y);
+					msi.SubImages[id].Opacity = 0.5;
+				}
+			}
 		}
 
 		//public Rectangle RectangleWithPositions(int X, int Y, int W, int H) {
@@ -697,12 +987,61 @@ namespace DeepZoomView {
 		}
 
 
-		public List<KeyValuePair<string, int>> GetGroupsForAxis(int cols) {
-			List<KeyValuePair<string, int>> theSet = new List<KeyValuePair<string, int>>();
-			foreach (KeyValuePair<string, List<int>> g in groups) {
-				theSet.Add(new KeyValuePair<string, int>(g.Key, Convert.ToInt32(Math.Ceiling(g.Value.Count / cols))));
+		private void orderByGroupsVertically(List<Group> groupsNotPlaced, out Dictionary<String, int> canvasIndex, out int cols, out int rows) {
+			int height = imgHeight;
+			int previousHeight = -1;
+			Boolean heightIsIncreasing;
+
+			placedGroups.Clear();
+
+			double prevPAR = 0;
+			int width = TestVerticalGroupDistribution(groupsNotPlaced, height), prevWidth = 0;
+
+			double pAR = 1.0 * width / height;
+
+			// TODO: Melhorar isto para que a ultima linha nao fique cortada
+			if (aspectRatio < pAR) {
+				heightIsIncreasing = true;
+			} else {
+				heightIsIncreasing = false;
 			}
-			return theSet;
+
+			while (true) {
+				if ((heightIsIncreasing && aspectRatio > pAR) || (!heightIsIncreasing && aspectRatio < pAR))
+					break;
+
+				if (heightIsIncreasing) height++;
+				else height--;
+
+				prevWidth = width;
+				width = TestVerticalGroupDistribution(groupsNotPlaced, height);
+
+				prevPAR = pAR;
+				pAR = 1.0 * width / height;
+			}
+
+			if (Math.Abs(aspectRatio - pAR) > Math.Abs(aspectRatio - prevPAR)) {
+				pAR = prevPAR;
+				width = prevWidth;
+				if (heightIsIncreasing) {
+					height--;
+				} else {
+					height++;
+				}
+			}
+			canvasIndex = DistributeGroupsVertically(groupsNotPlaced, height, width);
+			cols = width; // (int)Math.Ceiling(height * pAR);
+			rows = height;
+		}
+
+		/// <summary>
+		/// Returns a String identifying a coordinate
+		/// </summary>
+		/// <param name="x">X coordinate</param>
+		/// <param name="y">Y coordinate</param>
+		/// <returns>A string in the format "X-Y"</returns>
+		private String p(int x, int y) {
+			return x + "-" + y;
 		}
 
 
@@ -722,355 +1061,19 @@ namespace DeepZoomView {
 			}
 		}
 
-		/// <summary>
-		/// Distributes images of a group on the canvas.
-		/// </summary>
-		/// <param name="g">The group whose images need distribution</param>
-		/// <param name="ix">Initial X position</param>
-		/// <param name="iy">Initial Y position</param>
-		/// <returns>True if the group was succefully placed. False otherwise.</returns>
-		private Boolean Fill(Group g, int ix, int iy) {
-			int H, V,
-				x = ix, y = iy,
-				n = g.images.Count;
-			CalculateDistribution(n, out H, out V);
-
-			// test against the canvas limits
-			if (V > imgHeight - iy) {
-				V = imgHeight - iy;
-				if (V < 1) {
-					return false;
-				}
-				H = (int)Math.Ceiling(g.images.Count / (1.0 * V));
-
-				if (H > imgWidth - ix) {
-					// it doesn't fit! what now? search for other space? for now let's just not add it
-					return false;
-				}
-			}
-			if (H > imgWidth - ix) {
-				H = imgWidth - ix;
-				if (H < 1) {
-					return false;
-				}
-				V = (int)Math.Ceiling(g.images.Count / (1.0 * H));
-
-				if (V > imgHeight - iy) {
-					// it doesn't fit! what now? search for other space? for now let's just not add it
-					return false;
-				}
-			}
-
-			List<string> mapTmp = new List<string>();
-			while (n > 0) {
-				if (x - ix < H) {
-					if (!map.ContainsKey(p(x, y))) {
-						mapTmp.Add(p(x, y));
-						n--;
-						x++;
-					} else {
-						H = x - ix;
-					}
-				} else {
-					y++;
-					x = ix;
-					if (y > imgHeight || y > 2 * H || map.ContainsKey(p(x, y))) {
-						return false;
-					}
-				}
-			}
-			foreach (string pos in mapTmp) {
-				map.Add(pos, g);
-			}
-			g.rectangle = new RectWithRects(ix, iy, H, y - iy + 1);
-			return true;
-		}
-
-		/// <summary>
-		/// Returns a String identifying a coordinate
-		/// </summary>
-		/// <param name="x">X coordinate</param>
-		/// <param name="y">Y coordinate</param>
-		/// <returns>A string in the format "X-Y"</returns>
-		private String p(int x, int y) {
-			return x + "-" + y;
-		}
-
-		/// <summary>
-		/// Used by the constructor to determine an aproximation to the rows and columns need to display the images.
-		/// </summary>
-		private void CalculateCanvas() {
-			int cols;
-			int rows;	////////////////////////////////////////\
-			CalculateDistribution((int)Math.Ceiling(imgCount * 1.02), out cols, out rows);
-			imgWidth = cols;
-			imgHeight = rows;
-		}
-
-		/// <summary>
-		/// Discovers a rectangle that can hold "amount" elements. Uses the aspect ratio set in the instance.
-		/// </summary>
-		/// <param name="amount">The number of elements to hold</param>
-		/// <param name="max">Maximum width and height values. Ignored if the amout of elements can't fit.</param>
-		/// <param name="cols">Out: The number of columns</param>
-		/// <param name="rows">Out: The number of rows</param>
-		private void CalculateDistribution(int amount, out int cols, out int rows) {
-			CalculateDistribution(amount, aspectRatio, null, out cols, out rows);
-		}
-
-		/// <summary>
-		/// Discovers a rectangle that can hold "amount" elements.
-		/// </summary>
-		/// <param name="amount">The number of elements to hold</param>
-		/// <param name="aR">The aspect ratio of the rectangle</param>
-		/// <param name="cols">Out: The number of columns</param>
-		/// <param name="rows">Out: The number of rows</param>
-		private void CalculateDistribution(int amount, double aR, out int cols, out int rows) {
-			CalculateDistribution(amount, aR, null, out cols, out rows);
-		}
-
-		/// <summary>
-		/// Discovers a rectangle that can hold "amount" elements.
-		/// </summary>
-		/// <param name="amount">The number of elements to hold</param>
-		/// <param name="aR">The aspect ratio of the rectangle</param>
-		/// <param name="max">Maximum width and height values. Ignored if the amout of elements can't fit.</param>
-		/// <param name="cols">Out: The number of columns</param>
-		/// <param name="rows">Out: The number of rows</param>
-		private void CalculateDistribution(int amount, double aR, Point? max, out int cols, out int rows) {
-			int canHold = 1;
-			cols = 1;
-			rows = 1;
-			while (canHold < amount) {
-				if (!max.HasValue) {
-					cols++;
-					rows = Convert.ToInt32(Math.Floor(cols / aR));
-				} else {
-					if (cols < max.Value.X) {
-						cols++;
-						rows = Convert.ToInt32(Math.Min(Math.Floor(cols / aR), max.Value.Y));
-					} else if (rows < max.Value.Y) {
-						rows++;
-					} else {
-						cols++;
-						rows = Convert.ToInt32(Math.Floor(cols / aR));
-					}
-				}
-				canHold = Convert.ToInt32(cols * rows);
-			}
-		}
-
-		/// <summary>
-		/// Transverses the set of groups that were correctly placed and assigns each image to a position of the MSI
-		/// </summary>
-		/// <param name="max">This contains the width and height of the display</param>
-		/// <returns>A list of "X,Y"=>ImgID for the mouse-over identification</returns>
-		public Dictionary<string, int> PositionImages(out Point max) {
-			invertedGroups.Clear();
-			Dictionary<string, int> positions = new Dictionary<string, int>();
-			max = new Point(0, 0);
-			foreach (Group g in placedGroups) {
-				int x = (int)Math.Round(g.rectangle.X);
-				int y = (int)Math.Round(g.rectangle.Y);
-				foreach (int id in g.images) {
-					if (!positions.ContainsKey(x + ";" + y)) {
-						positions.Add(x + ";" + y, id);
-						invertedGroups.Add(id, g);
-						try {
-							Page.PositionImageInMSI(msi, id, x, y);
-							//msi.SubImages[id].ViewportOrigin = new Point(-x, -y);
-							msi.SubImages[id].Opacity = 1;
-						} catch {
-							//g.images.Remove(id);
-							Debug.WriteLine("On PositionImages, id " + id + " was not found on msi (which contains " + msi.SubImages.Count + ")");
-							continue;
-						}
-						max = new Point(Math.Max(max.X, x), Math.Max(max.Y, y));
-					}
-					if (++x >= g.rectangle.X + g.rectangle.Width) {
-						x = (int)Math.Round(g.rectangle.X);
-						y++;
-					}
-				}
-			}
-			if ((int)(max.X / aspectRatio) < max.Y) {
-				msi.ViewportWidth = max.Y * aspectRatio;
-			} else {
-				msi.ViewportWidth = max.X;
-			}
-			max.X++;
-			max.Y++;
-			imgWidth = (int)max.X;
-			imgHeight = (int)max.Y;
-			return positions;
-		}
-		/// <summary>
-		/// Transverses the set of groups that where not placed and moves the images out of the view.
-		/// </summary>
-		private void HideNotPlacedImages() {
+		private static int TestVerticalGroupDistribution(List<Group> groupsNotPlaced, int height) {
+			int x = 0;
+			int y = 0;
 			foreach (Group g in groupsNotPlaced) {
-				foreach (int id in g.images) {
-					Point p = msi.SubImages[id].ViewportOrigin;
-					Page.PositionImageInMSI(msi, id, p.X, p.Y);
-					msi.SubImages[id].Opacity = 0.5;
+				if (y != 0 && g.images.Count > height - y) {
+					x++;
+					y = 0;
 				}
+				x += g.images.Count / height;
+				y += g.images.Count % height;
+				y = (y + 1) % height;
 			}
-		}
-
-		/// <summary>
-		/// Given an image id, discovers in which group the images belongs,
-		/// obtains the rectangle of that group and displays it inside the "element".
-		/// Currently also displays the parents of the selected group's rectangle
-		/// </summary>
-		/// <param name="img">Image id</param>
-		/// <param name="element">Canvas element which will receive the Rectangle</param>
-		public void ShowGroupBorderFromImg(int img, Canvas element) {
-			if (!invertedGroups.ContainsKey(img)) return;
-
-			//			element.Children.Remove(groupBorder);
-			groupBorder = (Shape)element.Children.FirstOrDefault(x => (((String)x.GetValue(Canvas.TagProperty)) == "Group"));
-
-			double cellHeight = pxHeight / imgHeight;
-			double cellWidth = pxWidth / imgWidth;
-			cellHeight = cellWidth;
-			element.Children.Remove(groupBorder);
-			Group g = invertedGroups[img];
-			if (Display == "Linear") {
-
-				g.shape.Stroke = new SolidColorBrush(Colors.White);
-				g.shape.StrokeThickness = 1.0;
-				g.shape.Tag = "Group";
-				element.Children.Add(g.shape);
-			} else if (Display == "Groups") {
-				//if (groupBorder == null || (String)groupBorder.Tag == "") {
-				groupBorder = new Rectangle();
-				groupBorder.SetValue(Canvas.TagProperty, "Group");
-				element.Children.Add(groupBorder);
-				//}
-				groupBorder.SetValue(Canvas.TopProperty, g.rectangle.Y * cellHeight);
-				groupBorder.SetValue(Canvas.LeftProperty, g.rectangle.X * cellWidth);
-				groupBorder.Stroke = new SolidColorBrush(Colors.White);
-				groupBorder.StrokeThickness = 1.0;
-				//groupBorder.Fill = new SolidColorBrush(Colors.Red);
-				groupBorder.Width = g.rectangle.Width * cellHeight;
-				groupBorder.Height = g.rectangle.Height * cellWidth;
-			}
-
-			//return;
-
-			List<UIElement> toRemove = element.Children.Where(x => (String)x.GetValue(Canvas.TagProperty) == "ParentGroup").ToList();
-			foreach (UIElement e in toRemove) {
-				element.Children.Remove(e);
-			}
-
-			Color[] cs = new Color[] { Colors.Black, Colors.Blue, Colors.Cyan, Colors.Green, Colors.Yellow, Colors.Orange, Colors.Red, Colors.Magenta, Colors.Purple, Colors.Brown };
-			RectWithRects p = g.rectangle.Parent;
-			int n = 1;
-			while (p != null) {
-				Rectangle pBorder = new Rectangle();
-				pBorder.SetValue(Canvas.TagProperty, "ParentGroup");
-				element.Children.Add(pBorder);
-				pBorder.SetValue(Canvas.TopProperty, p.Y * cellHeight - n);
-				pBorder.SetValue(Canvas.LeftProperty, p.X * cellWidth - n);
-				pBorder.Stroke = new SolidColorBrush(cs[n % cs.Count()]);
-				pBorder.StrokeThickness = 1.0;
-				pBorder.Width = p.Width * cellHeight + 2 * n;
-				pBorder.Height = p.Height * cellWidth + 2 * n;
-				p = p.Parent;
-				n++;
-			}
-		}
-
-		public void Test(Canvas element) {
-			double cellHeight = pxHeight / imgHeight;
-			double cellWidth = pxWidth / imgWidth;
-			foreach (Group g in placedGroups) {
-				Rectangle r = new Rectangle();
-				r.Stroke = new SolidColorBrush(Colors.Red);
-				r.SetValue(Canvas.LeftProperty, g.rectangle.X);
-				r.SetValue(Canvas.TopProperty, g.rectangle.Y);
-				r.Width = cellWidth;
-				r.Height = cellHeight;
-			}
-		}
-
-
-		public void SetGroupNamesOverlay(Canvas destination) {
-			if (groupNamesOverlay == null) {
-				groupNamesOverlay = new Canvas();
-				groupNamesOverlay.Width = this.pxWidth;
-
-				Border border;
-				Polygon pBorder;
-				Rect bounds;
-				TextBlock txt;
-				Random rand = new Random();
-				double cellSide = pxWidth / imgWidth;
-
-				foreach (Group g in placedGroups) {
-					txt = new TextBlock();
-					txt.Text = g.name;
-					txt.TextAlignment = TextAlignment.Center;
-					txt.TextWrapping = TextWrapping.Wrap;
-					txt.VerticalAlignment = VerticalAlignment.Center;
-					txt.FontWeight = FontWeights.Bold;
-					txt.Foreground = new SolidColorBrush(Colors.White);
-					if (Group.DisplayType == "Groups") {
-						border = new Border();
-						bounds = g.rectangle.Rect;
-						border.Background = new SolidColorBrush(Color.FromArgb((byte)150, (byte)rand.Next(255), (byte)rand.Next(255), (byte)rand.Next(255)));
-						border.Width = bounds.Width * cellSide;
-						border.Height = bounds.Height * cellSide;
-						Canvas.SetLeft(border, bounds.X * cellSide);
-						Canvas.SetTop(border, bounds.Y * cellSide);
-						border.Child = txt;
-						groupNamesOverlay.Children.Add(border);
-					} else if (Group.DisplayType == "Linear") {
-						pBorder = DuplicatePolygon((Polygon)g.shape);
-						pBorder.Fill = new SolidColorBrush(Color.FromArgb((byte)150, (byte)rand.Next(255), (byte)rand.Next(255), (byte)rand.Next(255)));
-						Canvas.SetLeft(txt, pBorder.Points[0].X);
-						Canvas.SetTop(txt, pBorder.Points[0].Y);
-
-						txt.Width = pBorder.Width;
-						txt.Height = pBorder.Height;
-
-						RotateTransform rt = new RotateTransform();
-						rt.Angle = 90;
-						//rt.CenterY = -txt.Height;
-						//txt.RenderTransformOrigin = new Point(0, -txt.Height);
-						//txt.RenderTransform = rt;
-						groupNamesOverlay.Children.Add(pBorder);
-						groupNamesOverlay.Children.Add(txt);
-					}
-				}
-			}
-			destination.Children.Clear();
-			destination.Children.Add(groupNamesOverlay);
-		}
-
-		public static void SetFrameworkElementBoundsFromOther(FrameworkElement e, FrameworkElement r) {
-			Canvas.SetLeft(e, Canvas.GetLeft(r));
-			Canvas.SetTop(e, Canvas.GetTop(r));
-			e.Width = r.Width;
-			e.Height = r.Height;
-		}
-		public static void SetFrameworkElementBoundsFromRect(FrameworkElement e, Rect r) {
-			SetFrameworkElementBoundsFromRect(e, r, 1.0);
-		}
-
-		public static void SetFrameworkElementBoundsFromRect(FrameworkElement e, Rect r, double multiplier) {
-			Canvas.SetLeft(e, r.X * multiplier);
-			Canvas.SetTop(e, r.Y * multiplier);
-			e.Width = r.Width * multiplier;
-			e.Height = r.Height * multiplier;
-		}
-
-		public static Polygon DuplicatePolygon(Polygon o) {
-			Polygon newP = new Polygon();
-			foreach (Point p in o.Points) {
-				newP.Points.Add(p);
-			}
-			return newP;
+			return x;
 		}
 	} // closes GroupDisplay
 }

@@ -790,7 +790,7 @@ namespace DeepZoomView {
 			} else {
 				y += (currentImage.AspectRatio - 1) / 2;
 			}
-				
+
 
 			Point currentPosition = currentImage.ViewportOrigin;
 			Point futurePosition = new Point(-x, -y);
@@ -839,9 +839,9 @@ namespace DeepZoomView {
 		private int GetSubImageIndex(Point point) {
 			Double imgLogicalX = Math.Floor(msi.ViewportOrigin.X + msi.ViewportWidth * (point.X / msi.ActualWidth));
 			Double imgLogicalY = Math.Floor(msi.ViewportOrigin.Y + (msi.ViewportWidth * (msi.ActualHeight / msi.ActualWidth)) * (point.Y / msi.ActualHeight));
-			try {
+			if (canvasIndex.ContainsKey(imgLogicalX + ";" + imgLogicalY)) {
 				return canvasIndex[imgLogicalX + ";" + imgLogicalY];
-			} catch {
+			} else {
 				return -1;
 			}
 		}
