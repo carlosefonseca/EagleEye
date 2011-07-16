@@ -50,7 +50,7 @@ namespace DeepZoomView {
 		}
 
 
-#region Constructors
+		#region Constructors
 		public RectWithRects(Rect r)
 			: this(r.X, r.Y, r.Width, r.Height) {
 		}
@@ -107,7 +107,7 @@ namespace DeepZoomView {
 			group = g;
 			leaf = true;
 		}
-#endregion //Constructors
+		#endregion //Constructors
 
 		public Boolean Fits(double count) {
 			return (Width * Height >= count);
@@ -164,7 +164,7 @@ namespace DeepZoomView {
 			}
 			return String.Format("{{{0},{1},{2},{3}}}", relX.ToString("0.00", c), relY.ToString("0.00", c), Width.ToString("0.00", c), Height.ToString("0.00", c));
 		}
-	
+
 		public void Add(RectWithRects r) {
 			if (children == null) {
 				children = new List<RectWithRects>();
@@ -248,12 +248,12 @@ namespace DeepZoomView {
 			if (Width < Height)
 				Translate();
 		}
-		
+
 		internal void MakeVertical() {
 			if (Width > Height)
 				Translate();
 		}
-		
+
 		private void Translate() {
 			double tmp = X;
 			X = Y;
@@ -268,18 +268,31 @@ namespace DeepZoomView {
 		}
 
 		internal string TreeView2() {
-			return "{"+TreeViewXPTO()+"}";
+			return "{" + TreeViewXPTO() + "}";
 		}
 
 
 		internal string TreeViewXPTO() {
 			string o = ToStringRelativeToRoot();
 			if (children != null) {
-				foreach(RectWithRects r2 in children) {
-					o+=","+r2.TreeViewXPTO();
+				foreach (RectWithRects r2 in children) {
+					o += "," + r2.TreeViewXPTO();
 				}
 			}
 			return o;
+		}
+
+		internal IEnumerable<Group> GetAllGroups() {
+			List<Group> groups = new List<Group>();
+			if (this.Group != null) {
+				groups.Add(this.Group);
+			}
+			if (this.Children().Count != 0) {
+				foreach (RectWithRects r in this.Children()) {
+					groups.AddRange(r.GetAllGroups());
+				}
+			}
+			return groups;
 		}
 	}
 }
