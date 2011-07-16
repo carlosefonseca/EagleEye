@@ -84,6 +84,8 @@
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RectWithRects.cs" />
+    <Compile Include="TreeMapper.cs" />
+    <Compile Include="VerticalDistributor.cs" />
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml">
