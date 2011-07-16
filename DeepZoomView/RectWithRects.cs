@@ -50,6 +50,7 @@ namespace DeepZoomView {
 		}
 
 
+#region Constructors
 		public RectWithRects(Rect r)
 			: this(r.X, r.Y, r.Width, r.Height) {
 		}
@@ -106,6 +107,7 @@ namespace DeepZoomView {
 			group = g;
 			leaf = true;
 		}
+#endregion //Constructors
 
 		public Boolean Fits(double count) {
 			return (Width * Height >= count);
@@ -235,14 +237,23 @@ namespace DeepZoomView {
 			this.Rect = newR.Rect;
 		}
 
+		internal Boolean isHorizontal() {
+			if (Width < Height) {
+				return false;
+			}
+			return true;
+		}
+
 		internal void MakeHorizontal() {
 			if (Width < Height)
 				Translate();
 		}
+		
 		internal void MakeVertical() {
 			if (Width > Height)
 				Translate();
 		}
+		
 		private void Translate() {
 			double tmp = X;
 			X = Y;

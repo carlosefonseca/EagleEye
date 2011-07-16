@@ -385,13 +385,191 @@ namespace DeepZoomView {
 				"}  \r\n  property PO : {" + PX.ToString("0.00", c) + ", " + PY.ToString("0.00", c) + "} \r\n  property PS : {" + PW.ToString("0.00", c) + ", " + PH.ToString("0.00", c) + "}  ");
 		}
 
+
+		//	groups = groups.OrderByDescending(g => g.images.Count);
+
+		#region Treemap v3
+
+		private RectWithRects TreeMap(IEnumerable<Group> groups, RectWithRects rect) {
+			Random r = new Random();
+			int id = r.Next(100);
+			Debug.WriteLine(id + ": TreeMap with " + groups.Count() + " groups on rect " + rect.Rect);
+
+			Boolean originalIsHorizontal = rect.isHorizontal();
+			RectSide insertionSide = RectSide.Left;
+			if (!originalIsHorizontal) {
+				insertionSide = RectSide.Top;
+				//rect.MakeHorizontal();
+				//Debug.WriteLine(id + ": Rect is now Horizontal. " + rect.Rect);
+			}
+
+			// Left
+			int n = 1;
+			DescriptionRectsTreemap d, prevD = new DescriptionRectsTreemap();
+			int fixedSide;
+			if (insertionSide == RectSide.Left) {
+				fixedSide = (int)rect.Height;
+			} else if (insertionSide == RectSide.Top) {
+				fixedSide = (int)rect.Width;
+			} else {
+				throw new NotImplementedException();
+			}
+			d = CalculateSideFilling(groups.Take(n), fixedSide);
+			Debug.WriteLine("{0}: First MakeRect({1}) Waste:{2} Width:{3} AR:{4}", id, fixedSide, d.wastedSpace, d.calculatedSideLength, d.aspectRatioAverage);
+			do {
+				prevD = d;
+				n++;
+				if (n > fixedSide) {
+					break;
+				}
+				d = CalculateSideFilling(groups.Take(n), fixedSide);
+				Debug.WriteLine("{0}: MakeRect({1}/{2}) > Waste:{3} Width:{4} AR:{5}", id, n, groups.Count(), d.wastedSpace, d.calculatedSideLength, d.aspectRatioAverage);
+
+				if (/*prevD.wastedSpace == d.wastedSpace && */prevD.aspectRatioAverage < d.aspectRatioAverage) {
+					break;
+				}
+				/*				if (prevD.wastedSpace < d.wastedSpace) {
+									break;
+								}
+				*/
+				if (groups.Count() <= n /*|| groups.Count() <= fixedSide*/) {
+					prevD = d;
+					break;
+				}
+			} while (true);
+
+			if (prevD.calculatedSideLength == 0) {
+				Debug.WriteLine("{0}: FAIL! Width = 0!", id);
+			}
+
+			// prevD is better 
+			Debug.WriteLine("{0}: Decided on {1}", id, prevD.calculatedSideLength);
+			MakeRectsForGroupsToFillSide(insertionSide, groups.Take(--n), prevD.calculatedSideLength, rect);
+			String acc = "";
+			foreach (RectWithRects minirects in rect.Children()) {
+				acc += Environment.NewLine + "      " + minirects.ToString();
+			}
+			Debug.WriteLine("{0}: Generated rect: {1}", id, acc);
+
+			// Do rest
+			IEnumerable<Group> restOfGroups = groups.Skip(n);
+			Debug.WriteLine("{0}: Rest of groups count: {1}", id, restOfGroups.Count());
+
+			RectWithRects rest;
+			if (insertionSide == RectSide.Left) {
+				if (rect.Width - prevD.calculatedSideLength > 0 && rect.Height > 0) {
+					rest = new RectWithRects(prevD.calculatedSideLength, 0, rect.Width - prevD.calculatedSideLength, rect.Height);
+					Debug.WriteLine("{0}: Rect for rest: {1}", id, rest.Rect);
+					if (restOfGroups.Count() > 0) {
+						Debug.WriteLine("{0}: starting treemap...", id);
+						rest = TreeMap(restOfGroups, rest);
+						Debug.WriteLine("{0}: treemap ended: {1}", id, rest);
+						rect.Add(rest);
+					}
+				} else {
+					Debug.WriteLine(id + ": Ups! Got no more space! " + restOfGroups.Count() + " groups left to display...");
+					Debug.WriteLine("{0}: {1}-{2}({3}) > 0?  && {4} > 0", id, rect.Width, prevD.calculatedSideLength, rect.Width - prevD.calculatedSideLength, rect.Height);
+				}
+			} else if (insertionSide == RectSide.Top) {
+				if (rect.Height - prevD.calculatedSideLength > 0 && rect.Width > 0) {
+					rest = new RectWithRects(0, prevD.calculatedSideLength, rect.Width, rect.Height - prevD.calculatedSideLength);
+					Debug.WriteLine("{0}: Rect for rest: {1}", id, rest.Rect);
+					if (restOfGroups.Count() > 0) {
+						Debug.WriteLine("{0}: starting treemap...", id);
+						rest = TreeMap(restOfGroups, rest);
+						Debug.WriteLine("{0}: treemap ended: {1}", id, rest);
+						rect.Add(rest);
+					}
+				} else {
+					Debug.WriteLine(id + ": Ups! Got no more space! " + restOfGroups.Count() + " groups left to display...");
+					Debug.WriteLine("{0}: {1}-{2}({3}) > 0?  && {4} > 0", id, rect.Width, prevD.calculatedSideLength, rect.Width - prevD.calculatedSideLength, rect.Height);
+				}
+			} else {
+				throw new NotImplementedException();
+			}
+
+
+
+			if (!originalIsHorizontal) {
+				//rect.MakeVertical();
+				//Debug.WriteLine("{0}: reverting back to a vertical position", id);
+			}
+
+			Debug.WriteLine("{0}: returning: {1}", id, rect.Rect);
+			return rect;
+		}
+
+		private enum RectSide { Left, Top }
+
+		private void MakeRectsForGroupsToFillSide(RectSide side, IEnumerable<Group> l, int fixedLength, RectWithRects r) {
+			double position;
+			position = 0;
+			foreach (Group g in l) {
+				if (side == RectSide.Left) {
+					g.rect = new RectWithRects(0, position, fixedLength, Math.Ceiling(g.images.Count / fixedLength), g);
+					position += g.rect.Height;
+				} else if (side == RectSide.Top) {
+					g.rect = new RectWithRects(position, 0, Math.Ceiling(g.images.Count / fixedLength), fixedLength, g);
+					position += g.rect.Width;
+				} else {
+					throw new NotImplementedException();
+				}
+				r.Add(g.rectangle);
+				placedGroups.Add(g);
+			}
+		}
+
+		private struct DescriptionRectsTreemap {
+			public double aspectRatioAverage;
+			public int wastedSpace;
+			public int calculatedSideLength;
+		}
+
+
+		private DescriptionRectsTreemap CalculateSideFilling(IEnumerable<Group> l, int fixedSide) {
+			if (l.Count() == 0) {
+				throw new ArgumentException("Zero Groups!");
+			}
+			if (fixedSide <= 0) {
+				throw new ArgumentException("Invalid Height!");
+			}
+
+			double varSide = Math.Ceiling(l.Sum(g => g.images.Count) * 1.0 / fixedSide);
+			double rectSide, position;
+			double aspectRatioAcc = 0;
+			do {
+				aspectRatioAcc = 0;
+				position = 0;
+				foreach (Group g in l) {
+					rectSide = Math.Ceiling(g.images.Count / varSide);
+					position += rectSide;
+					aspectRatioAcc += Math.Max(varSide / rectSide, rectSide / varSide);
+					if (position > fixedSide) {
+						varSide++;
+						break;
+					}
+				}
+			} while (position > fixedSide);
+
+			DescriptionRectsTreemap ret = new DescriptionRectsTreemap();
+			ret.aspectRatioAverage = aspectRatioAcc / l.Count();
+			ret.wastedSpace = (int)((fixedSide - position) * varSide);
+			ret.calculatedSideLength = (int)varSide;
+			return ret;
+		}
+		#endregion //Treemap v3
+
+
+
+
+
 		/// <summary>
 		/// Image distribution using the Quantum TreeMap algorithm
 		/// </summary>
 		/// <param name="groups">Groups to be ordered</param>
 		/// <param name="parentRect">The area where to distribute the groups</param>
 		/// <returns>A RectWithRects containing all the rects and associated groups</returns>
-		private RectWithRects TreeMap(IEnumerable<Group> groups, RectWithRects parentRect) {
+		private RectWithRects OldTreeMap(IEnumerable<Group> groups, RectWithRects parentRect) {
 			// 1. if one group, return size for that group
 			if (groups.Count() == 1) {
 				parentRect.Group = groups.First();
