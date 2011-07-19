@@ -14,7 +14,9 @@ using System.Linq;
 namespace DeepZoomView {
 	public class OrganizableByDate : Organizable {
 		public new Dictionary<DateTime, List<int>> data = new Dictionary<DateTime, List<int>>();
+        public new Dictionary<DateTime, List<int>> dataWithStacks = new Dictionary<DateTime, List<int>>();
 		public new Dictionary<int, DateTime> invertedData = new Dictionary<int, DateTime>();
+        public new Dictionary<int, List<int>> stacks;
 
 		public override int ItemCount {
 			get {
@@ -31,7 +33,7 @@ namespace DeepZoomView {
 		public OrganizableByDate() : base("Date") { }
 
 		public override void Add(int k, string p) {
-			DateTime v = DateTime.Parse(p);
+			DateTime v = DateTime.Parse(p, new System.Globalization.CultureInfo("pt-PT"));
 			DateTime key = v.Date;
 			if (!data.ContainsKey(key)) {
 				data.Add(key, new List<int>());
@@ -42,7 +44,7 @@ namespace DeepZoomView {
 		}
 
 		public override List<KeyValuePair<String, List<int>>> GetGroups() {
-			IOrderedEnumerable<KeyValuePair<DateTime, List<int>>> ordered = data.OrderBy(x => x.Key);
+			IOrderedEnumerable<KeyValuePair<DateTime, List<int>>> ordered = dataWithStacks.OrderBy(x => x.Key);
 			List<KeyValuePair<String, List<int>>> reformated = new List<KeyValuePair<string,List<int>>>();
 			foreach (KeyValuePair<DateTime, List<int>> group in ordered) {
 				reformated.Add(new KeyValuePair<string, List<int>>(group.Key.ToShortDateString(), group.Value));
@@ -71,5 +73,24 @@ namespace DeepZoomView {
 		public override Boolean ContainsId(int k) {
 			return invertedData.ContainsKey(k);
 		}
-	}
+
+        internal void CreateStacks()
+        {
+            for (int i = 0; i < data.Count(); i++) {
+                data[data.ElementAt(i).Key] = data[data.ElementAt(i).Key].OrderBy(x => invertedData[x]).ToList();
+            }
+
+            Stacking s = new Stacking();
+            s.MakeStacks(this);
+            stacks = s.groups;
+            dataWithStacks = new Dictionary<DateTime, List<int>>(data);
+
+            foreach(KeyValuePair<int, List<int>> stack in s.groups) {
+                int firstID = stack.Value.First();
+                DateTime groupKey = invertedData[firstID].Date;
+                dataWithStacks[groupKey].Add(stack.Key);
+                dataWithStacks[groupKey] = dataWithStacks[groupKey].Except(stack.Value).ToList();
+            }
+        }
+    }
 }

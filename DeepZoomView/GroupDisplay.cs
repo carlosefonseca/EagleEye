@@ -20,6 +20,7 @@ namespace DeepZoomView {
 		public String Display;
 		public static List<String> DisplayOptions = new List<string>() { "Groups", "Linear" };
 
+
 		/// <summary>
 		/// Creates a new GroupDisplay
 		/// </summary>
@@ -114,18 +115,30 @@ namespace DeepZoomView {
 				int x = (int)Math.Round(g.rectangle.X);
 				int y = (int)Math.Round(g.rectangle.Y);
 				foreach (int id in g.images) {
-					if (!positions.ContainsKey(x + ";" + y)) {
-						positions.Add(x + ";" + y, id);
-						invertedGroups.Add(id, g);
-						try {
-							Page.PositionImageInMSI(msi, id, x, y);
-							//msi.SubImages[id].ViewportOrigin = new Point(-x, -y);
-							msi.SubImages[id].Opacity = 1;
-						} catch {
-							//g.images.Remove(id);
-							Debug.WriteLine("On PositionImages, id " + id + " was not found on msi (which contains " + msi.SubImages.Count + ")");
-							continue;
-						}
+                    if (!positions.ContainsKey(x + ";" + y)) {
+                        if (id < 0)
+                        {
+                            Debug.WriteLine(id + " -> " + stacks[id].Count()+ " [{0},{1}]",x,y);
+                            StackImagePosition(id, x, y);
+                        }
+                        else
+                        {
+                            Debug.WriteLine(id);
+					        positions.Add(x + ";" + y, id);
+                            invertedGroups.Add(id, g);
+                            try
+                            {
+                                Page.PositionImageInMSI(msi, id, x, y);
+                                //msi.SubImages[id].ViewportOrigin = new Point(-x, -y);
+                                msi.SubImages[id].Opacity = 0.1;
+                            }
+                            catch
+                            {
+                                //g.images.Remove(id);
+                                Debug.WriteLine("On PositionImages, id " + id + " was not found on msi (which contains " + msi.SubImages.Count + ")");
+                                continue;
+                            }
+                        }
 						max = new Point(Math.Max(max.X, x), Math.Max(max.Y, y));
 					}
 					if (++x >= g.rectangle.X + g.rectangle.Width) {
@@ -145,6 +158,43 @@ namespace DeepZoomView {
 			imgHeight = (int)max.Y;
 			return positions;
 		}
+        public Canvas overlays;
+        private void StackImagePosition(int id, int x, int y)
+        {
+            List<int> ids = stacks[id];
+
+            int first = ids.First();
+            List<int> rest = ids.Skip(1).ToList();
+
+            double ar = msi.SubImages[first].AspectRatio;
+
+            Page.PositionImageInMSI(msi, stacks[id].First(), x, y, 1.0001);
+
+            int longSide = (int)Math.Ceiling(rest.Count() / 6.0);
+            int shortSide = (int)Math.Ceiling(rest.Count() * 1.0 / longSide);
+            double side = Math.Min((1 - (1 / ar)) * ar, 0.9 / shortSide);
+            double space = (shortSide == 1 ? 0 : (0.1 / (shortSide - 1)));
+            double cellLongSide = x, cellShortSide = y + 1 - (side / ar);
+
+            foreach (int i in rest)
+            {
+                msi.SubImages[i].Opacity = 1;
+                if (ar > 1)
+                { // Portrait
+                    Page.PositionImageInMSI(msi, i, cellLongSide, cellShortSide, 1 / side);
+                }
+                else
+                { // Landscape
+                    Page.PositionImageInMSI(msi, i, cellShortSide, cellLongSide, 1 / side);
+                }
+                cellLongSide += side + space;
+                if (cellLongSide > x + 1)
+                {
+                    cellLongSide = x;
+                    cellShortSide -= side / ar;
+                }
+            }
+        }
 
 		public static void SetFrameworkElementBoundsFromOther(FrameworkElement e, FrameworkElement r) {
 			Canvas.SetLeft(e, Canvas.GetLeft(r));
@@ -338,6 +388,7 @@ namespace DeepZoomView {
 		private MultiScaleImage msi;
 		List<Group> placedGroups = new List<Group>();
 		private double pxHeight, pxWidth, aspectRatio;
+        public Dictionary<int, List<int>> stacks;
 
 		/// <summary>
 		/// Used by the constructor to determine an aproximation to the rows and columns need to display the images.

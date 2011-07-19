@@ -276,7 +276,7 @@ namespace DeepZoomView {
 			int i = 0;
 			foreach (MultiScaleSubImage subImage in msi.SubImages) {
 				Page.PositionImageInMSI(msi, i, x, y);
-				subImage.ViewportWidth = Math.Max(1, 1 / subImage.AspectRatio);
+				
 				//subImage.ViewportOrigin = new Point(-x, -y);
 				canvasIndex.Add(x + ";" + y, i++);
 				x += 1;
@@ -293,7 +293,9 @@ namespace DeepZoomView {
 			Overlays.GetValue(Canvas.TopProperty);
 
 			makeRullerCells(Hcells, y + 1);
-		}
+            LoadMetadata(null, null);
+            Vorganize.SelectedItem = "Date";
+        }
 
 		private KeyValuePair<double, double> CalculateHcellsVcells() {
 			return CalculateHcellsVcells(0, false);
@@ -338,9 +340,9 @@ namespace DeepZoomView {
 
 
 		private void Zoom(Double newzoom, Point p) {
-			if (newzoom < 1) {
+			/*if (newzoom < 1) {
 				ShowAllContent();
-			} else {
+			} else*/ {
 				msi.ZoomAboutLogicalPoint(newzoom / zoom, p.X, p.Y);
 				zoom = newzoom;
 			}
@@ -780,45 +782,88 @@ namespace DeepZoomView {
 		/// <param name="imgId">Image ID on the MSI</param>
 		/// <param name="row">New X</param>
 		/// <param name="col">New Y</param>
-		internal static void PositionImageInMSI(MultiScaleImage msi, int imgId, double x, double y) {
+        internal static void PositionImageInMSI(MultiScaleImage msi, int imgId, double x, double y)
+        {
+            PositionImageInMSI(msi, imgId, x, y, 1);
+        }
+        
+        internal static void PositionImageInMSI(MultiScaleImage msi, int imgId, double x, double y, double side) {
 			MultiScaleSubImage currentImage = msi.SubImages[imgId];
 
-			if (currentImage.AspectRatio < 1) {
-				x *= (1 / currentImage.AspectRatio);
-				x += ((1 / currentImage.AspectRatio) - 1) / 2;
-				y *= (1 / currentImage.AspectRatio);
-			} else {
-				y += (currentImage.AspectRatio - 1) / 2;
-			}
+            double newWidth;
 
+
+
+            //msi.SubImages[imgId].ViewportWidth = Math.Max(side, side / currentImage.AspectRatio);
+            if (side == 1)
+            {
+                if (currentImage.AspectRatio < 1)
+                {
+                    x *= (1 / currentImage.AspectRatio);
+                    x += ((1 / currentImage.AspectRatio) - 1) / 2;
+                    y *= (1 / currentImage.AspectRatio);
+                }
+                else
+                {
+                    y += (currentImage.AspectRatio - 1) / 2;
+                }
+
+                newWidth = Math.Max(side, side / currentImage.AspectRatio);
+            }
+            else
+            {
+                newWidth = side;
+                x *= side;
+                y *= side;
+            }
 
 			Point currentPosition = currentImage.ViewportOrigin;
 			Point futurePosition = new Point(-x, -y);
 
-			// Set up the animation to layout in grid
-			Storyboard moveStoryboard = new Storyboard();
+            if (true)
+            {
+                currentImage.ViewportOrigin = futurePosition;
+                currentImage.ViewportWidth = newWidth;
+            }
+            else
+            {
+                // Set up the animation to layout in grid
+                Storyboard moveStoryboard = new Storyboard();
+                Storyboard scaleStoryboard = new Storyboard();
 
-			// Create Animation
-			//PointAnimationUsingKeyFrames moveAnimation = new PointAnimationUsingKeyFrames();
-			PointAnimation moveAnimation = new PointAnimation();
+                // Create Animation
+                //PointAnimationUsingKeyFrames moveAnimation = new PointAnimationUsingKeyFrames();
+                PointAnimation moveAnimation = new PointAnimation();
 
-			QuadraticEase easeing = new QuadraticEase();
-			easeing.EasingMode = EasingMode.EaseInOut;
-			moveAnimation.EasingFunction = easeing;
-			moveAnimation.Duration = new Duration(TimeSpan.FromSeconds(1));
-			moveAnimation.To = futurePosition;
+                QuadraticEase easeing = new QuadraticEase();
+                easeing.EasingMode = EasingMode.EaseInOut;
+                moveAnimation.EasingFunction = easeing;
+                moveAnimation.Duration = new Duration(TimeSpan.FromSeconds(1));
+                moveAnimation.To = futurePosition;
 
-			Storyboard.SetTarget(moveAnimation, currentImage);
-			Storyboard.SetTargetProperty(moveAnimation, new PropertyPath("ViewportOrigin"));
+                DoubleAnimation scaleAnimation = new DoubleAnimation();
+                scaleAnimation.EasingFunction = easeing;
+                scaleAnimation.Duration = new Duration(TimeSpan.FromSeconds(1));
+                scaleAnimation.To = newWidth;
 
-			moveStoryboard.Children.Add(moveAnimation);
-			msi.Resources.Add("unique_id", moveStoryboard);
+                Storyboard.SetTarget(moveAnimation, currentImage);
+                Storyboard.SetTargetProperty(moveAnimation, new PropertyPath("ViewportOrigin"));
 
-			// Play Storyboard
-			moveStoryboard.Begin();
+                Storyboard.SetTarget(scaleAnimation, currentImage);
+                Storyboard.SetTargetProperty(scaleAnimation, new PropertyPath("ViewportWidth"));
 
-			// Now that the Storyboard has done it's work, clear the MultiScaleImage resources.
-			msi.Resources.Clear();
+                moveStoryboard.Children.Add(moveAnimation);
+                scaleStoryboard.Children.Add(scaleAnimation);
+                msi.Resources.Add("unique_id", moveStoryboard);
+                msi.Resources.Add("unique_id2", scaleStoryboard);
+
+                // Play Storyboard
+                moveStoryboard.Begin();
+                scaleStoryboard.Begin();
+
+                // Now that the Storyboard has done it's work, clear the MultiScaleImage resources.
+                msi.Resources.Clear();
+            }
 		}
 
 		private List<int> RandomizedListOfImages(List<int> idList) {
@@ -1029,6 +1074,11 @@ namespace DeepZoomView {
 				random_Click(null, null);
 			} else {
 				gd = new GroupDisplay(msi, metadataCollection.GetOrganized(selected).GetGroups());
+                if (selected == "Date")
+                {
+                    gd.overlays = Overlays;
+                    gd.stacks = ((OrganizableByDate)metadataCollection.GetOrganized(selected)).stacks;
+                }
 				gd.Display = (String)DisplayTypeCombo.SelectedItem;
 				Point max;
 				canvasIndex = gd.DisplayGroupsOnScreen(out max);
@@ -1042,7 +1092,14 @@ namespace DeepZoomView {
 		}
 
 		private void LoadMetadata(object sender, RoutedEventArgs e) {
-			if (AskForMetadata()) {
+            if (sender == null && e == null)
+            {
+                StreamReader stream = new StreamReader(App.GetResourceStream(new Uri("collection.xml", UriKind.Relative)).Stream);
+                metadataCollection.ParseXML(stream);
+                Vorganize_Update();
+                stream.Close();
+                load.Visibility = Visibility.Collapsed;
+            } else if (AskForMetadata()) {
 				load.Visibility = Visibility.Collapsed;
 				dontZoom = true;
 			}
@@ -1076,5 +1133,15 @@ namespace DeepZoomView {
 			}
 			DisplayTypeCombo.SelectedIndex = 0;
 		}
+
+        private void SearchField_ContentChanged(object sender, ContentChangedEventArgs e)
+        {
+
+        }
+
+        private void Filter(String s)
+        {
+
+        }
 	}
 }
