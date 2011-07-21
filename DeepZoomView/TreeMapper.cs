@@ -7,6 +7,13 @@ using System.Linq;
 namespace DeepZoomView {
 	public class TreeMapper {
 		public static RectWithRects TreeMap(IEnumerable<Group> groups, RectWithRects rect) {
+            if (groups.Count() == 1 && rect.Fits(groups.First().images.Count))
+            {
+                rect.Group = groups.First();
+                rect.Group.rectangle = rect;
+                return rect;
+            }
+
 			Random r = new Random();
 			int id = r.Next(100);
 			Debug.WriteLine(id + ": TreeMap with " + groups.Count() + " groups on rect " + rect.Rect);

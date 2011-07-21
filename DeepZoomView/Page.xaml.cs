@@ -275,10 +275,10 @@ namespace DeepZoomView {
 			var y = 0.0;
 			int i = 0;
 			foreach (MultiScaleSubImage subImage in msi.SubImages) {
-				Page.PositionImageInMSI(msi, i, x, y);
+				PositionImageInMSI(msi, i, x, y);
 				
 				//subImage.ViewportOrigin = new Point(-x, -y);
-				canvasIndex.Add(x + ";" + y, i++);
+				//canvasIndex.Add(x + ";" + y, i++);
 				x += 1;
 
 				if (x >= Hcells) {
@@ -483,7 +483,7 @@ namespace DeepZoomView {
 
 			foreach (KeyValuePair<String, List<int>> group in Groups) {
 				foreach (int id in group.Value) {
-					Page.PositionImageInMSI(msi, id, x, y);
+					PositionImageInMSI(msi, id, x, y);
 					//msi.SubImages[id].ViewportOrigin = new Point(-x, -y);
 					canvasIndex.Add(x + ";" + y, id);
 					y++;
@@ -575,7 +575,7 @@ namespace DeepZoomView {
 				foreach (KeyValuePair<int, Dictionary<int, List<int>>> month in years.Value) {
 					foreach (KeyValuePair<int, List<int>> day in month.Value) {
 						foreach (int id in day.Value) {
-							Page.PositionImageInMSI(msi, id, x, y);
+							PositionImageInMSI(msi, id, x, y);
 							//msi.SubImages[id].ViewportOrigin = new Point(-x, -y);
 							canvasIndex.Add(x + ";" + y, id);
 							x++;
@@ -674,7 +674,7 @@ namespace DeepZoomView {
 					x++;
 					foreach (KeyValuePair<int, List<int>> day in month.Value) {
 						foreach (int id in day.Value) {
-							Page.PositionImageInMSI(msi, id, x, y);
+							PositionImageInMSI(msi, id, x, y);
 							//msi.SubImages[id].ViewportOrigin = new Point(-x, -y);
 							canvasIndex.Add(x + ";" + y, id);
 							x++;
@@ -782,18 +782,22 @@ namespace DeepZoomView {
 		/// <param name="imgId">Image ID on the MSI</param>
 		/// <param name="row">New X</param>
 		/// <param name="col">New Y</param>
-        internal static void PositionImageInMSI(MultiScaleImage msi, int imgId, double x, double y)
+        internal void PositionImageInMSI(MultiScaleImage msi, int imgId, double x, double y)
         {
             PositionImageInMSI(msi, imgId, x, y, 1);
         }
         
-        internal static void PositionImageInMSI(MultiScaleImage msi, int imgId, double x, double y, double side) {
+        internal void PositionImageInMSI(MultiScaleImage msi, int imgId, double x, double y, double side) {
 			MultiScaleSubImage currentImage = msi.SubImages[imgId];
 
+            String oldCanvasID = p(currentImage.ViewportOrigin);
+            String newCanvasID = p(x, y);
+            canvasIndex.Remove(oldCanvasID);
+            canvasIndex.Remove(newCanvasID);
+            canvasIndex.Add(newCanvasID, imgId);
+
             double newWidth;
-
-
-
+            
             //msi.SubImages[imgId].ViewportWidth = Math.Max(side, side / currentImage.AspectRatio);
             if (side == 1)
             {
@@ -816,11 +820,11 @@ namespace DeepZoomView {
                 x *= side;
                 y *= side;
             }
-
-			Point currentPosition = currentImage.ViewportOrigin;
+            
+            Point currentPosition = currentImage.ViewportOrigin;
 			Point futurePosition = new Point(-x, -y);
 
-            if (true)
+            if (false)
             {
                 currentImage.ViewportOrigin = futurePosition;
                 currentImage.ViewportWidth = newWidth;
@@ -865,6 +869,40 @@ namespace DeepZoomView {
                 msi.Resources.Clear();
             }
 		}
+
+
+        /// <summary>
+        /// Returns a String identifying a coordinate
+        /// </summary>
+        /// <param name="x">X coordinate</param>
+        /// <param name="y">Y coordinate</param>
+        /// <returns>A string in the format "X-Y"</returns>
+        private static String p(int x, int y)
+        {
+            return x + ";" + y;
+        }
+
+        /// <summary>
+        /// Returns a String identifying a coordinate
+        /// </summary>
+        /// <param name="x">X coordinate</param>
+        /// <param name="y">Y coordinate</param>
+        /// <returns>A string in the format "X-Y"</returns>
+        private static String p(double x, double y)
+        {
+            if (Math.Round(x) == x && Math.Round(y) == y)
+            {
+                return p((int)x, (int)y);
+            } else {
+                return Math.Round(x, 3) + ";" + Math.Round(y, 3);
+            }
+        }
+
+        private static String p(Point point)
+        {
+            return p(point.X, point.Y);
+        }
+
 
 		private List<int> RandomizedListOfImages(List<int> idList) {
 			Random ranNum = new Random();
@@ -1073,15 +1111,21 @@ namespace DeepZoomView {
 			} else if (selected == "Random") {
 				random_Click(null, null);
 			} else {
-				gd = new GroupDisplay(msi, metadataCollection.GetOrganized(selected).GetGroups());
+                canvasIndex.Clear();
                 if (selected == "Date")
                 {
+                    OrganizableByDate o = ((OrganizableByDate)metadataCollection.GetOrganized(selected));
+                    gd = new GroupDisplay(msi, metadataCollection.GetOrganized(selected).GetGroups(), o.ItemCount, this);
                     gd.overlays = Overlays;
-                    gd.stacks = ((OrganizableByDate)metadataCollection.GetOrganized(selected)).stacks;
+                    gd.stacks = o.stacks;
+                }
+                else
+                {
+                    gd = new GroupDisplay(msi, metadataCollection.GetOrganized(selected).GetGroups(), this);
                 }
 				gd.Display = (String)DisplayTypeCombo.SelectedItem;
 				Point max;
-				canvasIndex = gd.DisplayGroupsOnScreen(out max);
+				gd.DisplayGroupsOnScreen(out max);
 				Hcells = max.X;
 				Vorganize.IsDropDownOpen = false;
 				GoHomeClick(null, null);

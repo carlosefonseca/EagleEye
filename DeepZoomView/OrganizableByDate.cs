@@ -17,10 +17,17 @@ namespace DeepZoomView {
         public new Dictionary<DateTime, List<int>> dataWithStacks = new Dictionary<DateTime, List<int>>();
 		public new Dictionary<int, DateTime> invertedData = new Dictionary<int, DateTime>();
         public new Dictionary<int, List<int>> stacks;
+        private int itemCount = -1;
 
 		public override int ItemCount {
 			get {
-				return invertedData.Count;
+                if (itemCount == -1)
+                {
+                    itemCount = dataWithStacks.Sum(kv => kv.Value.Count);
+                }
+
+				//return invertedData.Count;
+                return itemCount;
 			}
 		}
 
@@ -73,19 +80,19 @@ namespace DeepZoomView {
 		public override Boolean ContainsId(int k) {
 			return invertedData.ContainsKey(k);
 		}
-
+        
         internal void CreateStacks()
         {
+            // for each group, sort by time
             for (int i = 0; i < data.Count(); i++) {
                 data[data.ElementAt(i).Key] = data[data.ElementAt(i).Key].OrderBy(x => invertedData[x]).ToList();
             }
 
             Stacking s = new Stacking();
-            s.MakeStacks(this);
-            stacks = s.groups;
+            stacks = s.MakeStacks(this.invertedData);
             dataWithStacks = new Dictionary<DateTime, List<int>>(data);
 
-            foreach(KeyValuePair<int, List<int>> stack in s.groups) {
+            foreach(KeyValuePair<int, List<int>> stack in stacks) {
                 int firstID = stack.Value.First();
                 DateTime groupKey = invertedData[firstID].Date;
                 dataWithStacks[groupKey].Add(stack.Key);
