@@ -172,7 +172,7 @@ namespace DeepZoomView
                         if (id < 0)
                         {
                             Debug.WriteLine(id + " -> " + stacks[id].Count() + " [{0},{1}]", x, y);
-                            StackImagePosition(id, x, y);
+                            invertedGroups.Add(StackImagePosition(id, x, y), g);
                         }
                         else
                         {
