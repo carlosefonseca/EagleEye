@@ -193,7 +193,7 @@ namespace DeepZoomView {
 			return positions;
 		}
         public Canvas overlays;
-        private void StackImagePosition(int id, int x, int y)
+        private int StackImagePosition(int id, int x, int y)
         {
             List<int> ids = stacks[id];
 
@@ -212,6 +212,7 @@ namespace DeepZoomView {
             {
                 StackingImagesOnRight(x, y, rest, ar);
             }
+            return first;
         }
 
 
@@ -434,7 +435,7 @@ namespace DeepZoomView {
 			element.Children.Remove(groupBorder);
 			Group g = invertedGroups[img];
 			if (Display == "Linear") {
-
+                
 				g.shape.Stroke = new SolidColorBrush(Colors.White);
 				g.shape.StrokeThickness = 1.0;
 				g.shape.Tag = "Group";
@@ -454,7 +455,8 @@ namespace DeepZoomView {
 				groupBorder.Height = g.rectangle.Height * cellWidth;
 			}
 
-			//return;
+			if (Display != "Groups")
+            return;
 
 			List<UIElement> toRemove = element.Children.Where(x => (String)x.GetValue(Canvas.TagProperty) == "ParentGroup").ToList();
 			foreach (UIElement e in toRemove) {
@@ -618,10 +620,15 @@ namespace DeepZoomView {
 
 				foreach (int id in g.images) {
 					try {
-						page.PositionImageInMSI(msi, id, x, y);
-						//msi.SubImages[id].ViewportOrigin = new Point(-x, -y);
-						canvasIndex.Add(x + ";" + y, id);
-						invertedGroups.Add(id, g);
+                        if (id < 0)
+                        {
+                            invertedGroups.Add(StackImagePosition(id, x, y), g);
+                        }
+                        else
+                        {
+                            page.PositionImageInMSI(msi, id, x, y);
+                            invertedGroups.Add(id, g);
+                        }
 					} catch (Exception e) {
 						Debug.WriteLine("ERRO!!!!!!!1 " + e.Message);
 					}

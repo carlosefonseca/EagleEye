@@ -1165,7 +1165,7 @@ namespace DeepZoomView {
 			if (gd != null) {
 				gd.Display = selected;
 				Point max;
-				canvasIndex = gd.DisplayGroupsOnScreen(out max);
+				gd.DisplayGroupsOnScreen(out max);
 				Hcells = max.X;
 			}
 			dontZoom = true;
