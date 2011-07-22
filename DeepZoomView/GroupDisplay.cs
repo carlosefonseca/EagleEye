@@ -408,7 +408,6 @@ namespace DeepZoomView
                 foreach (Group g in placedGroups)
                 {
                     txt = new TextBlock();
-                    txt.Text = g.name;
                     txt.TextAlignment = TextAlignment.Center;
                     txt.TextWrapping = TextWrapping.Wrap;
                     txt.VerticalAlignment = VerticalAlignment.Center;
@@ -418,7 +417,19 @@ namespace DeepZoomView
                     {
                         border = new Border();
                         bounds = g.rectangle.Rect;
-                        border.Background = new SolidColorBrush(Color.FromArgb((byte)150, (byte)rand.Next(255), (byte)rand.Next(255), (byte)rand.Next(255)));
+                        if (g.name.StartsWith("#"))
+                        {
+                            String[] parts = g.name.Split(new char[] { ' ', '#' },StringSplitOptions.RemoveEmptyEntries);
+                            Byte R = Byte.Parse(parts[0]);
+                            Byte G = Byte.Parse(parts[1]);
+                            Byte B = Byte.Parse(parts[2]);
+                            border.Background = new SolidColorBrush(Color.FromArgb((byte)150, R, G, B));
+                        }
+                        else
+                        {
+                            txt.Text = g.name;
+                            border.Background = new SolidColorBrush(Color.FromArgb((byte)150, (byte)rand.Next(255), (byte)rand.Next(255), (byte)rand.Next(255)));
+                        }
                         border.Width = bounds.Width * cellSide;
                         border.Height = bounds.Height * cellSide;
                         Canvas.SetLeft(border, bounds.X * cellSide);
@@ -493,6 +504,7 @@ namespace DeepZoomView
                 groupBorder.Height = g.rectangle.Height * cellWidth;
             }
 
+            ///////////// DEBUG ////////////////
             if (Display != "Groups")
                 return;
 

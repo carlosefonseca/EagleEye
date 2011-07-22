@@ -18,7 +18,12 @@ namespace DeepZoomView {
 		public new Dictionary<int, List<int>> data = new Dictionary<int, List<int>>();
 		public new Dictionary<int, Color> invertedData = new Dictionary<int, Color>();
 
-		public override int ItemCount {
+        const int BLACK = -1;
+        const int GREY = -2;
+        const int WHITE = -3;
+        
+        public override int ItemCount
+        {
 			get {
 				return invertedData.Count;
 			}
@@ -53,12 +58,12 @@ namespace DeepZoomView {
 			lig = hsl.L;
 			int key = hue;
 			if (lig != -1 && sat != -1) {
-				if (lig < 0.1) {
-					key = -1;
+				if (lig < 0.2) {
+					key = BLACK;
 				} else if (lig > 0.9) {
-					key = -3;
+					key = WHITE;
 				} else if (sat < 0.1) {
-					key = -2;
+					key = GREY;
 				}
 			}
 
@@ -97,7 +102,7 @@ namespace DeepZoomView {
 			}
 
 			Color[] theColors = new Color[] { Colors.Red, Colors.Orange, Colors.Yellow, Colors.Green, Colors.Cyan, Colors.Blue, Colors.Purple };
-
+            
 			int buckets = 12;
 			double spread = 360.0 / buckets;
 
@@ -107,6 +112,7 @@ namespace DeepZoomView {
 					group = kv.Key;
 				} else {			// Hue
 					group = Convert.ToInt16(Math.Round((kv.Key % Math.Ceiling(360 - (spread / 2))) / spread));
+                    group = (int)(group * spread + spread * 0.5);
 				}
 				if (!groups.ContainsKey(group)) {
 					groups.Add(group, new List<int>());
@@ -126,10 +132,29 @@ namespace DeepZoomView {
 
 			List<int> sortedKeys = groups.Keys.ToList<int>();
 			sortedKeys.Sort();
-			foreach (int c in sortedKeys) {
-				groupsOut.Add(new KeyValuePair<String, List<int>>(c.ToString(), groups[c]));
-			}
+            HslColor cccc = new HslColor();
 
+			foreach (int c in sortedKeys) {
+                if (c < 0)
+                {
+                    switch (c)
+                    {
+                        case WHITE: cccc.L = 1; break;
+                        case GREY: cccc.L = 0.5; break;
+                        case BLACK: cccc.L = 0; break;
+                    }
+                    cccc.S = 0;
+                }
+                else
+                {
+                    cccc.H = c;
+                    cccc.S = 1;
+                    cccc.L = 0.5;
+                }
+                Color color = cccc.ToColor();
+                String s = String.Format("#{0} {1} {2}", color.R, color.G, color.B);
+                groupsOut.Add(new KeyValuePair<String, List<int>>(s, groups[c]));
+			}
 			return groupsOut;
 		}
 

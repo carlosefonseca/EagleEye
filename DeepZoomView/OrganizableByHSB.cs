@@ -114,7 +114,10 @@ namespace DeepZoomView {
 			}
 
 			Dictionary<int, String> colorNames = new Dictionary<int, string>();
-			colorNames.Add(0, "Red");
+            colorNames.Add(WHITE, "White");
+            colorNames.Add(GREY, "Grey");
+            colorNames.Add(BLACK, "Black");
+            colorNames.Add(0, "Red");
 			colorNames.Add(1, "Yellow");
 			colorNames.Add(2, "Green");
 			colorNames.Add(3, "Cyan");
@@ -124,7 +127,7 @@ namespace DeepZoomView {
 			List<int> sortedKeys = groups.Keys.ToList<int>();
 			sortedKeys.Sort();
 			foreach (int c in sortedKeys) {
-				groupsOut.Add(new KeyValuePair<String, List<int>>(c.ToString(), groups[c]));
+				groupsOut.Add(new KeyValuePair<String, List<int>>(colorNames[c], groups[c]));
 			}
 
 			return groupsOut;
