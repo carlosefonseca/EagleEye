@@ -18,6 +18,8 @@ namespace DeepZoomView {
 		public new Dictionary<int, List<int>> data = new Dictionary<int, List<int>>();
 		public new Dictionary<int, Color> invertedData = new Dictionary<int, Color>();
 
+        public override List<int> Ids { get { return invertedData.Keys.ToList(); } }
+
         const int BLACK = -1;
         const int GREY = -2;
         const int WHITE = -3;

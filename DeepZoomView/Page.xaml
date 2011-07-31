@@ -242,12 +242,12 @@
 
                 <ToggleButton x:Name="showgroups" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="7" Margin="0,0,10,0" Click="showgroups_Click" Content="Two State" IsThreeState="False" />
                 <Button x:Name="OnlySelected" Content="Only Selected" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="7" Margin="0,0,10,0" Click="OnlySelected_Click"></Button>
-                <TextBlock x:Name="LogBlock"></TextBlock>
+                <RichTextBox x:Name="SearchField" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="7" Margin="0,0,10,0" Width="300" ContentChanged="SearchField_ContentChanged"></RichTextBox>
             </StackPanel>
 
-            <MultiScaleImage x:Name="msi" Grid.Row="1" Grid.Column="1" Source="C:/EagleEye2/collection.xml"/>
+            <MultiScaleImage x:Name="msi" Grid.Row="1" Grid.Column="1" Source="C:/SmallDB/collection.xml" Canvas.ZIndex="0"/>
 
-            <Canvas Grid.Row="1" Grid.Column="1">
+            <Canvas Grid.Row="1" Grid.Column="1" Canvas.ZIndex="0" >
                 <Canvas Name="Overlays">
                     <Canvas.RenderTransform>
                         <ScaleTransform x:Name="OverlaysScale" ScaleX="1.0" ScaleY="1.0" />

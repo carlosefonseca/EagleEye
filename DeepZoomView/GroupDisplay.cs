@@ -1,4 +1,4 @@
-﻿using System;
+﻿/*using System;
 using System.Net;
 using System.Windows;
 using System.Windows.Controls;
@@ -17,7 +17,7 @@ namespace DeepZoomView
     /// <summary>
     /// Provides a TreeMap-sort-of-like view of a set of grouped images
     /// </summary>
-    public class GroupDisplay
+    public class GroupDisplay1
     {
         public String Display;
         public static List<String> DisplayOptions = new List<string>() { "Groups", "Linear" };
@@ -42,7 +42,7 @@ namespace DeepZoomView
         /// </summary>
         /// <param name="msi">The MSI where the images should be displayed</param>
         /// <param name="groups">The Groups to display</param>
-        public GroupDisplay(MultiScaleImage msi, List<KeyValuePair<string, List<int>>> groups, Page page)
+        public GroupDisplay1(MultiScaleImage msi, List<KeyValuePair<string, List<int>>> groups, Page page)
         {
             this.msi = msi;
             this.groups = groups;
@@ -60,7 +60,7 @@ namespace DeepZoomView
         /// </summary>
         /// <param name="msi">The MSI where the images should be displayed</param>
         /// <param name="groups">The Groups to display</param>
-        public GroupDisplay(MultiScaleImage msi, List<KeyValuePair<string, List<int>>> groups, int imgC, Page page)
+        public GroupDisplay1(MultiScaleImage msi, List<KeyValuePair<string, List<int>>> groups, int imgC, Page page)
         {
             this.msi = msi;
             this.groups = groups;
@@ -169,6 +169,7 @@ namespace DeepZoomView
                 {
                     if (!positions.ContainsKey(x + ";" + y))
                     {
+                     
                         if (id < 0)
                         {
                             Debug.WriteLine(id + " -> " + stacks[id].Count() + " [{0},{1}]", x, y);
@@ -217,158 +218,6 @@ namespace DeepZoomView
             return positions;
         }
         public Canvas overlays;
-        private int StackImagePosition(int id, int x, int y)
-        {
-            List<int> ids = stacks[id];
-
-            int first = ids.First();
-            List<int> rest = ids.Skip(1).ToList();
-
-            double ar = msi.SubImages[first].AspectRatio;
-            // msi.SubImages[first].Opacity = 0.7;
-            page.PositionImageInMSI(msi, stacks[id].First(), x, y, Math.Max(1.0001, 1 / ar));
-
-            if (ar > 1)
-            {
-                StackingImagesOnBottom(x, y, rest, ar);
-            }
-            else
-            {
-                StackingImagesOnRight(x, y, rest, ar);
-            }
-            return first;
-        }
-
-
-        private const double stackSpace = 0.03;
-
-        // Landscape  longside: x-axis ; shortside: y-axis
-        private void StackingImagesOnBottom(int x, int y, List<int> rest, double ar)
-        {
-            int nLines;
-            int itemsPerLine;
-            double longSide;
-            double shortSide;
-            double space;
-            double spaceForStack = 1 - 1 / ar;
-            double items = 3.0;
-            do
-            {
-                items++;
-                if (items > rest.Count * 10)
-                {
-                    throw new Exception("Fail...");
-                }
-                nLines = (int)Math.Ceiling(rest.Count() / items);
-                itemsPerLine = (int)Math.Ceiling(rest.Count() * 1.0 / nLines);
-                longSide = Math.Min((1 - stackSpace) / 3, (1 - stackSpace) / itemsPerLine);
-                shortSide = Math.Min(spaceForStack, longSide / msi.SubImages[rest.First()].AspectRatio);
-                space = (itemsPerLine == 1 ? 0 : (stackSpace / (itemsPerLine - 1)));
-            } while (shortSide * nLines + ((nLines - 1) * space) > spaceForStack);
-
-            double cellLongSide, cellShortSide;
-            cellLongSide = x;
-            cellShortSide = y + 1 - shortSide - (spaceForStack - shortSide * nLines - space * (nLines - 1)) / 2;
-            foreach (int i in rest)
-            {
-                msi.SubImages[i].Opacity = 1;
-                // TODO: what if image is in diferent orientation?
-                page.PositionImageInMSI(msi, i, cellLongSide, cellShortSide, 1 / longSide);
-                cellLongSide += longSide + space;
-                if (cellLongSide > x + 1)
-                {
-                    cellLongSide = x;
-                    cellShortSide -= shortSide + space;
-                }
-            }
-        }
-
-        private void oldStackingImagesOnBottom(int x, int y, List<int> rest, double ar)
-        {
-            int longSide = (int)Math.Ceiling(rest.Count() / 6.0);
-            int shortSide = (int)Math.Ceiling(rest.Count() * 1.0 / longSide);
-            double side;
-            if (ar > 1)
-            {
-                side = Math.Min((1 - (1 / ar)) * ar, 0.9 / shortSide);
-            }
-            else
-            {
-                side = (1 - stackSpace) / shortSide;
-            }
-            double space = (shortSide == 1 ? 0 : (stackSpace / (shortSide - 1)));
-            double cellLongSide, cellShortSide;
-            if (ar > 1)
-            { // Landscape  longside: x-axis ; shortside: y-axis
-                cellLongSide = x;
-                cellShortSide = y + 1 - (side / ar);
-            }
-            else
-            { // Portrait  longside: y-axis ; shortside: x-axis
-                cellLongSide = y;
-                cellShortSide = x + 1 - (side / ar);
-            }
-            foreach (int i in rest)
-            {
-                msi.SubImages[i].Opacity = 1;
-                if (ar > 1)
-                { // Landscape  longside: x-axis ; shortside: y-axis
-                    //msi.SubImages[i].Opacity = 0.3;
-                    page.PositionImageInMSI(msi, i, cellLongSide, cellShortSide, 1 / side);
-                }
-                else
-                { // Portrait  longside: y-axis ; shortside: x-axis
-                    page.PositionImageInMSI(msi, i, cellShortSide, cellLongSide, 1 / side);
-                }
-                cellLongSide += side + space;
-                if (cellLongSide > x + 1)
-                {
-                    cellLongSide = x;
-                    cellShortSide -= side / ar;
-                }
-            }
-        }
-
-        // Portrait  longside: y-axis ; shortside: x-axis
-        private void StackingImagesOnRight(int x, int y, List<int> rest, double ar)
-        {
-            int nLines;
-            int itemsPerLine;
-            double longSide;
-            double shortSide;
-            double space;
-            double spaceForStack = 1 - ar;
-            double items = 3.0;
-            do
-            {
-                items++;
-                if (items > rest.Count * 10)
-                {
-                    throw new Exception("Fail...");
-                }
-                nLines = (int)Math.Ceiling(rest.Count() / items);
-                itemsPerLine = (int)Math.Ceiling(rest.Count() * 1.0 / nLines);
-                longSide = Math.Min((1 - stackSpace) / 3, (1 - stackSpace) / itemsPerLine);
-                shortSide = Math.Min(spaceForStack, longSide * msi.SubImages[rest.First()].AspectRatio);
-                space = (itemsPerLine == 1 ? 0 : (stackSpace / (itemsPerLine - 1)));
-            } while (shortSide * nLines + ((nLines - 1) * space) > spaceForStack);
-
-            double cellLongSide, cellShortSide;
-            cellLongSide = y;
-            cellShortSide = x + 1 - shortSide - (spaceForStack - shortSide * nLines - space * (nLines - 1)) / 2;
-            foreach (int i in rest)
-            {
-                msi.SubImages[i].Opacity = 1;
-                // TODO: what if image is in diferent orientation?
-                page.PositionImageInMSI(msi, i, cellShortSide, cellLongSide, 1 / shortSide);
-                cellLongSide += longSide + space;
-                if (cellLongSide > y + 1)
-                {
-                    cellLongSide = y;
-                    cellShortSide -= shortSide + space;
-                }
-            }
-        }
 
         public static void SetFrameworkElementBoundsFromOther(FrameworkElement e, FrameworkElement r)
         {
@@ -868,3 +717,4 @@ namespace DeepZoomView
         }
     } // closes GroupDisplay
 }
+*/
