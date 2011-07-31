@@ -252,6 +252,7 @@
                     <Canvas.RenderTransform>
                         <ScaleTransform x:Name="OverlaysScale" ScaleX="1.0" ScaleY="1.0" />
                     </Canvas.RenderTransform>
+                    <Canvas x:Name="BorderOverlay" Visibility="Visible" Canvas.Left="0" Canvas.Top="0"></Canvas>
                     <Canvas x:Name="GroupNamesOverlay" Visibility="Collapsed" Canvas.Left="0" Canvas.Top="0"></Canvas>
                 </Canvas>
             </Canvas>
@@ -261,9 +262,9 @@
                 </Canvas.RenderTransform>
                 <Canvas.Background>
                     <LinearGradientBrush StartPoint="1,0" EndPoint="0,0">
-                <GradientStop Color="#555" Offset="0"></GradientStop>
-                <GradientStop Color="#000" Offset="1"></GradientStop>
-                </LinearGradientBrush>
+                        <GradientStop Color="#555" Offset="0"></GradientStop>
+                        <GradientStop Color="#000" Offset="1"></GradientStop>
+                    </LinearGradientBrush>
                 </Canvas.Background>
                 <Grid Name="YaxisGrid">
                     <Grid.RowDefinitions>
@@ -274,31 +275,31 @@
                     <TextBlock Text="1" Foreground="White" Grid.Row="0"></TextBlock>
                     <TextBlock Text="2" Foreground="White" Grid.Row="1"></TextBlock>
                 </Grid>
-                </Canvas>
+            </Canvas>
 
-                <Canvas Name="Xaxis" Grid.Row="2" Grid.Column="1">
-                    <Canvas.RenderTransform>
-                        <ScaleTransform x:Name="XaxisScale" ScaleX="1.0" ScaleY="1.0" />
-                    </Canvas.RenderTransform>
-                    <Canvas.Background>
-                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                            <GradientStop Color="#555" Offset="0"></GradientStop>
-                            <GradientStop Color="#000" Offset="1"></GradientStop>
-                        </LinearGradientBrush>
-                    </Canvas.Background>
-                    <Grid Name="XaxisGrid">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"></ColumnDefinition>
-                            <ColumnDefinition Width="*"></ColumnDefinition>
-                        </Grid.ColumnDefinitions>
+            <Canvas Name="Xaxis" Grid.Row="2" Grid.Column="1">
+                <Canvas.RenderTransform>
+                    <ScaleTransform x:Name="XaxisScale" ScaleX="1.0" ScaleY="1.0" />
+                </Canvas.RenderTransform>
+                <Canvas.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Color="#555" Offset="0"></GradientStop>
+                        <GradientStop Color="#000" Offset="1"></GradientStop>
+                    </LinearGradientBrush>
+                </Canvas.Background>
+                <Grid Name="XaxisGrid">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"></ColumnDefinition>
+                        <ColumnDefinition Width="*"></ColumnDefinition>
+                    </Grid.ColumnDefinitions>
 
-                        <TextBlock Text="1" Foreground="White" Grid.Column="0" TextAlignment="Center"></TextBlock>
-                        <TextBlock Text="2" Foreground="White" Grid.Column="1" TextAlignment="Center"></TextBlock>
-                    </Grid>
-                </Canvas>
+                    <TextBlock Text="1" Foreground="White" Grid.Column="0" TextAlignment="Center"></TextBlock>
+                    <TextBlock Text="2" Foreground="White" Grid.Column="1" TextAlignment="Center"></TextBlock>
+                </Grid>
+            </Canvas>
 
 
-                <!--          <Canvas Name="Xaxis" Grid.Row="2" Grid.Column="1">
+            <!--          <Canvas Name="Xaxis" Grid.Row="2" Grid.Column="1">
                 <Canvas.RenderTransform>
                     <ScaleTransform x:Name="XaxisScale" ScaleX="1.0" ScaleY="1.0" />
                 </Canvas.RenderTransform>
@@ -310,17 +311,17 @@
                 </Canvas.Background>
             </Canvas>
 -->
-                <Canvas x:Name="Mouse" Grid.Row="1" Grid.Column="1">
-                    <Border Background="White" Opacity="0.7">
-                        <TextBlock x:Name="MouseTitle" MaxWidth="200"></TextBlock>
-                    </Border>
-                </Canvas>
-                <Canvas  Grid.Row="1" Grid.Column="1" Height="37" HorizontalAlignment="Right" Margin="0,0,8,8" x:Name="buttonCanvas" VerticalAlignment="Bottom" Width="500" Opacity="0" Background="{x:Null}">
-                    <Button Height="30" x:Name="zoomIn" Width="42" Canvas.Left="197" Canvas.Top="4" Template="{StaticResource zoomInTemplate}" Content="Button" Click="ZoomInClick"/>
-                    <Button Height="30" x:Name="zoomOut" Width="42" Template="{StaticResource zoomOutTemplate}" Content="Button" Canvas.Left="227" Canvas.Top="4" Click="ZoomOutClick"/>
-                    <Button Height="30" x:Name="goHome" Width="42" Template="{StaticResource homeTemplate}" Content="Button" Canvas.Left="257" Canvas.Top="4" Click="GoHomeClick"/>
-                    <Button Height="30" x:Name="fullScreen" Width="42" Template="{StaticResource fullScreenTemplate}" Content="Button" Canvas.Left="287" Canvas.Top="4" Click="GoFullScreenClick"/>
-                </Canvas>
+            <Canvas x:Name="Mouse" Grid.Row="1" Grid.Column="1">
+                <Border Background="White" Opacity="0.7">
+                    <TextBlock x:Name="MouseTitle" MaxWidth="200"></TextBlock>
+                </Border>
+            </Canvas>
+            <Canvas  Grid.Row="1" Grid.Column="1" Height="37" HorizontalAlignment="Right" Margin="0,0,8,8" x:Name="buttonCanvas" VerticalAlignment="Bottom" Width="500" Opacity="0" Background="{x:Null}">
+                <Button Height="30" x:Name="zoomIn" Width="42" Canvas.Left="197" Canvas.Top="4" Template="{StaticResource zoomInTemplate}" Content="Button" Click="ZoomInClick"/>
+                <Button Height="30" x:Name="zoomOut" Width="42" Template="{StaticResource zoomOutTemplate}" Content="Button" Canvas.Left="227" Canvas.Top="4" Click="ZoomOutClick"/>
+                <Button Height="30" x:Name="goHome" Width="42" Template="{StaticResource homeTemplate}" Content="Button" Canvas.Left="257" Canvas.Top="4" Click="GoHomeClick"/>
+                <Button Height="30" x:Name="fullScreen" Width="42" Template="{StaticResource fullScreenTemplate}" Content="Button" Canvas.Left="287" Canvas.Top="4" Click="GoFullScreenClick"/>
+            </Canvas>
         </Grid>
     </Grid>
 </UserControl>

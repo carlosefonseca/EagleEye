@@ -19,6 +19,8 @@ namespace DeepZoomView.EECanvas
         List<Overlay> Shapes;
         Dictionary<int, Overlay> ImagesToShapes = new Dictionary<int, Overlay>();
         private Overlay currentBorder = null;
+		public Canvas BorderLayer { get; set; }
+		public Canvas ColorLayer { get; set; }
 
         public Overlays()
         {
@@ -32,15 +34,15 @@ namespace DeepZoomView.EECanvas
 
         public void ShowBorder(int imgId, Canvas holder)
         {
-            holder.Children.Clear();
-            /*            if (currentBorder != null)
-                        {
-                            currentBorder.Hide();
-                        }
-            */
+            //holder.Children.Clear();
+            if (currentBorder != null)
+            {
+                currentBorder.HideBorder();
+            }
+
             if (ImagesToShapes.ContainsKey(imgId))
             {
-                ImagesToShapes[imgId].ShowBorder(holder);
+                ImagesToShapes[imgId].ShowBorder();
                 currentBorder = ImagesToShapes[imgId];
             }
             else
@@ -58,5 +60,21 @@ namespace DeepZoomView.EECanvas
                 ImagesToShapes.Add(i, o);
             }
         }
-    }
+
+        internal void ShowAll()
+        {
+            foreach (Overlay s in this.Shapes)
+            {
+                s.ShowColor();
+            }
+        }
+
+		internal void SetLayers(Canvas border, Canvas color)
+		{
+			foreach (Overlay o in Shapes)
+			{
+				o.SetLayers(border, color);
+			}
+		}
+	}
 }
