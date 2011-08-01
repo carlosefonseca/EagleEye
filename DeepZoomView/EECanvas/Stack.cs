@@ -171,7 +171,7 @@ namespace DeepZoomView.EECanvas
                 //canvas.msis[i.ImageId].Opacity = 1;
                 // TODO: what if image is in diferent orientation?
                 canvas.placedItems.Add(i);
-                i.Place(canvas, cellLongSide, cellShortSide, 1 / longSide);
+                i.Place(canvas, cellShortSide, cellLongSide, 1 / shortSide);
                 //canvas.PositionImage(i.ImageId, cellShortSide, cellLongSide, 1 / shortSide);
                 cellLongSide += longSide + space;
                 if (cellLongSide > y + 1)

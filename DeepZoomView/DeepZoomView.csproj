@@ -146,6 +146,8 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="collection.xml" />
+    <Content Include="micro.xml" />
+    <Content Include="micro2.xml" />
     <Content Include="smalldb.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Silverlight\$(SilverlightVersion)\Microsoft.Silverlight.CSharp.targets" />

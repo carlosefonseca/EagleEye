@@ -242,7 +242,7 @@
 
                 <ToggleButton x:Name="showgroups" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="7" Margin="0,0,10,0" Click="showgroups_Click" Content="Two State" IsThreeState="False" />
                 <Button x:Name="OnlySelected" Content="Only Selected" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="7" Margin="0,0,10,0" Click="OnlySelected_Click"></Button>
-                <RichTextBox x:Name="SearchField" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="7" Margin="0,0,10,0" Width="300" ContentChanged="SearchField_ContentChanged"></RichTextBox>
+                <RichTextBox x:Name="SearchField" AcceptsReturn="False" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="7" Margin="0,0,10,0" Width="300" ContentChanged="SearchField_ContentChanged"></RichTextBox>
             </StackPanel>
 
             <MultiScaleImage x:Name="msi" Grid.Row="1" Grid.Column="1" Source="C:/SmallDB/collection.xml" Canvas.ZIndex="0"/>

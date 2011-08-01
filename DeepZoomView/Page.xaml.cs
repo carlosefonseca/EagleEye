@@ -27,7 +27,6 @@ namespace DeepZoomView
 {
 	public partial class Page : UserControl
 	{
-		// Based on prior work done by Lutz Gerhard, Peter Blois, and Scott Hanselman
 		Double zoom = 1;
 		bool duringDrag = false;
 		bool duringDragSelection = false;
@@ -42,11 +41,8 @@ namespace DeepZoomView
 		Point lastMouseViewPort = new Point();
 		CanvasItem LastItemHovered = null;
 		Dictionary<long, string> _Metadata = new Dictionary<long, string>();
-		//Dictionary<string, int> canvasIndex = new Dictionary<string, int>();
 		MetadataCollection metadataCollection = new MetadataCollection();
 		ObservableCollection<String> CbItems = null;
-		//GroupDisplay gd = null;
-		//MultiScaleImage msi;
 		Boolean dontZoom = false;
 
 		List<MyCanvas> CanvasHistory = new List<MyCanvas>();
@@ -61,11 +57,6 @@ namespace DeepZoomView
 		}
 
 		public Page()
-			: this("MicroDB\\DZC\\collection.xml")
-		{
-		}
-
-		public Page(String msiPath)
 		{
 			InitializeComponent();
 
@@ -178,7 +169,6 @@ namespace DeepZoomView
 					Double p2LogicalY = Math.Floor(msi.ViewportOrigin.Y + (msi.ViewportWidth * (msi.ActualHeight / msi.ActualWidth)) * (p2.Y / msi.ActualHeight));
 					selectedImages = new List<MultiScaleSubImage>();
 					selectedImagesIds = new List<int>();
-					MultiScaleSubImage img;
 
 					Selection s = new Selection();
 
@@ -1246,7 +1236,7 @@ namespace DeepZoomView
 		{
 			if (sender == null && e == null)
 			{
-				StreamReader stream = new StreamReader(App.GetResourceStream(new Uri("smalldb.xml", UriKind.Relative)).Stream);
+				StreamReader stream = new StreamReader(App.GetResourceStream(new Uri("SMALLDB.xml", UriKind.Relative)).Stream);
 				metadataCollection.ParseXML(stream);
 				Vorganize_Update();
 				stream.Close();
