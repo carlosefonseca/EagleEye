@@ -32,6 +32,15 @@ namespace DeepZoomView.EECanvas
 		public bool HasGroups { get; set; }
 		private int blocks = -1;
 		internal Dictionary<int, Shape> groupBorders = new Dictionary<int, Shape>();
+		internal List<CanvasItem> selection = null;
+
+		internal List<int> selectedItems
+		{
+			get
+			{
+				return selection.Select(c => c.ImageId).ToList();
+			}
+		}
 
 		internal double aspectRatio { get { return page.msi.ActualWidth / page.msi.ActualHeight; } }
 
@@ -94,79 +103,6 @@ namespace DeepZoomView.EECanvas
 		private void CreateBorders()
 		{
 			this.AllOverlays = disposition.MakeOverlays();
-
-			/* foreach (KeyValuePair<int, Group> kv in disposition.invertedGroups)
-			 {
-                
-			 }
-
-
-			 if (groupNamesOverlay == null)
-			 {
-				 groupNamesOverlay = new Canvas();
-				 groupNamesOverlay.Width = this.pxWidth;
-
-				 Border border;
-				 Polygon pBorder;
-				 Rect bounds;
-				 TextBlock txt;
-				 Random rand = new Random();
-				 double cellSide = pxWidth / imgWidth;
-
-				 foreach (Group g in placedGroups)
-				 {
-					 txt = new TextBlock();
-					 txt.TextAlignment = TextAlignment.Center;
-					 txt.TextWrapping = TextWrapping.Wrap;
-					 txt.VerticalAlignment = VerticalAlignment.Center;
-					 txt.FontWeight = FontWeights.Bold;
-					 txt.Foreground = new SolidColorBrush(Colors.White);
-					 if (Group.DisplayType == "Groups")
-					 {
-						 border = new Border();
-						 bounds = g.rectangle.Rect;
-						 if (g.name.StartsWith("#"))
-						 {
-							 String[] parts = g.name.Split(new char[] { ' ', '#' }, StringSplitOptions.RemoveEmptyEntries);
-							 Byte R = Byte.Parse(parts[0]);
-							 Byte G = Byte.Parse(parts[1]);
-							 Byte B = Byte.Parse(parts[2]);
-							 border.Background = new SolidColorBrush(Color.FromArgb((byte)150, R, G, B));
-						 }
-						 else
-						 {
-							 txt.Text = g.name;
-							 border.Background = new SolidColorBrush(Color.FromArgb((byte)150, (byte)rand.Next(255), (byte)rand.Next(255), (byte)rand.Next(255)));
-						 }
-						 border.Width = bounds.Width * cellSide;
-						 border.Height = bounds.Height * cellSide;
-						 Canvas.SetLeft(border, bounds.X * cellSide);
-						 Canvas.SetTop(border, bounds.Y * cellSide);
-						 border.Child = txt;
-						 groupNamesOverlay.Children.Add(border);
-					 }
-					 else if (Group.DisplayType == "Linear")
-					 {
-						 pBorder = DuplicatePolygon((Polygon)g.shape);
-						 pBorder.Fill = new SolidColorBrush(Color.FromArgb((byte)150, (byte)rand.Next(255), (byte)rand.Next(255), (byte)rand.Next(255)));
-						 Canvas.SetLeft(txt, pBorder.Points[0].X);
-						 Canvas.SetTop(txt, pBorder.Points[0].Y);
-
-						 txt.Width = pBorder.Width;
-						 txt.Height = pBorder.Height;
-
-						 RotateTransform rt = new RotateTransform();
-						 rt.Angle = 90;
-						 //rt.CenterY = -txt.Height;
-						 //txt.RenderTransformOrigin = new Point(0, -txt.Height);
-						 //txt.RenderTransform = rt;
-						 groupNamesOverlay.Children.Add(pBorder);
-						 groupNamesOverlay.Children.Add(txt);
-					 }
-				 }
-			 }
-			 destination.Children.Clear();
-			 destination.Children.Add(groupNamesOverlay);*/
 		}
 
 		private void GenerateViewAndBorders()
@@ -181,22 +117,6 @@ namespace DeepZoomView.EECanvas
 		private Dictionary<int, CanvasItem> ConvertIdsToItems(Organizable o)
 		{
 			return ConvertIdsToItems(o.Ids);
-			switch (o.GetType().Name)
-			{
-				case "OrganizableByColor":
-					return ConvertIdsToItems(((OrganizableByColor)o).invertedData.Keys.ToList());
-				case "OrganizableByDate":
-					return ConvertIdsToItems(((OrganizableByDate)o).Ids);
-				case "OrganizableByHSB":
-					return ConvertIdsToItems(((OrganizableByHSB)o).invertedData.Keys.ToList());
-				case "OrganizableByKeyword":
-					return ConvertIdsToItems(((OrganizableByKeyword)o).invertedData.Keys.ToList());
-				case "OrganizableByPath":
-					return ConvertIdsToItems(((OrganizableByPath)o).invertedData.Keys.ToList());
-				case "Organizable":
-					return ConvertIdsToItems(o.invertedData.Keys.ToList());
-				default: throw new NotImplementedException();
-			}
 		}
 
 		private Dictionary<int, CanvasItem> ConvertIdsToItems(List<int> l)
@@ -228,13 +148,12 @@ namespace DeepZoomView.EECanvas
 		/// <summary>
 		/// Places all Canvas Items on the MSI, sets it's dimention and rullers accordingly.
 		/// </summary>
-		public void Display()
+		public IEnumerable<int> Display()
 		{
 			diagonal = new Point(0, 0);
 			foreach (CanvasItem ci in placedItems)
 			{
 				PositionImage(ci);
-				//ci.Place(this);
 			}
 			diagonal.X++;
 			diagonal.Y++;
@@ -245,10 +164,12 @@ namespace DeepZoomView.EECanvas
 			page.Overlays.Height = page.msi.ActualHeight;
 
 			page.makeRullerCells(this.diagonal.X, this.diagonal.Y);
-			
+
 			page.BorderOverlay.Children.Clear();
 			page.GroupNamesOverlay.Children.Clear();
 			this.AllOverlays.SetLayers(page.BorderOverlay, page.GroupNamesOverlay);
+			return placedItems.Select(c => c.ImageId);
+			return canvasIndex.Values.Select(c => c.ImageId);
 		}
 
 

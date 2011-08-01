@@ -9,6 +9,7 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Shapes;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace DeepZoomView {
 	public class Group {
@@ -58,6 +59,11 @@ namespace DeepZoomView {
 			} else {
 				return "Group '" + name + "' Shape=None ImgCount=" + images.Count;
 			}
+		}
+
+		internal Group Filtered(List<int> subset)
+		{
+			return new Group(this.name, subset.Intersect(this.images).ToList());
 		}
 	}
 }

@@ -29,7 +29,14 @@ namespace DeepZoomView
         {
             get
             {
-                return invertedData.Count;
+                if (HasFilter)
+                {
+                    return invertedData.Keys.Intersect(filter).Count();
+                }
+                else
+                {
+                    return invertedData.Count;
+                }
             }
         }
 
@@ -49,6 +56,7 @@ namespace DeepZoomView
         {
             data = new Dictionary<int, List<int>>();
             invertedData = new Dictionary<int, HsbColor>();
+			AvailableForGroupping = false;
         }
 
 

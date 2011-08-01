@@ -86,6 +86,7 @@
     <Compile Include="EECanvas\Disposition\SequentialDisposition.cs" />
     <Compile Include="EECanvas\Overlay.cs" />
     <Compile Include="EECanvas\Overlays.cs" />
+    <Compile Include="EECanvas\Selection.cs" />
     <Compile Include="EECanvas\SingleImage.cs" />
     <Compile Include="EECanvas\Stack.cs" />
     <Compile Include="Group.cs" />

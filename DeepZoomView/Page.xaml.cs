@@ -42,7 +42,7 @@ namespace DeepZoomView
 		Point lastMouseViewPort = new Point();
 		CanvasItem LastItemHovered = null;
 		Dictionary<long, string> _Metadata = new Dictionary<long, string>();
-		Dictionary<string, int> canvasIndex = new Dictionary<string, int>();
+		//Dictionary<string, int> canvasIndex = new Dictionary<string, int>();
 		MetadataCollection metadataCollection = new MetadataCollection();
 		ObservableCollection<String> CbItems = null;
 		//GroupDisplay gd = null;
@@ -52,7 +52,7 @@ namespace DeepZoomView
 		List<MyCanvas> CanvasHistory = new List<MyCanvas>();
 		Dictionary<String, MyCanvas> CanvasCache = new Dictionary<string, MyCanvas>();
 		MyCanvas CurrentCanvas;
-
+		internal List<Selection> selections = new List<Selection>();
 
 		public Double ZoomFactor
 		{
@@ -180,20 +180,22 @@ namespace DeepZoomView
 					selectedImagesIds = new List<int>();
 					MultiScaleSubImage img;
 
+					Selection s = new Selection();
+
 					for (double x = p1LogicalX; x <= p2LogicalX; x++)
 					{
 						for (double y = p1LogicalY; y <= p2LogicalY; y++)
 						{
-							if (canvasIndex.ContainsKey(x + ";" + y))
+							if (CurrentCanvas.canvasIndex.ContainsKey(x + ";" + y))
 							{
-								img = msi.SubImages[canvasIndex[x + ";" + y]];
-								img.Opacity = 0.3;
-								//img.SetValue(BorderBrushProperty, new SolidColorBrush(Colors.Green));
-								selectedImages.Add(img);
-								selectedImagesIds.Add(canvasIndex[x + ";" + y]);
+								CanvasItem ci = CurrentCanvas.canvasIndex[x + ";" + y];
+								ci.SetOpacity(0.3);
+								s.Add(ci);
 							}
 						}
 					}
+					selections.Add(s);
+
 					Mouse.Children.Remove(selection);
 				}
 				duringDrag = false;
@@ -1019,23 +1021,26 @@ namespace DeepZoomView
 
 		private void OnlySelected_Click(object sender, RoutedEventArgs e)
 		{
-			if (selectedImagesIds.Count == 0)
+			if (selections.Count == 0)
 			{
 				return;
 			}
-			IEnumerable<int> notSelected = allImageIds.Except(selectedImagesIds);
 
-			fadeImages(notSelected, FadeAnimation.Out);
-			fadeImages(selectedImagesIds, FadeAnimation.In);
-			//CalculateHcellsVcells(selectedImagesIds.Count, true);
-			selectedImagesIds.Sort();
-			ArrangeIntoGrid(selectedImagesIds);//, Hcells, Vcells);
-			//ShowAllContent();
+			NewCanvasDispositionFromUI();
+
+			//IEnumerable<int> notSelected = allImageIds.Except(selectedImagesIds);
+
+			//fadeImages(notSelected, FadeAnimation.Out);
+			//fadeImages(selectedImagesIds, FadeAnimation.In);
+			////CalculateHcellsVcells(selectedImagesIds.Count, true);
+			//selectedImagesIds.Sort();
+			//ArrangeIntoGrid(selectedImagesIds);//, Hcells, Vcells);
+			////ShowAllContent();
 		}
 
-		enum FadeAnimation { In, Out };
+		internal enum FadeAnimation { In, Out };
 
-		private void fadeImages(IEnumerable<int> ids, FadeAnimation type)
+		internal void fadeImages(IEnumerable<int> ids, FadeAnimation type)
 		{
 			MultiScaleSubImage image;
 			foreach (int id in ids)
@@ -1111,6 +1116,18 @@ namespace DeepZoomView
 
 		private void NewCanvasDispositionFromUI()
 		{
+			if (selections != null && selections.Count > 0)
+			{
+				NewCanvasDispositionFromUI(selections.SelectMany(s => s).Select(c => c.ImageId));
+			}
+			else
+			{
+				NewCanvasDispositionFromUI(new List<int>());
+			}
+		}
+
+		private void NewCanvasDispositionFromUI(IEnumerable<int> filter)
+		{
 			if (msi.ActualHeight == 0 || msi.ActualWidth == 0)
 			{
 				return;
@@ -1118,8 +1135,8 @@ namespace DeepZoomView
 			String sorting = (String)Vorganize.SelectedItem;
 			if (sorting == null) { sorting = "id"; }
 
+			// Disposition (Treemap / Grid / Linear)
 			String disposition = (String)DisplayTypeCombo.SelectedItem;
-
 			Disposition d;
 			switch (disposition)
 			{
@@ -1128,12 +1145,31 @@ namespace DeepZoomView
 				case "Grid":
 				default: d = new SequentialDisposition(); break;
 			}
+
+			// Get Organizable
 			Organizable o = metadataCollection.GetOrganized(sorting);
 
+
+			String s = "";
+			int itemCount = o.ItemCount;
+			if (filter.Count() != 0)
+			{
+				// Filter Organizable
+				o.AddFilter(filter);
+				// make filter key
+				foreach (int i in filter)
+				{
+					s += i + ";";
+				}
+				itemCount = o.ItemCount;
+				// hide rest
+				//fadeImages(msi.SubImages.Select((i, n) => n).Except(filter), FadeAnimation.Out);
+			}
+			// Create canvas
 			MyCanvas canvas;
 			if (o != null)
 			{
-				String key = MyCanvas.KeyForCanvas(d, o, o.ItemCount, msi.ActualWidth / msi.ActualHeight);
+				String key = MyCanvas.KeyForCanvas(d, o, itemCount, msi.ActualWidth / msi.ActualHeight) + s;
 				if (CanvasCache.ContainsKey(key))
 				{
 					canvas = CanvasCache[key];
@@ -1141,7 +1177,7 @@ namespace DeepZoomView
 				else
 				{
 					canvas = new MyCanvas(this, d, o);
-					if (key != canvas.ToString())
+					if (key != canvas.ToString() + s)
 					{
 						throw new Exception("Keys are different!");
 					}
@@ -1150,8 +1186,11 @@ namespace DeepZoomView
 			}
 			else
 			{
-				String key = MyCanvas.KeyForCanvas(d, null, msi.SubImages.Count, msi.ActualWidth / msi.ActualHeight);
+				String key = MyCanvas.KeyForCanvas(d, null, msi.SubImages.Count, msi.ActualWidth / msi.ActualHeight) + s;
 				List<int> items = msi.SubImages.Select((m, i) => i).ToList();
+				if (filter != null && filter.Count() != 0)
+					items = items.Intersect(filter).ToList();
+
 				if (CanvasCache.ContainsKey(key))
 				{
 					canvas = CanvasCache[key];
@@ -1159,7 +1198,7 @@ namespace DeepZoomView
 				else
 				{
 					canvas = new MyCanvas(this, d, items);
-					if (key != canvas.ToString())
+					if (key != canvas.ToString() + s)
 					{
 						throw new Exception("Keys are different!");
 					}
@@ -1167,7 +1206,8 @@ namespace DeepZoomView
 				}
 			}
 			CanvasHistory.Add(canvas);
-			canvas.Display();
+			IEnumerable<int> placedImages = canvas.Display();
+			fadeImages(msi.SubImages.Select((m,i) => i).Except(placedImages), FadeAnimation.Out);
 			CurrentCanvas = canvas;
 		}
 

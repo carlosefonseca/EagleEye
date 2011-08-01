@@ -62,5 +62,10 @@ namespace DeepZoomView.EECanvas
             autoCenter = false;
             return true;
         }
-    }
+
+		public virtual void SetOpacity(double v)
+		{
+			this.MainImage.Opacity = v;
+		}
+	}
 }

@@ -20,23 +20,39 @@ namespace DeepZoomView {
 
         private int itemCount = -1;
 
-        public override List<int> Ids
-        {
-            get
-            {
-                return invertedData.Keys.Concat(stacks.Keys).ToList();
-            }
-        }
+
+		public override List<int> Ids
+		{
+			get
+			{
+				if (filter != null && filter.Count() > 0)
+				{
+					return invertedData.Keys.Concat(stacks.Keys).Intersect(filter).ToList();
+				}
+				else
+				{
+					return invertedData.Keys.Concat(stacks.Keys).ToList();
+				}
+			}
+		}
+
 
 		public override int ItemCount {
 			get {
-                if (itemCount == -1)
+                if (HasFilter)
                 {
-                    itemCount = dataWithStacks.Sum(kv => kv.Value.Count);
+                    return dataWithStacks.Values.SelectMany(c => c).Intersect(filter).Count();
                 }
+                else
+                {
+                    if (itemCount == -1)
+                    {
+                        itemCount = dataWithStacks.Sum(kv => kv.Value.Count);
+                    }
 
-				//return invertedData.Count;
-                return itemCount;
+                    //return invertedData.Count;
+                    return itemCount;
+                }
 			}
 		}
 

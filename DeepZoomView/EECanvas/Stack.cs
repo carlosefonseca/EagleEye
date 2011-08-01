@@ -23,6 +23,15 @@ namespace DeepZoomView.EECanvas
             get { return first.MainImage; }
         }
 
+		public List<CanvasItem> SubImages
+		{
+			get
+			{
+				return subImages;
+			}
+		}
+
+		
         public Stack(int id, System.Collections.ObjectModel.ReadOnlyCollection<MultiScaleSubImage> msis,
                                                                                        Dictionary<int, List<int>> stacks)
             : base(id)
@@ -209,5 +218,11 @@ namespace DeepZoomView.EECanvas
             // No corresponding sub-image
             return null;
         }
+
+		public override void SetOpacity(double v)
+		{
+			this.first.SetOpacity(v);
+			this.subImages.ForEach(ci => ci.SetOpacity(v));
+		}
     }
 }

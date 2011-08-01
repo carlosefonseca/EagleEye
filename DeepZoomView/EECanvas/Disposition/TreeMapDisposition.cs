@@ -29,14 +29,18 @@ namespace DeepZoomView.EECanvas.Dispositions
             {
                 return;
             }
+			
+			IEnumerable<Group> groups = organizable.GroupList().OrderByDescending(g => g.images.Count);
+			int itemCount = groups.Sum(g => g.images.Count);
+
             double increment = 1;
             RectWithRects r = null;
             while (r == null)
             {
-                CalculateDistribution((int)Math.Ceiling(organizable.ItemCount * increment), out cols, out rows);
+				CalculateDistribution((int)Math.Ceiling(itemCount * increment), out cols, out rows);
                 try
                 {
-                    r = TreeMap(organizable.GroupList(), new RectWithRects(0, 0, cols, rows));
+					r = TreeMap(groups, new RectWithRects(0, 0, cols, rows));
                     break;
                 }
                 catch (NotEnoughSpaceException)
