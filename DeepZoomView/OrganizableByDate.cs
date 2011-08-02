@@ -12,62 +12,101 @@ using System.Collections.Generic;
 using System.Linq;
 using DeepZoomView.EECanvas;
 
-namespace DeepZoomView {
-	public class OrganizableByDate : Organizable {
+namespace DeepZoomView
+{
+	public class OrganizableByDate : Organizable
+	{
 		public new Dictionary<DateTime, List<int>> data = new Dictionary<DateTime, List<int>>();
-        public new Dictionary<int, DateTime> invertedData = new Dictionary<int, DateTime>();
-        public new Dictionary<DateTime, List<int>> dataWithStacks = new Dictionary<DateTime, List<int>>();
+		public new Dictionary<int, DateTime> invertedData = new Dictionary<int, DateTime>();
+		public new Dictionary<DateTime, List<int>> dataWithStacks = new Dictionary<DateTime, List<int>>();
+		public new Dictionary<int, DateTime> invertedDataWithStacks = new Dictionary<int, DateTime>();
 
-        private int itemCount = -1;
-
+		private int itemCount = -1;
 
 		public override List<int> Ids
 		{
 			get
 			{
-				if (filter != null && filter.Count() > 0)
+				if (HasFilter)
 				{
-					return invertedData.Keys.Concat(stacks.Keys).Intersect(filter).ToList();
+					if (filteredIds == null)
+					{
+						if (filter.Any(i => i < 0))
+						{
+							filteredIds = invertedDataWithStacks.Keys.Intersect(filter);
+						}
+						else
+						{
+							filteredIds = invertedData.Keys.Intersect(filter);
+						}
+					}
+					return filteredIds.ToList();
 				}
 				else
 				{
-					return invertedData.Keys.Concat(stacks.Keys).ToList();
+					return invertedDataWithStacks.Keys.ToList();
 				}
 			}
 		}
 
+		//public override List<int> Ids
+		//{
+		//    get
+		//    {
+		//        if (filter != null && filter.Count() > 0)
+		//        {
+		//            return invertedData.Keys.Concat(stacks.Keys).Intersect(filter).ToList();
+		//        }
+		//        else
+		//        {
+		//            return invertedData.Keys.Concat(stacks.Keys).ToList();
+		//        }
+		//    }
+		//}
 
-		public override int ItemCount {
-			get {
-                if (HasFilter)
-                {
-                    return dataWithStacks.Values.SelectMany(c => c).Intersect(filter).Count();
-                }
-                else
-                {
-                    if (itemCount == -1)
-                    {
-                        itemCount = dataWithStacks.Sum(kv => kv.Value.Count);
-                    }
 
-                    //return invertedData.Count;
-                    return itemCount;
-                }
+		public override int ItemCount
+		{
+			get
+			{
+				return this.Ids.Count;
+			//    if (HasFilter)
+			//    {
+			//        return dataWithStacks.Values.SelectMany(c => c).Intersect(filter).Count();
+			//    }
+			//    else
+			//    {
+			//        if (itemCount == -1)
+			//        {
+			//            itemCount = dataWithStacks.Sum(kv => kv.Value.Count);
+			//        }
+
+			//        //return invertedData.Count;
+			//        return itemCount;
+			//    }
 			}
 		}
 
-		public override int GroupCount {
-			get {
+		public override int GroupCount
+		{
+			get
+			{
 				return data.Count;
 			}
 		}
 
-		public OrganizableByDate() : base("Date") { }
+		public OrganizableByDate()
+			: base("Date")
+		{
+			hasStacks = true;
+		}
 
-		public override void Add(int k, string p) {
+		public override void Add(int k, string p)
+		{
 			DateTime v = DateTime.Parse(p, new System.Globalization.CultureInfo("pt-PT"));
 			DateTime key = v.Date;
-			if (!data.ContainsKey(key)) {
+			if (!data.ContainsKey(key))
+			{
 				data.Add(key, new List<int>());
 			}
 			data[key].Add(k);
@@ -75,16 +114,49 @@ namespace DeepZoomView {
 			invertedData.Add(k, v);
 		}
 
-		public override List<KeyValuePair<String, List<int>>> GetGroups() {
-			List<KeyValuePair<DateTime, List<int>>> ordered = dataWithStacks.OrderBy(x => x.Key).ToList();
-			List<KeyValuePair<String, List<int>>> reformated = new List<KeyValuePair<string,List<int>>>();
-			foreach (KeyValuePair<DateTime, List<int>> group in ordered) {
+		public override List<KeyValuePair<String, List<int>>> GetGroups()
+		{
+			Dictionary<DateTime, List<int>> filteredDataWithStacks;
+			if (HasFilter)
+			{
+				Dictionary<DateTime, List<int>> dataOrDataWithStacks;
+				if (filter.Any(i => i < 0))
+				{ // filter is stack aware
+					dataOrDataWithStacks = dataWithStacks;
+				}
+				else
+				{
+					dataOrDataWithStacks = data;
+				}
+
+
+				filteredDataWithStacks = new Dictionary<DateTime, List<int>>();
+				foreach (KeyValuePair<DateTime, List<int>> kv in dataOrDataWithStacks)
+				{
+					IEnumerable<int> newV = kv.Value.Intersect(filter);
+					if (newV.Count() > 0)
+					{
+						filteredDataWithStacks.Add(kv.Key, newV.ToList());
+					}
+				}
+			}
+			else
+			{
+				filteredDataWithStacks = dataWithStacks;
+			}
+
+
+			IEnumerable<KeyValuePair<DateTime, List<int>>> ordered = filteredDataWithStacks;
+			List<KeyValuePair<String, List<int>>> reformated = new List<KeyValuePair<string, List<int>>>();
+			foreach (KeyValuePair<DateTime, List<int>> group in ordered)
+			{
 				reformated.Add(new KeyValuePair<string, List<int>>(group.Key.ToShortDateString(), group.Value));
 			}
 			return reformated;
 		}
-	
-		public override List<KeyValuePair<String, List<int>>> GetGroups(List<int> subset) {
+
+		public override List<KeyValuePair<String, List<int>>> GetGroups(List<int> subset)
+		{
 			throw new NotImplementedException();
 		}
 
@@ -94,37 +166,50 @@ namespace DeepZoomView {
 		/// </summary>
 		/// <param name="k">The MSI-Id for the image</param>
 		/// <returns></returns>
-		public override string Id(int k) {
-			if (invertedData.ContainsKey(k)) {
+		public override string Id(int k)
+		{
+			if (invertedData.ContainsKey(k))
+			{
 				return invertedData[k].ToString();
-			} else {
+			}
+			else
+			{
 				return null;
 			}
 		}
 
-		public override Boolean ContainsId(int k) {
+		public override Boolean ContainsId(int k)
+		{
 			return invertedData.ContainsKey(k);
 		}
-        
-        internal void CreateStacks()
-        {
-            hasStacks = true;
 
-            // for each group, sort by time
-            for (int i = 0; i < data.Count(); i++) {
-                data[data.ElementAt(i).Key] = data[data.ElementAt(i).Key].OrderBy(x => invertedData[x]).ToList();
-            }
+		internal void CreateStacks()
+		{
+			hasStacks = true;
 
-            Stacking s = new Stacking();
-            stacks = s.MakeStacks(this.invertedData);
-            dataWithStacks = new Dictionary<DateTime, List<int>>(data);
+			// for each group, sort by time
+			for (int i = 0; i < data.Count(); i++)
+			{
+				data[data.ElementAt(i).Key] = data[data.ElementAt(i).Key].OrderBy(x => invertedData[x]).ToList();
+			}
 
-            foreach(KeyValuePair<int, List<int>> stack in stacks) {
-                int firstID = stack.Value.First();
-                DateTime groupKey = invertedData[firstID].Date;
-                dataWithStacks[groupKey].Add(stack.Key);
-                dataWithStacks[groupKey] = dataWithStacks[groupKey].Except(stack.Value).ToList();
-            }
-        }
-    }
+			Stacking s = new Stacking();
+			stacks = s.MakeStacks(this.invertedData);
+			dataWithStacks = new Dictionary<DateTime, List<int>>(data);
+
+			IEnumerable<int> stackItems = stacks.SelectMany(kv => kv.Value);
+			invertedDataWithStacks = invertedData.Keys.Except(stackItems).Join(invertedData, i => i, i => i.Key, (a, b) => new KeyValuePair<int, DateTime>(a, b.Value)).ToDictionary(k=>k.Key,k=>k.Value);
+
+			//invertedDataWithStacks = invertedData.SkipWhile(kv => stackItems.Contains(kv.Key)).ToDictionary(n => n.Key, n => n.Value);
+
+			foreach (KeyValuePair<int, List<int>> stack in stacks)
+			{
+				int firstID = stack.Value.First();
+				DateTime groupKey = invertedData[firstID].Date;
+				dataWithStacks[groupKey].Add(stack.Key);
+				dataWithStacks[groupKey] = dataWithStacks[groupKey].Except(stack.Value).ToList();
+				invertedDataWithStacks.Add(stack.Key, groupKey);
+			}
+		}
+	}
 }

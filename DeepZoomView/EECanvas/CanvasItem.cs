@@ -8,6 +8,8 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Shapes;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace DeepZoomView.EECanvas
 {
@@ -18,7 +20,9 @@ namespace DeepZoomView.EECanvas
         public virtual MultiScaleSubImage MainImage { get; set; }
         protected MyCanvas canvas;
         public double Side = 1;
-        public bool autoCenter = true;
+		public bool autoCenter = true;
+
+		public bool IsLeaf { get { return ImageId >= 0; } }
 
         public String PositionAsString()
         {
@@ -66,6 +70,17 @@ namespace DeepZoomView.EECanvas
 		public virtual void SetOpacity(double v)
 		{
 			this.MainImage.Opacity = v;
+		}
+
+		public List<int> AddId(List<int> l)
+		{
+			l.Add(this.ImageId);
+			return l;
+		}
+
+		internal virtual IEnumerable<int> getAllIds()
+		{
+			return new int[] { this.ImageId };
 		}
 	}
 }

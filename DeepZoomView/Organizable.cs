@@ -267,12 +267,17 @@ namespace DeepZoomView
 			{
 				this.filter.Concat(iEnumerable);
 			}
+            filteredData = null;
+            filteredIds = null;
+            filteredListOfGroups = null;
 		}
 
 		internal void ClearFilter()
 		{
 			this.filter = null;
-			ListOfGroups = null;
+            filteredData = null;
+            filteredIds = null;
+            filteredListOfGroups = null;
 		}
 	}
 }

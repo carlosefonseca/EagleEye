@@ -83,7 +83,7 @@ namespace DeepZoomView.EECanvas.Dispositions
 
             while (true)
             {
-                if ((heightIsIncreasing && canvasAspectRatio > pAR) || (!heightIsIncreasing && canvasAspectRatio < pAR))
+                if ((heightIsIncreasing && canvasAspectRatio > pAR) || (!heightIsIncreasing && canvasAspectRatio < pAR) || height == 1)
                     break;
 
                 if (heightIsIncreasing) height++;
