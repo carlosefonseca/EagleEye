@@ -35,6 +35,26 @@ namespace DeepZoomView
 		protected bool HasFilter { get { return (filter != null && filter.Count() > 0); } }
 
 
+		public IEnumerable<String> KeysThatMatch(String txt)
+		{
+			return data.Keys.Where(s => s.Contains(txt));
+		}
+
+		public IEnumerable<int> IdsForKey(string k)
+		{
+			return data[k];
+		}
+
+		public IEnumerable<int> IdsForKey(IEnumerable<String> ks)
+		{
+			List<int> list = new List<int>();
+			foreach (String s in ks)
+			{
+				list.AddRange(data[s]);
+			}
+			return list;
+		}
+
 		public virtual List<int> Ids
 		{
 			get
@@ -256,6 +276,12 @@ namespace DeepZoomView
 			return this.Name;
 		}
 
+		internal void ReplaceFilter(IEnumerable<int> i)
+		{
+			this.filter = null;
+			AddFilter(i);
+		}
+
 		internal void AddFilter(IEnumerable<int> iEnumerable)
 		{
 			if (this.filter == null)
@@ -267,17 +293,17 @@ namespace DeepZoomView
 			{
 				this.filter.Concat(iEnumerable);
 			}
-            filteredData = null;
-            filteredIds = null;
-            filteredListOfGroups = null;
+			filteredData = null;
+			filteredIds = null;
+			filteredListOfGroups = null;
 		}
 
 		internal void ClearFilter()
 		{
 			this.filter = null;
-            filteredData = null;
-            filteredIds = null;
-            filteredListOfGroups = null;
+			filteredData = null;
+			filteredIds = null;
+			filteredListOfGroups = null;
 		}
 	}
 }

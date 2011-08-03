@@ -245,6 +245,7 @@
                 <Button x:Name="OnlySelected" Content="Only Selected" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="7" Margin="0,0,10,0" Click="OnlySelected_Click"></Button>
                 <my:FilterBar x:Name="SearchField" AcceptsReturn="False" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="1" Margin="0,0,10,0" Width="300" Height="25"
                              VerticalContentAlignment="Center" VerticalScrollBarVisibility="Disabled" ></my:FilterBar>
+                <Button x:Name="UpdateView" Content="Go" HorizontalAlignment="Center" VerticalAlignment="Center" Height="25" Margin="0,0,10,0" Click="UpdateView_Click"></Button>
             </StackPanel>
 
             <MultiScaleImage x:Name="msi" Grid.Row="1" Grid.Column="1" Source="C:/SmallDB/collection.xml" Canvas.ZIndex="0"/>

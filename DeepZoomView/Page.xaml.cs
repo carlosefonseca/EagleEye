@@ -1154,12 +1154,16 @@ namespace DeepZoomView
 				if (filter.Count() != 0)
 				{
 					// Filter Organizable
-					o.AddFilter(filter);
+					o.ReplaceFilter(filter);
 					// make filter key
 					foreach (int i in filter)
 					{
 						s += i + ";";
 					}
+				}
+				else
+				{
+					o.ClearFilter();
 				}
 
 				String key = MyCanvas.KeyForCanvas(d, o, o.ItemCount, msi.ActualWidth / msi.ActualHeight) + s;
@@ -1299,6 +1303,48 @@ namespace DeepZoomView
 
 		private void AppStartDebug()
 		{
+		}
+
+
+		private enum LOGIC { OR, AND };
+		private void UpdateView_Click(object sender, RoutedEventArgs e)
+		{
+			LOGIC logic = LOGIC.AND;
+			IEnumerable<String> filterbarList = SearchField.GetFilterElementsAsText;
+			List<int> filter = new List<int>();
+
+			bool first = true;
+
+			List<int> perSearchItem;
+			foreach (String s in filterbarList)
+			{
+				perSearchItem = new List<int>();
+				perSearchItem.AddRange(IdsFromMatchedKeysFromOrganizable("Keyword", s));
+				perSearchItem.AddRange(IdsFromMatchedKeysFromOrganizable("Path", s));
+				perSearchItem = perSearchItem.Distinct().ToList();
+	
+				if (first || logic == LOGIC.OR)
+				{
+					filter.AddRange(perSearchItem);
+				}
+				else if (logic == LOGIC.AND)
+				{
+					filter = filter.Intersect(perSearchItem).ToList();
+				}
+				first = false;
+			}
+
+			NewCanvasDispositionFromUI(filter.Distinct());
+		}
+
+		private IEnumerable<int> IdsFromMatchedKeysFromOrganizable(String organizable, String s)
+		{
+			if (metadataCollection.ContainsOrganizable(organizable))
+			{
+				Organizable o = metadataCollection.GetOrganized(organizable);
+				return o.IdsForKey(o.KeysThatMatch(s));
+			}
+			return new List<int>();
 		}
 	}
 }
