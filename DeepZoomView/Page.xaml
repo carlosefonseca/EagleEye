@@ -3,6 +3,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" 
     xmlns:vsm="clr-namespace:System.Windows;assembly=System.Windows"
     xmlns:controlsToolkit="clr-namespace:System.Windows.Controls;assembly=System.Windows.Controls.Toolkit"
+    xmlns:my="clr-namespace:DeepZoomView.Controls"
     >
     <UserControl.Resources>
         <ControlTemplate x:Key="zoomInTemplate" TargetType="Button">
@@ -242,7 +243,8 @@
 
                 <ToggleButton x:Name="showgroups" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="7" Margin="0,0,10,0" Click="showgroups_Click" Content="Two State" IsThreeState="False" />
                 <Button x:Name="OnlySelected" Content="Only Selected" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="7" Margin="0,0,10,0" Click="OnlySelected_Click"></Button>
-                <RichTextBox x:Name="SearchField" AcceptsReturn="False" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="7" Margin="0,0,10,0" Width="300" ContentChanged="SearchField_ContentChanged"></RichTextBox>
+                <my:FilterBar x:Name="SearchField" AcceptsReturn="False" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="1" Margin="0,0,10,0" Width="300" Height="25"
+                             VerticalContentAlignment="Center" VerticalScrollBarVisibility="Disabled" ></my:FilterBar>
             </StackPanel>
 
             <MultiScaleImage x:Name="msi" Grid.Row="1" Grid.Column="1" Source="C:/SmallDB/collection.xml" Canvas.ZIndex="0"/>
@@ -298,19 +300,6 @@
                 </Grid>
             </Canvas>
 
-
-            <!--          <Canvas Name="Xaxis" Grid.Row="2" Grid.Column="1">
-                <Canvas.RenderTransform>
-                    <ScaleTransform x:Name="XaxisScale" ScaleX="1.0" ScaleY="1.0" />
-                </Canvas.RenderTransform>
-                <Canvas.Background>
-                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                        <GradientStop Color="#555" Offset="0"></GradientStop>
-                        <GradientStop Color="#000" Offset="1"></GradientStop>
-                    </LinearGradientBrush>
-                </Canvas.Background>
-            </Canvas>
--->
             <Canvas x:Name="Mouse" Grid.Row="1" Grid.Column="1">
                 <Border Background="White" Opacity="0.7">
                     <TextBlock x:Name="MouseTitle" MaxWidth="200"></TextBlock>

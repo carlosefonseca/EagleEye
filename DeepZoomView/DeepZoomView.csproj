@@ -89,6 +89,7 @@
     <Compile Include="EECanvas\Selection.cs" />
     <Compile Include="EECanvas\SingleImage.cs" />
     <Compile Include="EECanvas\Stack.cs" />
+    <Compile Include="FilterBar.cs" />
     <Compile Include="Group.cs" />
     <Compile Include="OrganizableByPath.cs" />
     <Compile Include="OrganizableByKeyword.cs" />
