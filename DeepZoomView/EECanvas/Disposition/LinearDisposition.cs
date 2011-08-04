@@ -27,13 +27,24 @@ namespace DeepZoomView.EECanvas.Dispositions
         internal override void Place(MyCanvas c)
         {
             canvas = c;
-            organizable = canvas.organizable;
+			List<Group> orderedGroup;
 
-            CalculateDistribution(organizable.ItemCount, out cols, out rows);
+			if (canvas.organizable == null)
+			{
+				orderedGroup = new List<Group>();
+				Group g = new Group("Group", canvas.items.Values.SelectMany(ci => ci.getAllIds()).ToList());
+				orderedGroup.Add(g);
+			}
+			else
+			{
+				organizable = canvas.organizable;
 
-            //IOrderedEnumerable<KeyValuePair<string, List<int>>> orderedGroup = groups.OrderBy(kv => kv.Key);
-            List<Group> orderedGroup = organizable.GroupList();
+				
 
+				//IOrderedEnumerable<KeyValuePair<string, List<int>>> orderedGroup = groups.OrderBy(kv => kv.Key);
+				orderedGroup = organizable.GroupList();
+			}
+			CalculateDistribution(orderedGroup.Sum(g=>g.images.Count), out cols, out rows);
             orderByGroupsVertically(orderedGroup);
 
 
