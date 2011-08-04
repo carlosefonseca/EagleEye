@@ -1253,6 +1253,9 @@ namespace DeepZoomView
 				load.Visibility = Visibility.Collapsed;
 				dontZoom = true;
 			}
+			DisplayTypeCombo.SelectedIndex = 1;
+			Vorganize.SelectedIndex = 3;
+			UpdateView();
 		}
 
 		private void showgroups_Click(object sender, RoutedEventArgs e)
@@ -1294,7 +1297,7 @@ namespace DeepZoomView
 
 		private void AppStartDebug()
 		{
-			//LoadMetadata(null, null);
+			LoadMetadata(null, null);
 		}
 
 

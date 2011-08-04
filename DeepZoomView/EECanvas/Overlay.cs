@@ -64,12 +64,11 @@ namespace DeepZoomView.EECanvas
 		}
 
 
-
 		private void MakeBorder()
 		{
 			placedBorder = CopyShape();
-			placedBorder.Stroke = new SolidColorBrush(Colors.White);
-			placedBorder.StrokeThickness = 1;
+			placedBorder.Stroke = new SolidColorBrush(Colors.DarkGray);
+			placedBorder.StrokeThickness = 0.5;
 		}
 
 		private void MakeColor()
@@ -83,6 +82,9 @@ namespace DeepZoomView.EECanvas
 		public void ShowBorder()
 		{
 			placedBorder.Visibility = Visibility.Visible;
+			//placedBorder.Opacity = 1;
+			placedBorder.Stroke = new SolidColorBrush(Colors.White);
+			placedBorder.StrokeThickness = 2;
 		}
 
 		public void ShowColor()
@@ -93,7 +95,8 @@ namespace DeepZoomView.EECanvas
 
 		public void Hide()
 		{
-			placedBorder.Visibility = Visibility.Collapsed;
+			//placedBorder.Visibility = Visibility.Collapsed;
+			
 			placedColor.Visibility = Visibility.Collapsed;
 			textborder.Visibility = Visibility.Collapsed;
 		}
@@ -169,7 +172,9 @@ namespace DeepZoomView.EECanvas
 
 		internal void HideBorder()
 		{
-			placedBorder.Visibility = Visibility.Collapsed;
+			//placedBorder.Visibility = Visibility.Collapsed;
+			placedBorder.Stroke = new SolidColorBrush(Colors.DarkGray);
+			placedBorder.StrokeThickness = 0.5;
 		}
 	}
 }

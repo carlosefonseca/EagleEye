@@ -17,6 +17,37 @@ namespace DeepZoomView.Controls
 	public class FilterBar : RichTextBox
 	{
 		private ListBox optionList = new ListBox();
+		private Run placeholderText;
+		
+		public FilterBar()
+			: base()
+		{
+			Paragraph p = new Paragraph();
+			placeholderText = new Run();
+			placeholderText.Text = " Filters";
+			placeholderText.Foreground = new SolidColorBrush(Colors.LightGray);
+			placeholderText.FontStyle = System.Windows.FontStyles.Italic;
+			p.Inlines.Add(placeholderText);
+			this.Blocks.Add(p);
+		}
+
+		protected override void OnGotFocus(RoutedEventArgs e)
+		{
+			base.OnGotFocus(e);
+			if (Inlines.Contains(placeholderText))
+			{
+				Inlines.Remove(placeholderText);
+			}
+		}
+
+		protected override void OnLostFocus(RoutedEventArgs e)
+		{
+			base.OnLostFocus(e);
+			if (Inlines.Count == 0)
+			{
+				Inlines.Add(placeholderText);
+			}
+		}
 
 		private InlineCollection Inlines { get { return ((Paragraph)this.Blocks.First()).Inlines; } }
 

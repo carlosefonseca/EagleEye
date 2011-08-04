@@ -272,8 +272,8 @@
                         <RowDefinition Height="*"></RowDefinition>
                     </Grid.RowDefinitions>
 
-                    <TextBlock Text="1" Foreground="White" Grid.Row="0"></TextBlock>
-                    <TextBlock Text="2" Foreground="White" Grid.Row="1"></TextBlock>
+                    <TextBlock Text="No" Foreground="White" Grid.Row="0"></TextBlock>
+                    <TextBlock Text="Images" Foreground="White" Grid.Row="1"></TextBlock>
                 </Grid>
             </Canvas>
 
@@ -293,14 +293,14 @@
                         <ColumnDefinition Width="*"></ColumnDefinition>
                     </Grid.ColumnDefinitions>
 
-                    <TextBlock Text="1" Foreground="White" Grid.Column="0" TextAlignment="Center"></TextBlock>
-                    <TextBlock Text="2" Foreground="White" Grid.Column="1" TextAlignment="Center"></TextBlock>
+                    <TextBlock Text="No" Foreground="White" Grid.Column="0" TextAlignment="Center"></TextBlock>
+                    <TextBlock Text="Images" Foreground="White" Grid.Column="1" TextAlignment="Center"></TextBlock>
                 </Grid>
             </Canvas>
 
             <Canvas x:Name="Mouse" Grid.Row="1" Grid.Column="1">
                 <Border Background="White" Opacity="0.7">
-                    <TextBlock x:Name="MouseTitle" MaxWidth="200"></TextBlock>
+                    <TextBlock x:Name="MouseTitle" FontSize="9" MaxWidth="250" TextWrapping="Wrap"></TextBlock>
                 </Border>
             </Canvas>
             <Canvas  Grid.Row="1" Grid.Column="1" Height="37" HorizontalAlignment="Right" Margin="0,0,8,8" x:Name="buttonCanvas" VerticalAlignment="Bottom" Width="500" Opacity="0" Background="{x:Null}">
