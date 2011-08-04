@@ -338,12 +338,6 @@ namespace DeepZoomView
 			}
 
 			ArrangeIntoGrid(allImageIds);
-			/*
-			CanvasDisposition StartingCanvas = new CanvasDisposition(this);
-			CanvasHistory.Add(StartingCanvas);
-			SequentialDisposition.Place(StartingCanvas, allImageIds);
-			*/
-			LoadMetadata(null, null);
 			AppStartDebug();
 		}
 
@@ -892,7 +886,7 @@ namespace DeepZoomView
 			Double imgLogicalX = Math.Floor(msi.ViewportOrigin.X + msi.ViewportWidth * (point.X / msi.ActualWidth));
 			Double imgLogicalY = Math.Floor(msi.ViewportOrigin.Y + (msi.ViewportWidth * (msi.ActualHeight / msi.ActualWidth)) * (point.Y / msi.ActualHeight));
 
-			if (CurrentCanvas.canvasIndex.ContainsKey(imgLogicalX + ";" + imgLogicalY))
+			if (CurrentCanvas != null && CurrentCanvas.canvasIndex.ContainsKey(imgLogicalX + ";" + imgLogicalY))
 			{
 				return CurrentCanvas.canvasIndex[imgLogicalX + ";" + imgLogicalY];
 			}
@@ -1250,10 +1244,12 @@ namespace DeepZoomView
 				metadataCollection.ParseXML(stream);
 				Vorganize_Update();
 				stream.Close();
+				((StackPanel)load.Parent).Children.ToList().ForEach(ui => ui.Visibility = System.Windows.Visibility.Visible);
 				load.Visibility = Visibility.Collapsed;
 			}
 			else if (AskForMetadata())
 			{
+				((StackPanel)load.Parent).Children.ToList().ForEach(ui => ui.Visibility = System.Windows.Visibility.Visible);
 				load.Visibility = Visibility.Collapsed;
 				dontZoom = true;
 			}
@@ -1291,11 +1287,6 @@ namespace DeepZoomView
 			DisplayTypeCombo.SelectedIndex = 0;
 		}
 
-		private void SearchField_ContentChanged(object sender, ContentChangedEventArgs e)
-		{
-
-		}
-
 		private void Filter(String s)
 		{
 
@@ -1303,11 +1294,14 @@ namespace DeepZoomView
 
 		private void AppStartDebug()
 		{
+			//LoadMetadata(null, null);
 		}
 
 
+
+
 		private enum LOGIC { OR, AND };
-		private void UpdateView_Click(object sender, RoutedEventArgs e)
+		private void UpdateView()
 		{
 			LOGIC logic = LOGIC.AND;
 			IEnumerable<String> filterbarList = SearchField.GetFilterElementsAsText;
@@ -1322,7 +1316,7 @@ namespace DeepZoomView
 				perSearchItem.AddRange(IdsFromMatchedKeysFromOrganizable("Keyword", s));
 				perSearchItem.AddRange(IdsFromMatchedKeysFromOrganizable("Path", s));
 				perSearchItem = perSearchItem.Distinct().ToList();
-	
+
 				if (first || logic == LOGIC.OR)
 				{
 					filter.AddRange(perSearchItem);
@@ -1345,6 +1339,14 @@ namespace DeepZoomView
 				return o.IdsForKey(o.KeysThatMatch(s));
 			}
 			return new List<int>();
+		}
+
+		private void SearchField_KeyDown(object sender, KeyEventArgs e)
+		{
+			if (e.Key == Key.Enter)
+			{
+				UpdateView();
+			}
 		}
 	}
 }
