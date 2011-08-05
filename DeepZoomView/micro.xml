@@ -1,0 +1,65 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Collection MaxLevel="5" TileSize="256" Format="jpg" NextItemId="12" xmlns="http://schemas.microsoft.com/deepzoom/2008">
+  <Items>
+    <I Id="0" N="0" Source="images/0.xml">
+      <Size Width="2592" Height="1944" />
+      <Viewport Width="1" X="0" Y="0" />
+      <Tag xmlns="">{"id":"0","date":"10-04-2011 10:29:50","RGB":"-11305085","HSB":"H:185 S:0,224 B:0,42","device":"Canon Canon PowerShot S5 IS","Path":"Z:\\tese\\aa\\2011.04.10-10.29.50.jpg"}</Tag>
+    </I>
+    <I Id="1" N="1" Source="images/1.xml">
+      <Size Width="2592" Height="1944" />
+      <Viewport Width="1" X="0" Y="0" />
+      <Tag xmlns="">{"id":"1","date":"10-04-2011 10:35:08","RGB":"-7043503","HSB":"H:47 S:0,293 B:0,449","device":"Canon Canon PowerShot S5 IS","Path":"Z:\\tese\\aa\\2011.04.10-10.35.08.jpg"}</Tag>
+    </I>
+    <I Id="2" N="2" Source="images/2.xml">
+      <Size Width="2592" Height="1944" />
+      <Viewport Width="1" X="0" Y="0" />
+      <Tag xmlns="">{"id":"2","date":"10-04-2011 11:18:04","RGB":"-11779014","HSB":"H:33 S:0,134 B:0,263","device":"Canon Canon PowerShot S5 IS","Path":"Z:\\tese\\aa\\2011.04.10-11.18.04.jpg"}</Tag>
+    </I>
+    <I Id="3" N="3" Source="images/3.xml">
+      <Size Width="2592" Height="1944" />
+      <Viewport Width="1" X="0" Y="0" />
+      <Tag xmlns="">{"id":"3","date":"10-04-2011 11:18:05","RGB":"-14672359","HSB":"H:42 S:0,123 B:0,112","device":"Canon Canon PowerShot S5 IS","Path":"Z:\\tese\\aa\\2011.04.10-11.18.05.jpg"}</Tag>
+    </I>
+    <I Id="4" N="4" Source="images/4.xml">
+      <Size Width="2592" Height="1944" />
+      <Viewport Width="1" X="0" Y="0" />
+      <Tag xmlns="">{"id":"4","date":"10-04-2011 11:18:06","RGB":"-7240329","HSB":"H:32 S:0,106 B:0,518","device":"Canon Canon PowerShot S5 IS","Path":"Z:\\tese\\aa\\2011.04.10-11.18.06.jpg"}</Tag>
+    </I>
+    <I Id="5" N="5" Source="images/5.xml">
+      <Size Width="2592" Height="1944" />
+      <Viewport Width="1" X="0" Y="0" />
+      <Tag xmlns="">{"id":"5","date":"10-04-2011 11:24:39","RGB":"-9598589","HSB":"H:167 S:0,114 B:0,482","device":"Canon Canon PowerShot S5 IS","Path":"Z:\\tese\\aa\\2011.04.10-11.24.39.jpg"}</Tag>
+    </I>
+    <I Id="6" N="6" Source="images/6.xml">
+      <Size Width="2592" Height="1944" />
+      <Viewport Width="1" X="0" Y="0" />
+      <Tag xmlns="">{"id":"6","date":"10-04-2011 11:24:40","RGB":"-13415867","HSB":"H:166 S:0,184 B:0,245","device":"Canon Canon PowerShot S5 IS","Path":"Z:\\tese\\aa\\2011.04.10-11.24.40.jpg"}</Tag>
+    </I>
+    <I Id="7" N="7" Source="images/7.xml">
+      <Size Width="2592" Height="1944" />
+      <Viewport Width="1" X="0" Y="0" />
+      <Tag xmlns="">{"id":"7","date":"10-04-2011 11:24:41","RGB":"-4402225","HSB":"H:169 S:0,207 B:0,782","device":"Canon Canon PowerShot S5 IS","Path":"Z:\\tese\\aa\\2011.04.10-11.24.41.jpg"}</Tag>
+    </I>
+    <I Id="8" N="8" Source="images/8.xml">
+      <Size Width="2592" Height="1944" />
+      <Viewport Width="1" X="0" Y="0" />
+      <Tag xmlns="">{"id":"8","date":"10-04-2011 11:25:50","RGB":"-10058880","HSB":"H:173 S:0,124 B:0,457","device":"Canon Canon PowerShot S5 IS","Path":"Z:\\tese\\aa\\2011.04.10-11.25.50.jpg"}</Tag>
+    </I>
+    <I Id="9" N="9" Source="images/9.xml">
+      <Size Width="2592" Height="1944" />
+      <Viewport Width="1" X="0" Y="0" />
+      <Tag xmlns="">{"id":"9","date":"10-04-2011 11:25:51","RGB":"-10124672","HSB":"H:175 S:0,126 B:0,453","device":"Canon Canon PowerShot S5 IS","Path":"Z:\\tese\\aa\\2011.04.10-11.25.51.jpg"}</Tag>
+    </I>
+    <I Id="10" N="10" Source="images/10.xml">
+      <Size Width="2592" Height="1944" />
+      <Viewport Width="1" X="0" Y="0" />
+      <Tag xmlns="">{"id":"10","date":"10-04-2011 11:25:52","RGB":"-10058880","HSB":"H:173 S:0,124 B:0,457","device":"Canon Canon PowerShot S5 IS","Path":"Z:\\tese\\aa\\2011.04.10-11.25.52.jpg"}</Tag>
+    </I>
+    <I Id="11" N="11" Source="images/11.xml">
+      <Size Width="2592" Height="1944" />
+      <Viewport Width="1" X="0" Y="0" />
+      <Tag xmlns="">{"id":"11","date":"10-04-2011 11:25:53","RGB":"-9993344","HSB":"H:173 S:0,12 B:0,459","device":"Canon Canon PowerShot S5 IS","Path":"Z:\\tese\\aa\\2011.04.10-11.25.53.jpg"}</Tag>
+    </I>
+  </Items>
+</Collection>

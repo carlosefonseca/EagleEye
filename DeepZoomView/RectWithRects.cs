@@ -18,7 +18,7 @@ namespace DeepZoomView {
 		public double Height { get; set; }
 		private List<RectWithRects> children;
 		public Boolean leaf;
-		public Group group;
+		private Group group;
 		public RectWithRects Parent { get; set; }
 
 		public Group Group {

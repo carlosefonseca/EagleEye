@@ -84,6 +84,10 @@ namespace DeepZoomView {
 					organizedMetadata.Remove(k);
 				}
 			}
+            if (this.ContainsOrganizable("date"))
+            {
+                ((OrganizableByDate)organizedMetadata["date"]).CreateStacks();
+            }
 		}
 
 
