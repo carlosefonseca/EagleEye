@@ -47,5 +47,10 @@ namespace EagleEye.Common {
 				}
 			}
 		}
+
+		public override void Remove(long id) {
+			base.Remove(id);
+			persistence.Remove(id.ToString());
+		}
 	}
 }

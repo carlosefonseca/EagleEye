@@ -108,10 +108,19 @@ namespace EagleEye {
 					case "exit": Console.WriteLine("Bye"); break;
 					case "addgen": AddDir(split); PlugMan.RunPlugin(images, "color"); PlugMan.RunPlugin(images, "exif"); PlugMan.RunPlugin(images, "dzcg"); break;
 					case "bigtest": BigTest(); break;
+					case "remove": RemoveNotExisting(); break;
 					case "": Console.WriteLine(cmds); break;
 					default: Console.WriteLine("Unkown cmd. " + cmds); break;
 				}
 			} while (command != "exit");
+		}
+
+		private static void RemoveNotExisting() {
+			foreach (Image i in LibMan.collection.ToList()) {
+				if (!File.Exists(i.path)) {
+					LibMan.collection.TheDictionary().Remove(i.id);
+				}
+			}
 		}
 
 		private static void BigTest() {
@@ -186,7 +195,7 @@ namespace EagleEye {
 				images.Add(ExifToolWrapper.CrawlDir(dir));
 				Console.WriteLine(images.Count() + " images in Mem.");
 			} else {
-				Console.WriteLine("Directory not found.");
+				Console.WriteLine("Directory '{0}' not found.",dir);
 			}
 			return dir;
 		}

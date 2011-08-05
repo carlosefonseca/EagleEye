@@ -88,20 +88,27 @@ namespace EEPlugin {
 				Color? result = null;
 				if (overrideData || !i.ContainsPluginData("RGB")) {
 					Console.WriteLine("Color Detecting " + i.path + "... ");
-/*					if (thumbs.ThumbnailExists(i)) {
+					/*					if (thumbs.ThumbnailExists(i)) {
+											continue;
+										}
+										Stopwatch s1 = Stopwatch.StartNew();
+					 *
+					*/
+					try {
+						result = RunDetection(thumbs.GetThumbnail(i));
+						/*					s1.Stop();
+											Stopwatch s2 = Stopwatch.StartNew();
+											result = RunDetection(i.path);
+											s2.Stop();
+											Console.WriteLine("Thumb: " + s1.ElapsedMilliseconds + "  Orig: " + s2.ElapsedMilliseconds);
+						*/
+						i.SetPluginData("RGB", result.Value.ToArgb().ToString());
+						i.SetPluginData("HSB", "H:" + (int)result.Value.GetHue()
+											+ " S:" + Math.Round(result.Value.GetSaturation(), 3)
+											+ " B:" + Math.Round(result.Value.GetBrightness(), 3));
+					} catch {
 						continue;
 					}
-					Stopwatch s1 = Stopwatch.StartNew();
-*/					result = RunDetection(thumbs.GetThumbnail(i));
-/*					s1.Stop();
-					Stopwatch s2 = Stopwatch.StartNew();
-					result = RunDetection(i.path);
-					s2.Stop();
-					Console.WriteLine("Thumb: " + s1.ElapsedMilliseconds + "  Orig: " + s2.ElapsedMilliseconds);
-*/					i.SetPluginData("RGB", result.Value.ToArgb().ToString());
-					i.SetPluginData("HSB", "H:" + (int)result.Value.GetHue()
-										+ " S:" + Math.Round(result.Value.GetSaturation(), 3)
-										+ " B:" + Math.Round(result.Value.GetBrightness(), 3));
 				}
 			}
 			return null;

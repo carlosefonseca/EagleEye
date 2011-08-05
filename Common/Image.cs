@@ -47,9 +47,9 @@ namespace EagleEye.Common {
 		}
 
 		public object Exif(string k) {
-			try {
+			if (this.exif.ContainsKey(k)) {
 				return this.exif[k];
-			} catch (KeyNotFoundException) {
+			} else {
 				return "";
 			}
 		}

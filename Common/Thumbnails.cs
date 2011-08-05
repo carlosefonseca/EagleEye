@@ -55,15 +55,14 @@ namespace EagleEye.Common {
 		MemoryStream memStream;
 		System.Drawing.Image thumb;
 
-		/// <summary>
-		/// Generates a thumbnail on the filesystem. Sets the i.v. thumbnail
-		/// </summary>
-		/// <param name="path">The FOLDER where the thumbnail will be created</param>
-		/// <returns>Full path</returns>
-		public byte[] GenerateThumbnailData(Image i) {
+
+		public System.Drawing.Image GenerateThumbnail(Image i) {
 			int smallside = ThumbSize, newWidth, newHeight;
 
-			if (!File.Exists(i.path)) return null;
+			if (!File.Exists(i.path)) {
+				throw new FileNotFoundException();
+			}
+
 			Bitmap orig = new Bitmap(i.path);
 			if (orig.Size.Height < orig.Size.Width) {
 				newHeight = smallside;
@@ -74,6 +73,27 @@ namespace EagleEye.Common {
 			}
 			thumb = orig.GetThumbnailImage(newWidth, newHeight, abort, intptr);
 			if (thumb == null) { throw new Exception("The thumbnail is null :S "); }
+			return thumb;
+		}
+
+
+		public byte[] ImageToData(System.Drawing.Image i) {
+			//Saving to byte[]
+			memStream = new MemoryStream();
+			i.Save(memStream, jpgEncoder, myEncoderParameters);
+			byte[] bytes = memStream.GetBuffer();
+			memStream.Close();
+			return bytes;
+		}
+
+
+		/// <summary>
+		/// Generates a thumbnail on the filesystem. Sets the i.v. thumbnail
+		/// </summary>
+		/// <param name="path">The FOLDER where the thumbnail will be created</param>
+		/// <returns>Full path</returns>
+		public byte[] GenerateThumbnailData(Image i) {
+			System.Drawing.Image thumb = GenerateThumbnail(i);
 
 			//Saving to byte[]
 			memStream = new MemoryStream();
@@ -93,15 +113,13 @@ namespace EagleEye.Common {
 			return null;
 		}
 
-		public void PutThumbnailInDB(Image i, byte[] data) {
-
-		}
-
-		public void GenerateAndSaveThumbnail(Image i) {
-			byte[] data = GenerateThumbnailData(i);
+		public System.Drawing.Image GenerateAndSaveThumbnail(Image i) {
+			System.Drawing.Image thumb = GenerateThumbnail(i);
+			byte[] data = ImageToData(thumb);
 			if (data != null) {
 				persistence.Put(i.id.ToString(), data);
 			}
+			return thumb;
 		}
 
 		public bool ThumbnailExists(Image i) {
