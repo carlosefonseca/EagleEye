@@ -11,6 +11,7 @@ namespace EagleEye.Common {
 		internal Dictionary<long, Image> collection;
 		private long currId = 0;
 		private SortedImageCollection cachedSortedImageCollection;
+		private Dictionary<String, long> paths = new Dictionary<string, long>();
 
 		public ImageCollection() {
 			collection = new Dictionary<long, Image>();
@@ -31,6 +32,15 @@ namespace EagleEye.Common {
 				collection = c;
 				currId = collection.Keys.Max() + 1;
 			}
+//			List<long> duplicatedKeys = new List<long>();
+			foreach (KeyValuePair<long, Image> kv in collection) {
+/*				if (paths.ContainsKey(kv.Value.path)) {
+					duplicatedKeys.Add(kv.Key);
+					continue;
+				}
+*/				paths.Add(kv.Value.path, kv.Value.id);
+			}
+//			duplicatedKeys.ForEach(id => Remove(id));
 		}
 
 		public long Add(Image i) {
@@ -43,6 +53,7 @@ namespace EagleEye.Common {
 				i.id = k;
 			}
 			collection.Add(k, i);
+			paths.Add(i.path, i.id);
 			cachedSortedImageCollection = null;
 			currId++;
 			return k;
@@ -56,11 +67,16 @@ namespace EagleEye.Common {
 						currId = k + 1;
 				}*/
 
+		public Boolean PathExists(String path) {
+			return paths.ContainsKey(System.IO.Path.GetFullPath(path));
+		}
+
 		public void AddNew(List<Image> list) {
 			cachedSortedImageCollection = null;
 			foreach (Image i in list) {
 				i.id = currId;
 				collection.Add(currId, i);
+				paths.Add(i.path, i.id);
 				currId++;
 			}
 		}
@@ -139,7 +155,12 @@ namespace EagleEye.Common {
 			return txt;
 		}
 
-
+		public virtual void Remove(long id) {
+			if (paths.ContainsValue(id)) {
+				paths.Remove(collection[id].path);
+			}
+			collection.Remove(id);
+		}
 
 		#region Output
 

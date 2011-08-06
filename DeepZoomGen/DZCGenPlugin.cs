@@ -14,6 +14,7 @@ using System.Xml.Linq;
 using Newtonsoft.Json;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Threading;
 
 
 namespace EEPlugin {
@@ -98,11 +99,11 @@ namespace EEPlugin {
 				string target = DZDir + relativeTarget;
 
 				if (File.Exists(target)) {
-					Console.WriteLine(i.id.ToString() + " " + i.path + "... ");
+					Console.WriteLine(" "+i.id.ToString() + " " + i.path + "... ");
 					PluginData.Add(i.id, relativeTarget);
 				} else {
 					// Creation needed
-					Console.WriteLine(" >> " + i.id.ToString() + " " + i.path + "... ");
+					Console.Write(">" + i.id.ToString() + " " + i.path + "... ");
 					Stopwatch st = Stopwatch.StartNew();
 					// GERACAO DE CADA IMAGEM
 					generationOK = GenerateMSI(i, target);
@@ -231,7 +232,7 @@ namespace EEPlugin {
 			ic.TileFormat = ImageFormat.Jpg;
 			ic.ImageQuality = 0.7;
 			ic.TileOverlap = 0;
-			Console.WriteLine(source + "->" + target);
+			Console.WriteLine(Path.GetFileName(source) + "->" + Path.GetFileName(target));
 			try {
 				ic.Create(source, target);
 				return true;
@@ -243,21 +244,28 @@ namespace EEPlugin {
 
 		private bool GenerateMSI(EagleEye.Common.Image i, string target) {
 			try {
-				Int64 o = (Int64)i.Exif("Orientation");
-				if (o == 3 || o == 6 || o == 8) {
-					String path = null;
-					switch (o) {
-						case 3: path = GenerateRotatedImage(i.path, RotateFlipType.Rotate180FlipNone); break;
-						case 6: path = GenerateRotatedImage(i.path, RotateFlipType.Rotate90FlipNone); break;
-						case 8: path = GenerateRotatedImage(i.path, RotateFlipType.Rotate270FlipNone); break;
-					}
-					if (path != null) {
-						Boolean ret = GenerateMSI(path, target);
+				if (i.ContainsExif("Orientation")) {
+					Int64 o = (Int64)i.Exif("Orientation");
+					Console.Write(" R{0} ", o);
+					if (o == 3 || o == 6 || o == 8) {
+						String path = null;
+						switch (o) {
+							case 3: path = GenerateRotatedImage(i.path, RotateFlipType.Rotate180FlipNone); break;
+							case 6: path = GenerateRotatedImage(i.path, RotateFlipType.Rotate90FlipNone); break;
+							case 8: path = GenerateRotatedImage(i.path, RotateFlipType.Rotate270FlipNone); break;
+							default: Console.Write("!"); break;
+						}
 
-						return ret;
+						if (path != null) {
+							Boolean ret = GenerateMSI(path, target);
+
+							return ret;
+						}
 					}
 				}
-			} catch { }
+			} catch (Exception e) {
+				Console.WriteLine(e);
+			}
 			//File.Delete("tmp.jpg");
 			return GenerateMSI(i.path, target);
 		}
@@ -267,11 +275,25 @@ namespace EEPlugin {
 			Bitmap b = new Bitmap(sr);
 			sr.Close();
 			b.RotateFlip(r);
-			Stream w = new FileStream("tmp.jpg", FileMode.Create);
+			Stream w = null;
+			String fn = null;
+			while (w == null) {
+				try {
+					fn = "tmp.jpg";
+					w = new FileStream(fn, FileMode.Create);
+				} catch {
+					try {
+						fn = "tmp2.jpg";
+						w = new FileStream(fn, FileMode.Create);
+					} catch {
+						Thread.Sleep(100);
+					}
+				}
+			}
 			b.Save(w, System.Drawing.Imaging.ImageFormat.Jpeg);
 			b.Dispose();
 			w.Close();
-			return "tmp.jpg";
+			return fn;
 		}
 
 		/// <summary>

@@ -116,6 +116,14 @@ namespace EagleEye.Common {
 			Put(k, bytes);
 		}
 
+		public void Remove(string key) {
+			if (btreeDB == null)
+				throw new Exception("DB Not Initialized");
+			System.Text.Encoding enc = System.Text.Encoding.ASCII;
+			byte[] k = enc.GetBytes(key);
+			btreeDB.Delete(new DatabaseEntry(k));
+		}
+
 
 		public List<T1> Read<T1>(ConvertFromBytes<T1> D1) {
 			List<T1> output = new List<T1>();
