@@ -33,7 +33,7 @@ namespace DeepZoomView.EECanvas.Dispositions
         }
 
         public static List<String> DisplayOptions = new List<string>() { "Grid", "Groups", "Linear" };
-
+		
         protected Disposition() { }
 
         /// <summary>

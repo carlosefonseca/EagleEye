@@ -26,6 +26,7 @@ namespace DeepZoomView
 		public Dictionary<int, List<int>> stacks;
 		public Dictionary<int, List<CanvasItem>> stacksForCanvas;
 		public Boolean hasStacks = false;
+		public List<String> Dispositions = new List<string>();
 
 		protected IEnumerable<int> filter = null;
 		protected IEnumerable<int> filteredIds = null;
@@ -33,7 +34,6 @@ namespace DeepZoomView
 		protected Dictionary<string, List<int>> filteredData = null;
 
 		protected bool HasFilter { get { return (filter != null && filter.Count() > 0); } }
-
 
 		public IEnumerable<String> KeysThatMatch(String txt)
 		{
@@ -117,6 +117,7 @@ namespace DeepZoomView
 			invertedData = new Dictionary<int, string>();
 			dataWithStacks = new Dictionary<Object, List<int>>();
 			stacksForCanvas = new Dictionary<int, List<CanvasItem>>();
+			Dispositions.Add("Group");
 		}
 
 		public Boolean Import(String s) { return false; }

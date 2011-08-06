@@ -232,22 +232,29 @@
                 <ColumnDefinition Width="*"></ColumnDefinition>
             </Grid.ColumnDefinitions>
 
-            <StackPanel Grid.Column="0" Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Center">
+            <Canvas Grid.Column="0" Grid.Row="0" Grid.ColumnSpan="2" Background="Black" Canvas.ZIndex="100">
+                <StackPanel Visibility="Collapsed">
+                    <TextBlock Text="Display:" VerticalAlignment="Center" Foreground="White" Margin="0,0,10,0" Visibility="Collapsed"></TextBlock>
+                    <ComboBox Name="DisplayTypeCombo" VerticalAlignment="Center" Margin="0,0,10,0" SelectionChanged="DisplayTypeCombo_SelectionChanged" Loaded="DisplayTypeCombo_Loaded" Visibility="Collapsed"></ComboBox>
+
+                    <TextBlock Text="Sort by:" VerticalAlignment="Center" Foreground="White" Margin="0,0,10,0" Visibility="Collapsed"></TextBlock>
+                    <ComboBox Name="Vorganize" VerticalAlignment="Center" Margin="0,0,10,0" DropDownOpened="Vorganize_DropDownOpened" SelectionChanged="Vorganize_SelectionChanged" Visibility="Collapsed"></ComboBox>
+                </StackPanel>
+            </Canvas>
+
+            <StackPanel Grid.Column="0" Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Center" Canvas.ZIndex="1000">
                 <Button x:Name="load" Content="Load Metadata" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="7" Margin="0,0,10,0" Click="LoadMetadata"></Button>
-                <TextBlock Text="Display:" VerticalAlignment="Center" Foreground="White" Margin="0,0,10,0" Visibility="Collapsed"></TextBlock>
-                <ComboBox Name="DisplayTypeCombo" VerticalAlignment="Center" Margin="0,0,10,0" SelectionChanged="DisplayTypeCombo_SelectionChanged" Loaded="DisplayTypeCombo_Loaded" Visibility="Collapsed"></ComboBox>
 
-                <TextBlock Text="Sort by:" VerticalAlignment="Center" Foreground="White" Margin="0,0,10,0" Visibility="Collapsed"></TextBlock>
-                <ComboBox Name="Vorganize" VerticalAlignment="Center" Margin="0,0,10,0" DropDownOpened="Vorganize_DropDownOpened" SelectionChanged="Vorganize_SelectionChanged" Visibility="Collapsed"></ComboBox>
-
+                <my:SegmentedControl x:Name="SegHolder" VerticalAlignment="Center" HorizontalAlignment="Center" Visibility="Collapsed" Margin="0,0,10,0"/>
+                
                 <ToggleButton x:Name="showgroups" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="3" Margin="0,0,10,0" Click="showgroups_Click" Content="Two State" IsThreeState="False" Visibility="Collapsed"/>
                 <my:FilterBar x:Name="SearchField" AcceptsReturn="False" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="1" Margin="0,0,10,0" Width="300" Height="25"
                              VerticalContentAlignment="Center" VerticalScrollBarVisibility="Disabled" KeyDown="SearchField_KeyDown" Visibility="Collapsed"></my:FilterBar>
             </StackPanel>
 
-            <MultiScaleImage x:Name="msi" Grid.Row="1" Grid.Column="1" Source="C:/smalldb/collection.xml" Canvas.ZIndex="0"/>
+            <MultiScaleImage x:Name="msi" Grid.Row="1" Grid.Column="1" Source="C:/SmallDB/collection.xml" Canvas.ZIndex="0"/>
 
-            <Canvas Grid.Row="1" Grid.Column="1" Canvas.ZIndex="0" >
+            <Canvas Grid.Row="1" Grid.Column="1" Canvas.ZIndex="10" >
                 <Canvas Name="Overlays">
                     <Canvas.RenderTransform>
                         <ScaleTransform x:Name="OverlaysScale" ScaleX="1.0" ScaleY="1.0" />

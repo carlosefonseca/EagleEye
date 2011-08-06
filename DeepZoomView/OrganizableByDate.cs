@@ -49,41 +49,12 @@ namespace DeepZoomView
 			}
 		}
 
-		//public override List<int> Ids
-		//{
-		//    get
-		//    {
-		//        if (filter != null && filter.Count() > 0)
-		//        {
-		//            return invertedData.Keys.Concat(stacks.Keys).Intersect(filter).ToList();
-		//        }
-		//        else
-		//        {
-		//            return invertedData.Keys.Concat(stacks.Keys).ToList();
-		//        }
-		//    }
-		//}
-
 
 		public override int ItemCount
 		{
 			get
 			{
 				return this.Ids.Count;
-			//    if (HasFilter)
-			//    {
-			//        return dataWithStacks.Values.SelectMany(c => c).Intersect(filter).Count();
-			//    }
-			//    else
-			//    {
-			//        if (itemCount == -1)
-			//        {
-			//            itemCount = dataWithStacks.Sum(kv => kv.Value.Count);
-			//        }
-
-			//        //return invertedData.Count;
-			//        return itemCount;
-			//    }
 			}
 		}
 
@@ -99,6 +70,7 @@ namespace DeepZoomView
 			: base("Date")
 		{
 			hasStacks = true;
+			Dispositions.Add("Linear");
 		}
 
 		public override void Add(int k, string p)

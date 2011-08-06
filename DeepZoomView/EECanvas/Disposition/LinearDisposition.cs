@@ -15,14 +15,14 @@ using System.Diagnostics;
 
 namespace DeepZoomView.EECanvas.Dispositions
 {
-    public class LienarDisposition : Disposition
+    public class LinearDisposition : Disposition
     {
         private Organizable organizable;
         private List<Group> placedGroups = new List<Group>();
         List<Group> groupsNotPlaced = new List<Group>();
         private Overlays overlays = new Overlays();
 
-        public LienarDisposition() { }
+        public LinearDisposition() { }
 
         internal override void Place(MyCanvas c)
         {

@@ -24,7 +24,7 @@ namespace DeepZoomView {
 			imgMetadata.Add(msiId, metadata);
 			String k;
 			foreach (KeyValuePair<string, string> kv in metadata) {
-				k = kv.Key;
+				k = kv.Key[0].ToString().ToUpperInvariant()+kv.Key.Substring(1);
 
 				if (!organizedMetadata.ContainsKey(k)) {
 					CreateOrganizable(k, JsonPrimitive.Parse(kv.Value).JsonType);
@@ -45,9 +45,9 @@ namespace DeepZoomView {
 		/// <param name="type">The JSON type of the parameter (relevant when the name doesn't relate to a predefined type)</param>
 		private void CreateOrganizable(string k, JsonType type) {
 			Organizable o;
-			if (k == "color" || k == "RGB") o = new OrganizableByColor();
+			if (k == "Color" || k == "RGB") o = new OrganizableByColor();
 			else if (k == "HSB") o = new OrganizableByHSB();
-			else if (k == "date") o = new OrganizableByDate();
+			else if (k == "Date") o = new OrganizableByDate();
 			else if (k == "Keywords") o = new OrganizableByKeyword();
 			else if (k == "Path") o = new OrganizableByPath();
 			else {
@@ -84,9 +84,9 @@ namespace DeepZoomView {
 					organizedMetadata.Remove(k);
 				}
 			}
-            if (this.ContainsOrganizable("date"))
+            if (this.ContainsOrganizable("Date"))
             {
-                ((OrganizableByDate)organizedMetadata["date"]).CreateStacks();
+                ((OrganizableByDate)organizedMetadata["Date"]).CreateStacks();
             }
 		}
 
@@ -95,8 +95,18 @@ namespace DeepZoomView {
 		/// Listing of names of the available Organizables that can be used to group images
 		/// </summary>
 		/// <returns></returns>
-		public IEnumerable<String> GetOrganizationOptions() {
+		public IEnumerable<String> GetOrganizationOptionsNames()
+		{
 			return (IEnumerable<String>)organizedMetadata.Where(x => x.Value.AvailableForGroupping).Select(x => x.Value.Name);
+		}
+		
+		/// <summary>
+		/// Listing of names of the available Organizables that can be used to group images
+		/// </summary>
+		/// <returns></returns>
+		public IEnumerable<Organizable> GetOrganizationOptions()
+		{
+			return (IEnumerable<Organizable>)organizedMetadata.Where(x => x.Value.AvailableForGroupping).Select(x => x.Value);
 		}
 
 		/// <summary>

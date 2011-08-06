@@ -78,6 +78,11 @@
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Controls\SegmentedControl.cs" />
+    <Content Include="SegmentedControlStyle.xaml">
+      <SubType>Designer</SubType>
+    </Content>
+    <Compile Include="DisplaySetting.cs" />
     <Compile Include="EECanvas\Disposition\LinearDisposition.cs" />
     <Compile Include="EECanvas\Disposition\NotEnoughSpaceException.cs" />
     <Compile Include="EECanvas\MyCanvas.cs" />
@@ -89,7 +94,7 @@
     <Compile Include="EECanvas\Selection.cs" />
     <Compile Include="EECanvas\SingleImage.cs" />
     <Compile Include="EECanvas\Stack.cs" />
-    <Compile Include="FilterBar.cs" />
+    <Compile Include="Controls\FilterBar.cs" />
     <Compile Include="Group.cs" />
     <Compile Include="OrganizableByPath.cs" />
     <Compile Include="OrganizableByKeyword.cs" />
@@ -166,4 +171,7 @@
       </FlavorProperties>
     </VisualStudio>
   </ProjectExtensions>
+  <PropertyGroup>
+    <PostBuildEvent>copy $(TargetDir)TestPage.html + $(TargetDir)DeepZoomView.dll + $(TargetDir)DeepZoomView.xap C:\SmallDB\</PostBuildEvent>
+  </PropertyGroup>
 </Project>

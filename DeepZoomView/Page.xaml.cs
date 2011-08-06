@@ -22,6 +22,7 @@ using System.Diagnostics;
 using DeepZoomView.EECanvas;
 using DeepZoomView.EECanvas.Dispositions;
 using System.Windows.Markup;
+using DeepZoomView.Controls;
 
 namespace DeepZoomView
 {
@@ -50,6 +51,10 @@ namespace DeepZoomView
 		MyCanvas CurrentCanvas;
 		internal List<Selection> newSelections = new List<Selection>();
 		internal IEnumerable<int> currentSelections = null;
+
+		private Dictionary<String, DisplaySetting> DisplaySettings = new Dictionary<string, DisplaySetting>();
+		public static Dictionary<String, Type> DisplayOptions = new Dictionary<string, Type>();
+
 
 		public Double ZoomFactor
 		{
@@ -275,7 +280,10 @@ namespace DeepZoomView
 			};
 
 			App.Current.Host.Content.Resized += new EventHandler(Content_Resized);
-			Vorganize_Update();
+			DisplayOptions.Add("Grid", typeof(SequentialDisposition));
+			DisplayOptions.Add("Group", typeof(TreeMapDisposition));
+			DisplayOptions.Add("Linear", typeof(LinearDisposition));
+			//Vorganize_Update();
 		}
 
 		private void HideTooltip()
@@ -439,7 +447,6 @@ namespace DeepZoomView
 			{
 				StreamReader stream = file.OpenText();
 				metadataCollection.ParseXML(stream);
-				Vorganize_Update();
 				stream.Close();
 			}
 			if (failed.Count == 1)
@@ -1053,7 +1060,7 @@ namespace DeepZoomView
 			}
 		}
 
-		private void resetbtn_Click(object sender, RoutedEventArgs e)
+		private void resetDisplay()
 		{
 			selectedImages = new List<MultiScaleSubImage>();
 			selectedImagesIds = new List<int>();
@@ -1064,6 +1071,8 @@ namespace DeepZoomView
 			makeAnAxis("Y", Vcells);
 			makeAnAxis("X", Hcells);
 			*/
+
+
 			Vorganize.SelectedIndex = 0;
 		}
 
@@ -1089,7 +1098,7 @@ namespace DeepZoomView
 			CbItems.Clear();
 			CbItems.Add("-None-");
 			CbItems.Add("Random");
-			foreach (String s in metadataCollection.GetOrganizationOptions())
+			foreach (String s in metadataCollection.GetOrganizationOptionsNames())
 			{
 				CbItems.Add(s);
 			}
@@ -1131,7 +1140,7 @@ namespace DeepZoomView
 			switch (disposition)
 			{
 				case "Groups": d = new TreeMapDisposition(); break;
-				case "Linear": d = new LienarDisposition(); break;
+				case "Linear": d = new LinearDisposition(); break;
 				case "Grid":
 				default: d = new SequentialDisposition(); break;
 			}
@@ -1206,6 +1215,81 @@ namespace DeepZoomView
 		}
 
 
+		private void NewCanvasDispositionFromUI(DisplaySetting display, IEnumerable<int> filter)
+		{
+			if (msi.ActualHeight == 0 || msi.ActualWidth == 0)
+			{
+				return;
+			}
+			Disposition d = (Disposition)(display.Disposition.GetConstructor(new Type[] { }).Invoke(new Type[] { }));
+			Organizable o = display.Organization;
+
+			String s = "";
+			// Create canvas
+			MyCanvas canvas;
+			if (o != null)		// The Organizable Exists
+			{
+				if (filter.Count() != 0)
+				{
+					// Filter Organizable
+					o.ReplaceFilter(filter);
+					// make filter key
+					foreach (int i in filter)
+					{
+						s += i + ";";
+					}
+				}
+				else
+				{
+					o.ClearFilter();
+				}
+
+				String key = MyCanvas.KeyForCanvas(d, o, o.ItemCount, msi.ActualWidth / msi.ActualHeight) + s;
+				Debug.WriteLine(key + " " + s);
+				if (CanvasCache.ContainsKey(key))
+				{
+					canvas = CanvasCache[key];
+				}
+				else
+				{
+					canvas = new MyCanvas(this, d, o);
+					if (key != canvas.ToString() + s)
+					{
+						throw new Exception("Keys are different!");
+					}
+					CanvasCache.Add(key, canvas);
+				}
+			}
+			else  // The Organizable DOES NOT Exist
+			{
+				String key = MyCanvas.KeyForCanvas(d, null, msi.SubImages.Count, msi.ActualWidth / msi.ActualHeight) + s;
+				List<int> items = msi.SubImages.Select((m, i) => i).ToList();
+				if (filter != null && filter.Count() != 0)
+					items = items.Intersect(filter).ToList();
+
+				if (CanvasCache.ContainsKey(key))
+				{
+					canvas = CanvasCache[key];
+				}
+				else
+				{
+					canvas = new MyCanvas(this, d, items);
+					if (key != canvas.ToString() + s)
+					{
+						throw new Exception("Keys are different!");
+					}
+					CanvasCache.Add(key, canvas);
+				}
+			}
+			CanvasHistory.Add(canvas);
+			// Place
+			IEnumerable<int> placedImages = canvas.Display();
+			// hide rest
+			fadeImages(msi.SubImages.Select((m, i) => i).Except(placedImages), FadeAnimation.Out);
+			CurrentCanvas = canvas;
+		}
+
+
 		private void Vorganize_SelectionChanged(object sender, SelectionChangedEventArgs e)
 		{
 			String selected = (String)Vorganize.SelectedItem;
@@ -1215,7 +1299,7 @@ namespace DeepZoomView
 			}
 			else if (selected == "-None-")
 			{
-				resetbtn_Click(null, null);
+				resetDisplay();
 				CanvasHistory.Add(CanvasHistory.First());
 				CurrentCanvas = CanvasHistory.Last();
 				Overlays.Children.Remove(Overlays.Children.FirstOrDefault(x => (((String)x.GetValue(Canvas.TagProperty)) == "Group")));
@@ -1240,22 +1324,68 @@ namespace DeepZoomView
 		{
 			if (sender == null && e == null)
 			{
+				// Loading from embeded file, for debugging
 				StreamReader stream = new StreamReader(App.GetResourceStream(new Uri("smalldb.xml", UriKind.Relative)).Stream);
 				metadataCollection.ParseXML(stream);
 				Vorganize_Update();
 				stream.Close();
-				((StackPanel)load.Parent).Children.ToList().ForEach(ui => ui.Visibility = System.Windows.Visibility.Visible);
-				load.Visibility = Visibility.Collapsed;
 			}
-			else if (AskForMetadata())
+			else if (AskForMetadata()) // normal loading
 			{
-				((StackPanel)load.Parent).Children.ToList().ForEach(ui => ui.Visibility = System.Windows.Visibility.Visible);
-				load.Visibility = Visibility.Collapsed;
 				dontZoom = true;
 			}
-			DisplayTypeCombo.SelectedIndex = 1;
-			Vorganize.SelectedIndex = 3;
+			else
+			{
+				// loading failed
+				return;
+			}
+			// post loading actions
+			// Switch visible controls
+			((StackPanel)load.Parent).Children.ToList().ForEach(ui => ui.Visibility = System.Windows.Visibility.Visible);
+			load.Visibility = Visibility.Collapsed;
+
+			// set user options and display
+			SetVisualizationUI();
+//			Vorganize_Update();
+//			DisplayTypeCombo.SelectedIndex = 1;
+//			Vorganize.SelectedIndex = 3;
 			UpdateView();
+		}
+
+		private void SetVisualizationUI()
+		{
+			IEnumerable<Organizable> options = metadataCollection.GetOrganizationOptions();
+			foreach (Organizable o in options)
+			{
+				if (o.Dispositions.Count == 1)
+				{
+					DisplaySettings.Add(o.Name, new DisplaySetting(o.Name, o, DisplayOptions[o.Dispositions[0]]));
+				}
+				else
+				{
+					foreach (String d in o.Dispositions)
+					{
+						String name = o.Name;
+						if (d != "Group")
+						{
+							name += String.Format(" ({0})", d);
+						}
+
+						DisplaySettings.Add(name, new DisplaySetting(name, o, DisplayOptions[d]));
+					}
+				}
+			}
+
+			SegHolder.SetButtons(DisplaySettings.Keys.ToList());
+			SegHolder.OnChangeSelected += VizChangedHandler;
+			if (DisplaySettings.ContainsKey("Date")) {
+				SegHolder.Selected = "Date";
+			} else {
+				SegHolder.Selected = DisplaySettings.Keys.First();
+
+				//////////////////////////// selecciona-o mas não muda o display
+				////////////////////////////////////////////////////////
+			}
 		}
 
 		private void showgroups_Click(object sender, RoutedEventArgs e)
@@ -1301,9 +1431,16 @@ namespace DeepZoomView
 		}
 
 
-
+		public void VizChangedHandler(object sender, MyEventArgs e)
+		{
+			if (DisplaySettings.ContainsKey(e.active))
+			{
+				UpdateView(DisplaySettings[e.active]);
+			}
+		}
 
 		private enum LOGIC { OR, AND };
+
 		private void UpdateView()
 		{
 			LOGIC logic = LOGIC.AND;
@@ -1332,6 +1469,38 @@ namespace DeepZoomView
 			}
 
 			NewCanvasDispositionFromUI(filter.Distinct());
+		}
+
+
+		private void UpdateView(DisplaySetting displaySetting)
+		{
+			// FILTERS
+			LOGIC logic = LOGIC.AND;
+			IEnumerable<String> filterbarList = SearchField.GetFilterElementsAsText;
+			List<int> filter = new List<int>();
+
+			bool first = true;
+
+			List<int> perSearchItem;
+			foreach (String s in filterbarList)
+			{
+				perSearchItem = new List<int>();
+				perSearchItem.AddRange(IdsFromMatchedKeysFromOrganizable("Keyword", s));
+				perSearchItem.AddRange(IdsFromMatchedKeysFromOrganizable("Path", s));
+				perSearchItem = perSearchItem.Distinct().ToList();
+
+				if (first || logic == LOGIC.OR)
+				{
+					filter.AddRange(perSearchItem);
+				}
+				else if (logic == LOGIC.AND)
+				{
+					filter = filter.Intersect(perSearchItem).ToList();
+				}
+				first = false;
+			}
+
+			NewCanvasDispositionFromUI(displaySetting, filter.Distinct());
 		}
 
 		private IEnumerable<int> IdsFromMatchedKeysFromOrganizable(String organizable, String s)
