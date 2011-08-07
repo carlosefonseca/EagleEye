@@ -19,6 +19,9 @@ namespace DeepZoomView.Controls
 
 	public class MyEventArgs : EventArgs
 	{
+		/// <summary>
+		/// The selected button
+		/// </summary>
 		public string active;
 		public MyEventArgs(String s)
 		{
@@ -26,16 +29,29 @@ namespace DeepZoomView.Controls
 		}
 	}
 
+	/// <summary>
+	/// A set of buttons next to each other that mimic the radio button behaviour.
+	/// </summary>
 	public class SegmentedControl : Canvas
 	{
+		/// <summary>
+		/// Event to run when the selected button changes. The handler will receive the text of the selected button.
+		/// </summary>
 		public event EvHandler OnChangeSelected;
 
 		List<RadioButton> buttons = new List<RadioButton>();
 		Border border;
 		StackPanel stack;
 
+		/// <summary>
+		/// Gets or sets the currently selected button.
+		/// </summary>
 		public string Selected
 		{
+			get
+			{
+				return (String)buttons.First(r => r.IsChecked.Value).Content;
+			}
 			set
 			{
 				buttons.First(r => value.Equals(r.Content)).IsChecked = true;
@@ -43,6 +59,9 @@ namespace DeepZoomView.Controls
 			}
 		}
 
+		/// <summary>
+		/// Creates a new Segmented Control element.
+		/// </summary>
 		public SegmentedControl()
 			: base()
 		{
@@ -62,18 +81,30 @@ namespace DeepZoomView.Controls
 			stack.SizeChanged += new SizeChangedEventHandler(StackSizeChanged);
 		}
 
-		void StackSizeChanged(object sender, SizeChangedEventArgs e)
+		/// <summary>
+		/// Handles the size change of the stack element (Buttons added or removed).
+		/// </summary>
+		/// <param name="sender">The Stack panel that changed (also accessible by this.stack)</param>
+		/// <param name="e"></param>
+		private void StackSizeChanged(object sender, SizeChangedEventArgs e)
 		{
 			StackClip((StackPanel)sender);
 			ResizeCanvas();
 		}
 
+		/// <summary>
+		/// Resizes the outter canvas to fit the contents.
+		/// </summary>
 		private void ResizeCanvas()
 		{
 			this.Width = border.ActualWidth;
 			this.Height = border.ActualHeight;
 		}
 
+		/// <summary>
+		/// Clips the Stack so it has round corners.
+		/// </summary>
+		/// <param name="stack"></param>
 		void StackClip(StackPanel stack)
 		{
 			RectangleGeometry r = new RectangleGeometry();
@@ -83,16 +114,13 @@ namespace DeepZoomView.Controls
 			stack.Clip = r;
 		}
 
-		public SegmentedControl(List<String> buttonNames)
-			: this()
-		{
-			buttonNames.ForEach(n => AddButton(n));
-			buttons.ForEach(b => this.stack.Children.Add(b));
-		}
-
+		/// <summary>
+		/// Creates the buttons on the element.
+		/// </summary>
+		/// <param name="buttonNames">A list with all button names.</param>
 		public void SetButtons(List<String> buttonNames)
 		{
-			buttonNames.ForEach(n => AddButton(n));
+			buttonNames.ForEach(n => buttons.Add(NewButton(n)));
 			foreach (RadioButton b in buttons)
 			{
 				if (this.stack.Children.Count != 0)
@@ -104,7 +132,10 @@ namespace DeepZoomView.Controls
 		}
 
 
-
+		/// <summary>
+		/// Creates the line that splits the buttons
+		/// </summary>
+		/// <returns></returns>
 		private UIElement MakeSplitLine()
 		{
 			Rectangle r = new Rectangle();
@@ -115,16 +146,16 @@ namespace DeepZoomView.Controls
 			return r;
 		}
 
-
-		private void AddButton(String name)
-		{
-			buttons.Add(NewButton(name));
-		}
-
+		/// <summary>
+		/// Creates the visible button element for the given name.
+		/// </summary>
+		/// <param name="name">The text that will be displayed on the button</param>
+		/// <returns></returns>
 		private RadioButton NewButton(string name)
 		{
 			RadioButton r = new RadioButton();
 			r.Content = name;
+			// Couldn't make it work any other way :(
 			StreamReader stream = new StreamReader(App.GetResourceStream(new Uri("SegmentedControlStyle.xaml", UriKind.Relative)).Stream);
 			ControlTemplate ct = (ControlTemplate)XamlReader.Load(stream.ReadToEnd());
 			r.Template = ct;
@@ -132,8 +163,12 @@ namespace DeepZoomView.Controls
 			return r;
 		}
 		
-		
-		void b_Checked(object sender, RoutedEventArgs e)
+		/// <summary>
+		/// Handles the selection of a button and calls the user defined event with the text of the newly selected button.
+		/// </summary>
+		/// <param name="sender">The pressed button</param>
+		/// <param name="e"></param>
+		private void b_Checked(object sender, RoutedEventArgs e)
 		{
 			if (OnChangeSelected != null)
 			{
