@@ -464,212 +464,6 @@ namespace DeepZoomView
 			return true;
 		}
 
-		#region Old
-		/*
-        private void orderByGroupsVertically(List<KeyValuePair<String, List<int>>> Groups)
-        {
-            List<int> groupSizes = new List<int>();
-            List<string> groupNames = new List<string>();
-            int total = 0;
-            foreach (KeyValuePair<String, List<int>> group in Groups)
-            {
-                groupNames.Add(group.Key);
-                groupSizes.Add(group.Value.Count);
-                total += group.Value.Count;
-            }
-
-            Hcells = 1;
-            Vcells = 1;
-
-            foreach (int row in groupSizes)
-            {
-                if (row > Vcells)
-                {
-                    Vcells = row;
-                }
-            }
-
-            Hcells = groupSizes.Count;
-            Hcells = Convert.ToInt32(Math.Floor(msi.ActualHeight * Hcells / msi.ActualWidth));
-            double rowsNeeded = 0;
-
-            while (true)
-            {
-                rowsNeeded = 0;
-                // Determina o que acontece ao reduzir a largura
-                foreach (int row in groupSizes)
-                {
-                    rowsNeeded += Math.Ceiling(row / (Vcells - 1));
-                }
-
-                // se for viavel reduzir a largura, faz isso mesmo.
-                Hcells = Convert.ToInt32(Math.Floor(msi.ActualWidth * (Vcells - 1) / msi.ActualHeight));
-                if (rowsNeeded <= Hcells)
-                {
-                    Vcells--;
-                }
-                else
-                {
-                    Hcells = Convert.ToInt32(Math.Floor(msi.ActualWidth * Vcells / msi.ActualHeight));
-                    break;
-                }
-            }
-
-
-
-            // put images in canvas
-            double imgSize = msi.ActualHeight / Vcells;
-            var x = 0.0;
-            var y = 0.0;
-            // era fixe guardar o anterior para repor
-            canvasIndex = new Dictionary<string, int>();
-
-            foreach (KeyValuePair<String, List<int>> group in Groups)
-            {
-                foreach (int id in group.Value)
-                {
-                    PositionImageInMSI(msi, id, x, y);
-                    //msi.SubImages[id].ViewportOrigin = new Point(-x, -y);
-                    canvasIndex.Add(x + ";" + y, id);
-                    y++;
-
-                    if (y >= Vcells)
-                    {
-                        x += 1;
-                        y = 0.0;
-                    }
-                }
-                y = 0;
-                x++;
-            }
-
-            double HcellsTmp = msi.ActualWidth * Vcells / msi.ActualHeight;
-            Hcells = Math.Max(Hcells, HcellsTmp);
-            msi.ViewportWidth = Hcells;
-            zoom = 1;
-            ShowAllContent();
-
-            List<KeyValuePair<string, int>> groups = new List<KeyValuePair<string, int>>();
-            for (int i = 0; i < groupNames.Count; i++)
-            {
-                groups.Add(new KeyValuePair<string, int>(groupNames[i], Convert.ToInt32(Math.Ceiling(groupSizes[i] / Hcells))));
-            }
-            makeAnAxis("X", groups);
-            makeAnAxis("Y", Vcells);
-        }
-
-
-        private void orderByGroupsHorizontally()
-        {
-            if (dateCollection == null && !AskForMetadata())
-            {
-                return;
-            }
-
-            List<int> groupSizes = new List<int>();
-            List<string> groupNames = new List<string>();
-            int total = 0;
-            foreach (KeyValuePair<int, Dictionary<int, Dictionary<int, List<int>>>> years in dateCollection.Get())
-            {
-                foreach (KeyValuePair<int, Dictionary<int, List<int>>> month in years.Value)
-                {
-                    groupNames.Add(years.Key.ToString() + "\n" + (new DateTime(1, month.Key, 1)).ToString("MMM"));
-                    int count = 0;
-                    foreach (KeyValuePair<int, List<int>> day in month.Value)
-                    {
-                        count += day.Value.Count;
-                    }
-                    groupSizes.Add(count);
-                    total += count;
-                }
-            }
-
-            Hcells = 1;
-            Vcells = 1;
-
-            foreach (int row in groupSizes)
-            {
-                if (row > Hcells)
-                {
-                    Hcells = row;
-                }
-            }
-
-            Vcells = groupSizes.Count;
-            double rowsNeeded = 0;
-            double NewVcells;
-            while (true)
-            {
-                rowsNeeded = 0;
-                // Determina o que acontece ao reduzir a largura
-                foreach (int row in groupSizes)
-                {
-                    rowsNeeded += Math.Ceiling(row / (Hcells - 1));
-                }
-
-                // se for viavel reduzir a largura, faz isso mesmo.
-                NewVcells = Convert.ToInt32(Math.Ceiling(msi.ActualHeight * (Hcells - 1) / msi.ActualWidth));
-                if (rowsNeeded <= NewVcells)
-                {
-                    Hcells--;
-                    Vcells = NewVcells;
-                }
-                else
-                {
-                    //Vcells = Math.Max(rowsNeeded, Convert.ToInt32(Math.Ceiling(msi.ActualHeight * Hcells / msi.ActualWidth)));
-                    break;
-                }
-            }
-
-
-
-            // put images in canvas
-            double imgSize = msi.ActualWidth / Hcells;
-            var x = 0.0;
-            var y = 0.0;
-            // era fixe guardar o anterior para repor
-            canvasIndex = new Dictionary<string, int>();
-
-            foreach (KeyValuePair<int, Dictionary<int, Dictionary<int, List<int>>>> years in dateCollection.Get())
-            {
-                foreach (KeyValuePair<int, Dictionary<int, List<int>>> month in years.Value)
-                {
-                    foreach (KeyValuePair<int, List<int>> day in month.Value)
-                    {
-                        foreach (int id in day.Value)
-                        {
-                            PositionImageInMSI(msi, id, x, y);
-                            //msi.SubImages[id].ViewportOrigin = new Point(-x, -y);
-                            canvasIndex.Add(x + ";" + y, id);
-                            x++;
-
-                            if (x >= Hcells)
-                            {
-                                y += 1;
-                                x = 0.0;
-                            }
-                        }
-                    }
-                    x = 0;
-                    y++;
-                }
-            }
-            double HcellsTmp = msi.ActualWidth * Vcells / msi.ActualHeight;
-            Hcells = Math.Max(Hcells, HcellsTmp);
-            msi.ViewportWidth = Hcells;
-            zoom = 1;
-            ShowAllContent();
-
-            List<KeyValuePair<string, int>> groups = new List<KeyValuePair<string, int>>();
-            for (int i = 0; i < groupNames.Count; i++)
-            {
-                groups.Add(new KeyValuePair<string, int>(groupNames[i], Convert.ToInt32(Math.Ceiling(groupSizes[i] / Hcells))));
-            }
-            makeAnAxis("Y", groups);
-            makeAnAxis("X", Hcells);
-        }
-        */
-		#endregion
 
 		private void makeAnAxis(String XorY, double n)
 		{
@@ -734,45 +528,6 @@ namespace DeepZoomView
 				}
 			}
 		}
-
-		#region Old
-		/*
-        private void orderImagesByDate() {
-			orderByGroupsHorizontally();
-			return;
-			double imgSize = msi.ActualWidth / Hcells;
-			var x = 0.0;
-			var y = 0.0;
-			// era fixe guardar o anterior para repor
-			canvasIndex = new Dictionary<string, int>();
-			foreach (KeyValuePair<int, Dictionary<int, Dictionary<int, List<int>>>> years in dateCollection.Get()) {
-				foreach (KeyValuePair<int, Dictionary<int, List<int>>> month in years.Value) {
-					TextBlock yearOverlay = new TextBlock();
-					yearOverlay.Text = years.Key.ToString() + "\n" + (new DateTime(1, month.Key, 1)).ToString("MMMM");
-					yearOverlay.Foreground = new SolidColorBrush(Colors.White);
-					yearOverlay.SetValue(Canvas.LeftProperty, x * imgSize);
-					yearOverlay.SetValue(Canvas.TopProperty, y * imgSize);
-					Overlays.Children.Add(yearOverlay);
-					x++;
-					foreach (KeyValuePair<int, List<int>> day in month.Value) {
-						foreach (int id in day.Value) {
-							PositionImageInMSI(msi, id, x, y);
-							//msi.SubImages[id].ViewportOrigin = new Point(-x, -y);
-							canvasIndex.Add(x + ";" + y, id);
-							x++;
-
-							if (x >= Hcells) {
-								y += 1;
-								x = 0.0;
-							}
-						}
-					}
-					x = 0;
-					y++;
-				}
-			}
-		}*/
-		#endregion
 
 		private void ZoomOutClick(object sender, System.Windows.RoutedEventArgs e)
 		{
@@ -1018,15 +773,6 @@ namespace DeepZoomView
 			}
 
 			NewCanvasDispositionFromUI();
-
-			//IEnumerable<int> notSelected = allImageIds.Except(selectedImagesIds);
-
-			//fadeImages(notSelected, FadeAnimation.Out);
-			//fadeImages(selectedImagesIds, FadeAnimation.In);
-			////CalculateHcellsVcells(selectedImagesIds.Count, true);
-			//selectedImagesIds.Sort();
-			//ArrangeIntoGrid(selectedImagesIds);//, Hcells, Vcells);
-			////ShowAllContent();
 		}
 
 		internal enum FadeAnimation { In, Out };
@@ -1070,9 +816,6 @@ namespace DeepZoomView
 			makeAnAxis("Y", Vcells);
 			makeAnAxis("X", Hcells);
 			*/
-
-
-			Vorganize.SelectedIndex = 0;
 		}
 
 		private void random_Click(object sender, RoutedEventArgs e)
@@ -1087,25 +830,6 @@ namespace DeepZoomView
 			}
 		}
 
-		private void Vorganize_Update()
-		{
-			if (CbItems == null)
-			{
-				CbItems = new ObservableCollection<string>();
-				Vorganize.ItemsSource = CbItems;
-			}
-			CbItems.Clear();
-			CbItems.Add("-None-");
-			CbItems.Add("Random");
-			foreach (String s in metadataCollection.GetOrganizationOptionsNames())
-			{
-				CbItems.Add(s);
-			}
-		}
-
-		private void Vorganize_DropDownOpened(object sender, EventArgs e)
-		{
-		}
 
 		private void NewCanvasDispositionFromUI()
 		{
@@ -1130,19 +854,10 @@ namespace DeepZoomView
 			{
 				return;
 			}
-			String sorting = (String)Vorganize.SelectedItem;
-			if (sorting == null) { sorting = "id"; }
+			String sorting = "id";
 
 			// Disposition (Treemap / Grid / Linear)
-			String disposition = (String)DisplayTypeCombo.SelectedItem;
-			Disposition d;
-			switch (disposition)
-			{
-				case "Groups": d = new TreeMapDisposition(); break;
-				case "Linear": d = new LinearDisposition(); break;
-				case "Grid":
-				default: d = new SequentialDisposition(); break;
-			}
+			Disposition d = new SequentialDisposition();
 
 			// Get Organizable
 			Organizable o = metadataCollection.GetOrganized(sorting);
@@ -1288,37 +1003,6 @@ namespace DeepZoomView
 			CurrentCanvas = canvas;
 		}
 
-
-		private void Vorganize_SelectionChanged(object sender, SelectionChangedEventArgs e)
-		{
-			String selected = (String)Vorganize.SelectedItem;
-			if (selected == null)
-			{
-				return;
-			}
-			else if (selected == "-None-")
-			{
-				resetDisplay();
-				CanvasHistory.Add(CanvasHistory.First());
-				CurrentCanvas = CanvasHistory.Last();
-				Overlays.Children.Remove(Overlays.Children.FirstOrDefault(x => (((String)x.GetValue(Canvas.TagProperty)) == "Group")));
-			}
-			else if (selected == "Random")
-			{
-				random_Click(null, null);
-			}
-			else
-			{
-				NewCanvasDispositionFromUI();
-
-				Vorganize.IsDropDownOpen = false;
-				GoHomeClick(null, null);
-				dontZoom = true;
-				showgroups.IsChecked = false;
-				showgroups_Click(null, null);
-			}
-		}
-
 		private void LoadMetadata(object sender, RoutedEventArgs e)
 		{
 			if (sender == null && e == null)
@@ -1326,7 +1010,6 @@ namespace DeepZoomView
 				// Loading from embeded file, for debugging
 				StreamReader stream = new StreamReader(App.GetResourceStream(new Uri("smalldb.xml", UriKind.Relative)).Stream);
 				metadataCollection.ParseXML(stream);
-				Vorganize_Update();
 				stream.Close();
 			}
 			else if (AskForMetadata()) // normal loading
@@ -1345,9 +1028,6 @@ namespace DeepZoomView
 
 			// set user options and display
 			SetVisualizationUI();
-//			Vorganize_Update();
-//			DisplayTypeCombo.SelectedIndex = 1;
-//			Vorganize.SelectedIndex = 3;
 			UpdateView();
 		}
 
@@ -1401,22 +1081,6 @@ namespace DeepZoomView
 			}
 		}
 
-
-
-		private void DisplayTypeCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
-		{
-			NewCanvasDispositionFromUI();
-			dontZoom = true;
-		}
-
-		private void DisplayTypeCombo_Loaded(object sender, RoutedEventArgs e)
-		{
-			foreach (String s in Disposition.DisplayOptions)
-			{
-				DisplayTypeCombo.Items.Add(s);
-			}
-			DisplayTypeCombo.SelectedIndex = 0;
-		}
 
 		private void Filter(String s)
 		{

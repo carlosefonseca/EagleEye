@@ -169,27 +169,6 @@ namespace DeepZoomView
 			return ListOfGroups;
 		}
 
-		/*		/// <summary>
-				/// Filters the GroupList
-				/// </summary>
-				/// <param name="subset"></param>
-				/// <returns></returns>
-				public virtual List<Group> GroupList(List<int> subset)
-				{
-					List<Group> list = new List<Group>();
-					Group newg;
-					foreach (Group g in GroupList())
-					{
-						newg = g.Filtered(subset);
-						if (newg.images.Count > 0)
-						{
-							list.Add(newg);
-						}
-					}
-					return list;
-				}
-		*/
-
 		public virtual List<KeyValuePair<string, List<int>>> GetGroups()
 		{
 			filteredData = new Dictionary<string, List<int>>();

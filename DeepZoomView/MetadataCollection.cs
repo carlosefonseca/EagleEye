@@ -50,10 +50,13 @@ namespace DeepZoomView {
 			else if (k == "Date") o = new OrganizableByDate();
 			else if (k == "Keywords") o = new OrganizableByKeyword();
 			else if (k == "Path") o = new OrganizableByPath();
-			else {
+			else if (k == "Id") { o = new Organizable(k); o.isNumber = true; o.Dispositions.Clear(); o.Dispositions.Add("Grid"); }
+			else
+			{
 				Console.WriteLine("Unknown data type: '" + k + "'. Using base 'Organizable' type.");
 				o = new Organizable(k);
-				if (type == JsonType.Number) {
+				if (type == JsonType.Number)
+				{
 					o.isNumber = true;
 				}
 			}
