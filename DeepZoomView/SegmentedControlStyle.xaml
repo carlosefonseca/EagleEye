@@ -54,8 +54,6 @@
                         </ObjectAnimationUsingKeyFrames>
                     </Storyboard>
                 </VisualState>
-                <!--The Disabled state is omitted for brevity.-->
-
             </VisualStateGroup>
 
         </VisualStateManager.VisualStateGroups>
@@ -65,7 +63,6 @@
                 <GradientStop Color="#FFF" Offset="0.1"/>
                 <GradientStop Color="#C0C0C0" Offset="0.9"/>
             </LinearGradientBrush>
-            <!--<SolidColorBrush x:Name="BackgroundBrush" Color="Gray"/>-->
         </Border.Background>
         <Border.BorderBrush>
             <SolidColorBrush x:Name="BorderBrush" Color="#555" />

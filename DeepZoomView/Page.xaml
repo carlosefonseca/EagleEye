@@ -2,10 +2,75 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" 
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" 
     xmlns:vsm="clr-namespace:System.Windows;assembly=System.Windows"
-    xmlns:controlsToolkit="clr-namespace:System.Windows.Controls;assembly=System.Windows.Controls.Toolkit"
     xmlns:my="clr-namespace:DeepZoomView.Controls"
     >
     <UserControl.Resources>
+        <ControlTemplate x:Key="ButtonTemplate">
+            <Border x:Name="RootElement" CornerRadius="5" Padding="3,3,3,3" Margin="0" BorderThickness="2" BorderBrush="#555" HorizontalAlignment="Stretch" MinWidth="50" Height="28">
+                <Border.Resources>
+                    <LinearGradientBrush x:Key="CheckedStyle" StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Color="#e0ecf5" Offset="0.1"/>
+                        <GradientStop Color="#75abd8" Offset="0.9"/>
+                    </LinearGradientBrush>
+                    <LinearGradientBrush x:Key="PressedStyle" StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Color="#e0ecf5" Offset="0.1"/>
+                        <GradientStop Color="#FFFFFF" Offset="0.9"/>
+                    </LinearGradientBrush>
+                    <LinearGradientBrush x:Key="OverStyle" StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Color="#FFFFFF" Offset="0.1"/>
+                        <GradientStop Color="#E0ECF5" Offset="0.9"/>
+                    </LinearGradientBrush>
+                </Border.Resources>
+
+                <VisualStateManager.VisualStateGroups>
+
+                    <!--Define the states for the common states.
+          The states in the VisualStateGroup are mutually exclusive to
+          each other.-->
+                    <VisualStateGroup x:Name="CommonStates">
+
+                        <!--The Normal state is the state the button is in when it is not in another state from this VisualStateGroup.-->
+                        <VisualState x:Name="Normal" />
+
+
+                        <VisualState x:Name="MouseOver">
+                            <Storyboard Duration="0">
+                                <ObjectAnimationUsingKeyFrames Duration="0" Storyboard.TargetName="RootElement" Storyboard.TargetProperty="(UIElement.Background)">
+                                    <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="{StaticResource OverStyle}"></DiscreteObjectKeyFrame>
+                                </ObjectAnimationUsingKeyFrames>
+                            </Storyboard>
+                        </VisualState>
+
+                        <VisualState x:Name="Pressed">
+                            <Storyboard Duration="0">
+                                <ObjectAnimationUsingKeyFrames Duration="0" Storyboard.TargetName="RootElement" Storyboard.TargetProperty="(UIElement.Background)">
+                                    <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="{StaticResource PressedStyle}"></DiscreteObjectKeyFrame>
+                                </ObjectAnimationUsingKeyFrames>
+                            </Storyboard>
+                        </VisualState>
+
+                        <VisualState x:Name="Checked">
+                            <Storyboard>
+                                <ObjectAnimationUsingKeyFrames Duration="0" Storyboard.TargetName="RootElement" Storyboard.TargetProperty="(UIElement.Background)">
+                                    <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="{StaticResource CheckedStyle}"></DiscreteObjectKeyFrame>
+                                </ObjectAnimationUsingKeyFrames>
+                            </Storyboard>
+                        </VisualState>
+                    </VisualStateGroup>
+
+                </VisualStateManager.VisualStateGroups>
+
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Color="#FFF" Offset="0.1"/>
+                        <GradientStop Color="#C0C0C0" Offset="0.9"/>
+                    </LinearGradientBrush>
+                </Border.Background>
+                <ContentPresenter VerticalAlignment="Bottom" HorizontalAlignment="Center" />
+            </Border>
+        </ControlTemplate>
+        
+        
         <ControlTemplate x:Key="zoomInTemplate" TargetType="Button">
             <Grid>
                 <vsm:VisualStateManager.VisualStateGroups>
@@ -239,7 +304,7 @@
 
                 <my:SegmentedControl x:Name="SegHolder" VerticalAlignment="Center" HorizontalAlignment="Center" Visibility="Collapsed" Margin="0,0,10,0"/>
 
-                <ToggleButton x:Name="showgroups" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="3" Margin="0,0,10,0" Click="showgroups_Click" Content="Two State" IsThreeState="False" Visibility="Collapsed"/>
+                <ToggleButton x:Name="showgroups" Template="{StaticResource ButtonTemplate}" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,10,0" Click="showgroups_Click" Content="Group Names" IsThreeState="False" Visibility="Collapsed"/>
                 <my:FilterBar x:Name="SearchField" AcceptsReturn="False" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="1" Margin="0,0,10,0" Width="300" Height="25"
                              VerticalContentAlignment="Center" VerticalScrollBarVisibility="Disabled" KeyDown="SearchField_KeyDown" Visibility="Collapsed"></my:FilterBar>
             </StackPanel>
