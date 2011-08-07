@@ -1123,18 +1123,24 @@ namespace DeepZoomView
 
 			// FILTERS
 			LOGIC logic = LOGIC.AND;
-			IEnumerable<String> filterbarList = SearchField.GetFilterElementsAsText;
+			IEnumerable<FilterButton> filterbarList = SearchField.FilterButtons;
 			List<int> filter = new List<int>();
 
 			bool first = true;
 
 			List<int> perSearchItem;
-			foreach (String s in filterbarList)
+			foreach (FilterButton f in filterbarList)
 			{
+				String s = f.Text;
 				perSearchItem = new List<int>();
 				perSearchItem.AddRange(IdsFromMatchedKeysFromOrganizable("Keyword", s));
 				perSearchItem.AddRange(IdsFromMatchedKeysFromOrganizable("Path", s));
 				perSearchItem = perSearchItem.Distinct().ToList();
+
+				if (perSearchItem.Count == 0)
+				{
+					f.Paint(Colors.Red);
+				}
 
 				if (first || logic == LOGIC.OR)
 				{

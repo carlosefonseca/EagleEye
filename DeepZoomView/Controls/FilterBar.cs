@@ -19,6 +19,10 @@ namespace DeepZoomView.Controls
 		private ListBox optionList = new ListBox();
 		private Run placeholderText;
 		
+
+		/// <summary>
+		/// Creates a new Filterbar
+		/// </summary>
 		public FilterBar()
 			: base()
 		{
@@ -31,6 +35,10 @@ namespace DeepZoomView.Controls
 			this.Blocks.Add(p);
 		}
 
+		/// <summary>
+		/// When the control gets focus, clears the placeholder text
+		/// </summary>
+		/// <param name="e"></param>
 		protected override void OnGotFocus(RoutedEventArgs e)
 		{
 			base.OnGotFocus(e);
@@ -38,8 +46,13 @@ namespace DeepZoomView.Controls
 			{
 				Inlines.Remove(placeholderText);
 			}
+			IsReadOnly = false;
 		}
 
+		/// <summary>
+		/// When the control gets focus, places placeholder text
+		/// </summary>
+		/// <param name="e"></param>
 		protected override void OnLostFocus(RoutedEventArgs e)
 		{
 			base.OnLostFocus(e);
@@ -47,12 +60,22 @@ namespace DeepZoomView.Controls
 			{
 				Inlines.Add(placeholderText);
 			}
+			IsReadOnly = true;
 		}
 
+		/// <summary>
+		/// Gets the paragraph inlines (Runs, buttons...)
+		/// </summary>
 		private InlineCollection Inlines { get { return ((Paragraph)this.Blocks.First()).Inlines; } }
 
-		private IEnumerable<FilterButton> FilterButtons { get { return Inlines.Where(i => i.GetType() == typeof(InlineUIContainer)).Select(i => ((InlineUIContainer)i).Child).Cast<FilterButton>(); } }
+		/// <summary>
+		/// Gets all buttons in the filter bar. Text not transformed into button is not included.
+		/// </summary>
+		public IEnumerable<FilterButton> FilterButtons { get { return Inlines.Where(i => i.GetType() == typeof(InlineUIContainer)).Select(i => ((InlineUIContainer)i).Child).Cast<FilterButton>(); } }
 
+		/// <summary>
+		/// Gets the text of the buttons in the filter bar. Text not transformed into button is not included.
+		/// </summary>
 		public List<String> GetFilterElementsAsText
 		{
 			get
@@ -66,6 +89,10 @@ namespace DeepZoomView.Controls
 			}
 		}
 
+		/// <summary>
+		/// Handles key presses
+		/// </summary>
+		/// <param name="e">The key pressed</param>
 		protected override void OnKeyDown(KeyEventArgs e)
 		{
 			base.OnKeyDown(e);
@@ -111,27 +138,25 @@ namespace DeepZoomView.Controls
 				theParagraph.Inlines.Insert(index, uic);
 				//theParagraph.Inlines.Add(uic);
 			}
-			else
-			{
-				/*				Paragraph theParagraph = ((Paragraph)this.Blocks.First());
-								IEnumerable<Inline> runs = theParagraph.Inlines.Where(i => i.GetType() == typeof(Run));
-								Run txt = (Run)(runs.Last());
-								txt.SetValue(TextBlock.PaddingProperty, new Thickness(5));
-					*/
-			}
 		}
 
+		public void PaintButtonRed(String t)
+		{
+			FilterButtons.First(b => t.Equals((String)b.Content)).Paint(Colors.Red);
+		}
+	} // FilterBar
 
-	}
 
-
-
+	/// <summary>
+	/// The buttons used inside the Filter Bar
+	/// </summary>
 	public class FilterButton : Button
 	{
 		public enum FilterType { Text, Keyword, Path, Date, Color }
 
 		public FilterType type = FilterType.Text;
 		public String text;
+		public String tooltip = "Test";
 
 		const String sb =
 			"<ControlTemplate xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation' " +
@@ -139,11 +164,16 @@ namespace DeepZoomView.Controls
 				"xmlns:data='clr-namespace:System.Windows.Controls;assembly=System.Windows.Controls.Data' " +
 				"xmlns:mc='http://schemas.openxmlformats.org/markup-compatibility/2006' " +
 				"TargetType='Button' >" +
-				"<Border x:Name=\"Border\" Background=\"Silver\" CornerRadius=\"7\" Padding=\"3,0,3,0\" Margin=\"1,0,0,1\">" +
+				"<Border x:Name=\"Border\" Background=\"{TemplateBinding Background}\" CornerRadius=\"7\" Padding=\"3,0,3,0\" Margin=\"1,0,0,1\" "+
+														 "ToolTipService.ToolTip=\"ToolTip to the left.\"  ToolTipService.Placement=\"Mouse\" >" +
 					"<ContentPresenter VerticalAlignment=\"Bottom\" HorizontalAlignment=\"Center\" />" +
 				"</Border>" +
 			"</ControlTemplate>";
 
+		/// <summary>
+		/// Creates a button with the included text
+		/// </summary>
+		/// <param name="txt">The text to include in the button</param>
 		public FilterButton(String txt)
 			: base()
 		{
@@ -151,6 +181,29 @@ namespace DeepZoomView.Controls
 			text = txt;
 			ControlTemplate ct = (ControlTemplate)XamlReader.Load(sb);
 			Template = ct;
+			Paint();
+		}
+
+		/// <summary>
+		/// Gets the text of the button
+		/// </summary>
+		public String Text { get { return (String)Content; } }
+
+		/// <summary>
+		/// Paint the button with a color.
+		/// </summary>
+		/// <param name="c">The color to paint the button with.</param>
+		public void Paint(Color c)
+		{
+			this.Background = new SolidColorBrush(c);
+		}
+
+		/// <summary>
+		/// Paint the button with the default color.
+		/// </summary>
+		public void Paint()
+		{
+			this.Background = new SolidColorBrush(Color.FromArgb(255, 0xC0, 0xC0, 0xC0));
 		}
 	}
 }
