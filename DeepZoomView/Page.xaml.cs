@@ -54,7 +54,7 @@ namespace DeepZoomView
 
 		private Dictionary<String, DisplaySetting> DisplaySettings = new Dictionary<string, DisplaySetting>();
 		public static Dictionary<String, Type> DisplayOptions = new Dictionary<string, Type>();
-
+		private DisplaySetting currentDisplay = null;
 
 		public Double ZoomFactor
 		{
@@ -283,7 +283,6 @@ namespace DeepZoomView
 			DisplayOptions.Add("Grid", typeof(SequentialDisposition));
 			DisplayOptions.Add("Group", typeof(TreeMapDisposition));
 			DisplayOptions.Add("Linear", typeof(LinearDisposition));
-			//Vorganize_Update();
 		}
 
 		private void HideTooltip()
@@ -325,7 +324,7 @@ namespace DeepZoomView
 
 		void Content_Resized(object sender, EventArgs e)
 		{
-
+			UpdateView();
 		}
 
 		private void showOverlay()
@@ -1380,11 +1379,10 @@ namespace DeepZoomView
 			SegHolder.OnChangeSelected += VizChangedHandler;
 			if (DisplaySettings.ContainsKey("Date")) {
 				SegHolder.Selected = "Date";
+				UpdateView(DisplaySettings["Date"]);
 			} else {
 				SegHolder.Selected = DisplaySettings.Keys.First();
-
-				//////////////////////////// selecciona-o mas não muda o display
-				////////////////////////////////////////////////////////
+				UpdateView(DisplaySettings.First().Value);
 			}
 		}
 
@@ -1443,37 +1441,22 @@ namespace DeepZoomView
 
 		private void UpdateView()
 		{
-			LOGIC logic = LOGIC.AND;
-			IEnumerable<String> filterbarList = SearchField.GetFilterElementsAsText;
-			List<int> filter = new List<int>();
-
-			bool first = true;
-
-			List<int> perSearchItem;
-			foreach (String s in filterbarList)
+			if (currentDisplay == null)
 			{
-				perSearchItem = new List<int>();
-				perSearchItem.AddRange(IdsFromMatchedKeysFromOrganizable("Keyword", s));
-				perSearchItem.AddRange(IdsFromMatchedKeysFromOrganizable("Path", s));
-				perSearchItem = perSearchItem.Distinct().ToList();
-
-				if (first || logic == LOGIC.OR)
-				{
-					filter.AddRange(perSearchItem);
-				}
-				else if (logic == LOGIC.AND)
-				{
-					filter = filter.Intersect(perSearchItem).ToList();
-				}
-				first = false;
+				NewCanvasDispositionFromUI();
 			}
-
-			NewCanvasDispositionFromUI(filter.Distinct());
+			else
+			{
+				UpdateView(currentDisplay);
+			}
+			return;
 		}
 
 
 		private void UpdateView(DisplaySetting displaySetting)
 		{
+			currentDisplay = displaySetting;
+
 			// FILTERS
 			LOGIC logic = LOGIC.AND;
 			IEnumerable<String> filterbarList = SearchField.GetFilterElementsAsText;
