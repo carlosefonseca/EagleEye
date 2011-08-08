@@ -24,7 +24,7 @@ namespace DeepZoomView {
 		}
 
 		public override void Add(int k, string p) {
-			String dir = Path.GetFullPath(p);
+			String dir = Path.GetDirectoryName(p);
 
 			if (!data.ContainsKey(dir)) {
 				data.Add(dir, new List<int>());

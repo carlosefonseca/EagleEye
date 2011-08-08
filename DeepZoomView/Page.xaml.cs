@@ -294,7 +294,7 @@ namespace DeepZoomView
 		private void MakeTooltipText(int index)
 		{
 			String tooltipTxt = "";
-			foreach (String oName in metadataCollection.GetOrganizables())
+			foreach (String oName in metadataCollection.GetAllOrganizablesNames())
 			{
 				Organizable o = metadataCollection.GetOrganized(oName);
 				if (o.ContainsId(index))
@@ -1028,11 +1028,30 @@ namespace DeepZoomView
 
 			// set user options and display
 			SetVisualizationUI();
+
+			// Set the autocomplete stuff for the filter bar
+			SearchField.AutoCompleteElement = SearchFieldAutocomplete;
+			SearchField.OnTextInsertion += new EvHandler(SearchField_OnTextInsertion);
+
 			UpdateView();
+		}
+
+		void SearchField_OnTextInsertion(object sender, MyEventArgs e)
+		{
+			CalculateAndSetSearchFieldAutocompleteOptions(e.active);
+		}
+
+		private void CalculateAndSetSearchFieldAutocompleteOptions(string p)
+		{
+			SearchField.AutocompleteOptions.Clear();
+			IEnumerable<AutocompleteOption> cena = metadataCollection.GetAllOrganizables.SelectMany(o => o.RelatedKeys(p));
+			SearchField.AutocompleteOptions.Clear();
+			cena.ToList().ForEach(a => SearchField.AutocompleteOptions.Add(a));
 		}
 
 		private void SetVisualizationUI()
 		{
+			// Set the visualization options and respective buttons
 			IEnumerable<Organizable> options = metadataCollection.GetOrganizationOptions();
 			foreach (Organizable o in options)
 			{
@@ -1049,19 +1068,21 @@ namespace DeepZoomView
 						{
 							name += String.Format(" ({0})", d);
 						}
-
 						DisplaySettings.Add(name, new DisplaySetting(name, o, DisplayOptions[d]));
 					}
 				}
 			}
 
-			SegHolder.SetButtons(DisplaySettings.Keys.ToList());
-			SegHolder.OnChangeSelected += VizChangedHandler;
-			if (DisplaySettings.ContainsKey("Date")) {
-				SegHolder.Selected = "Date";
+			DisplayOptionsButtons.SetButtons(DisplaySettings.Keys.ToList());
+			DisplayOptionsButtons.OnChangeSelected += VizChangedHandler;
+			if (DisplaySettings.ContainsKey("Date"))
+			{
+				DisplayOptionsButtons.Selected = "Date";
 				UpdateView(DisplaySettings["Date"]);
-			} else {
-				SegHolder.Selected = DisplaySettings.Keys.First();
+			}
+			else
+			{
+				DisplayOptionsButtons.Selected = DisplaySettings.Keys.First();
 				UpdateView(DisplaySettings.First().Value);
 			}
 		}
@@ -1116,7 +1137,11 @@ namespace DeepZoomView
 			return;
 		}
 
-
+		/// <summary>
+		/// Updates the image layout using a display settings object.
+		/// Does all the filtering and sends it to be displayed.
+		/// </summary>
+		/// <param name="displaySetting"></param>
 		private void UpdateView(DisplaySetting displaySetting)
 		{
 			currentDisplay = displaySetting;
@@ -1156,6 +1181,12 @@ namespace DeepZoomView
 			NewCanvasDispositionFromUI(displaySetting, filter.Distinct());
 		}
 
+		/// <summary>
+		/// Gathers the image ids from the specified Organizable instance that match the specified string
+		/// </summary>
+		/// <param name="organizable"></param>
+		/// <param name="s"></param>
+		/// <returns></returns>
 		private IEnumerable<int> IdsFromMatchedKeysFromOrganizable(String organizable, String s)
 		{
 			if (metadataCollection.ContainsOrganizable(organizable))

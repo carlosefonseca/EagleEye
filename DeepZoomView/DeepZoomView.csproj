@@ -78,6 +78,7 @@
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Controls\FilterBarWithSuggestions.cs" />
     <Compile Include="Controls\SegmentedControl.cs" />
     <Content Include="SegmentedControlStyle.xaml">
       <SubType>Designer</SubType>

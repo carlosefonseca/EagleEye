@@ -11,6 +11,7 @@ using System.Windows.Shapes;
 using System.Collections.Generic;
 using System.Linq;
 using DeepZoomView.EECanvas;
+using DeepZoomView.Controls;
 
 namespace DeepZoomView
 {
@@ -284,6 +285,28 @@ namespace DeepZoomView
 			filteredData = null;
 			filteredIds = null;
 			filteredListOfGroups = null;
+		}
+
+		internal virtual IEnumerable<AutocompleteOption> RelatedKeys(String k)
+		{
+			if (this.isNumber)
+			{
+				int n;
+				try
+				{
+					n = Convert.ToInt32(k);
+					return new List<AutocompleteOption>() { new AutocompleteOption(n.ToString(), this.Name + ": " + n, this) };
+				}
+				catch (FormatException)
+				{
+					return new List<AutocompleteOption>();
+				}
+			}
+			else
+			{
+				String[] aaa = data.Keys.Where(s => s.IndexOf(k, StringComparison.InvariantCultureIgnoreCase) != -1).ToArray();
+				return data.Keys.Where(s => s.IndexOf(k, StringComparison.InvariantCultureIgnoreCase) != -1).Select(s => new AutocompleteOption(s, this.Name + ": " + s, this));
+			}
 		}
 	}
 }

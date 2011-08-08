@@ -11,6 +11,9 @@ using System.Windows.Shapes;
 using System.Collections.Generic;
 using System.Linq;
 using DeepZoomView.EECanvas;
+using System.Globalization;
+using System.Text.RegularExpressions;
+using DeepZoomView.Controls;
 
 namespace DeepZoomView
 {
@@ -170,9 +173,7 @@ namespace DeepZoomView
 			dataWithStacks = new Dictionary<DateTime, List<int>>(data);
 
 			IEnumerable<int> stackItems = stacks.SelectMany(kv => kv.Value);
-			invertedDataWithStacks = invertedData.Keys.Except(stackItems).Join(invertedData, i => i, i => i.Key, (a, b) => new KeyValuePair<int, DateTime>(a, b.Value)).ToDictionary(k=>k.Key,k=>k.Value);
-
-			//invertedDataWithStacks = invertedData.SkipWhile(kv => stackItems.Contains(kv.Key)).ToDictionary(n => n.Key, n => n.Value);
+			invertedDataWithStacks = invertedData.Where(kv => !stackItems.Contains(kv.Key)).ToDictionary(k => k.Key, k => k.Value);
 
 			foreach (KeyValuePair<int, List<int>> stack in stacks)
 			{
@@ -182,6 +183,46 @@ namespace DeepZoomView
 				dataWithStacks[groupKey] = dataWithStacks[groupKey].Except(stack.Value).ToList();
 				invertedDataWithStacks.Add(stack.Key, groupKey);
 			}
+		}
+
+
+		internal virtual IEnumerable<AutocompleteOption> RelatedKeys(String k)
+		{
+			List<AutocompleteOption> list = new List<AutocompleteOption>();
+
+			DateTimeFormatInfo date = new CultureInfo("en-US").DateTimeFormat;
+			list.Concat(date.AbbreviatedMonthGenitiveNames.Where(s => s.Contains(k)).Select(s => new AutocompleteOption(s, "Taken in "+s, null, this)));
+
+			list.Concat(new List<String>() { "Winter", "Spring", "Summer", "Autum" }.Where(s => s.Contains(k)).Select(s => new AutocompleteOption(s, "Taken during "+s, null, this)));
+
+			try
+			{
+				DateTime d = DateTime.Parse(k);
+				list.Concat(data.Keys.Where(dt => dt.Date.CompareTo(d.Date) == 0).Select(dd => new AutocompleteOption(dd.ToShortDateString(), "Taken in "+dd.ToShortDateString(), null, this)));
+			}
+			catch { }
+
+
+			try
+			{
+				Match m;
+				if (new Regex(@"^\d{4}$").IsMatch(k))
+				{
+					list.Add(new AutocompleteOption(k, "Year " + k, this));
+				}
+				else
+				{
+					m = new Regex(@"^(\d{4})[-/.](\d{2})$").Match(k);
+					if (m.Success)
+					{
+						String ym = new DateTime(Convert.ToInt32(m.Groups[1]), Convert.ToInt32(m.Groups[2]), 1).ToString(date.YearMonthPattern);
+						list.Add(new AutocompleteOption(k, ym, this));
+					}
+				}
+			}
+			catch { }
+
+			return list;
 		}
 	}
 }

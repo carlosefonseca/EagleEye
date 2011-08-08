@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Collections;
 using System.Linq;
 using ColorUtils;
+using DeepZoomView.Controls;
 
 namespace DeepZoomView
 {
@@ -248,6 +249,15 @@ namespace DeepZoomView
 		public override Boolean ContainsId(int k)
 		{
 			return invertedData.ContainsKey(k);
+		}
+
+		internal virtual IEnumerable<AutocompleteOption> RelatedKeys(String k)
+		{
+			List<AutocompleteOption> list = new List<AutocompleteOption>();
+
+			list.Concat(typeof(System.Windows.Media.Colors).GetProperties(System.Reflection.BindingFlags.Static).Where(p => p.Name.Contains(k)).Select(p => new AutocompleteOption(p.Name, "Mean color is "+p.Name, this)));
+
+			return list.Concat( data.Keys.Where(s => s.ToString().Contains(k)).Select(s => new AutocompleteOption(s.ToString(), this)) );
 		}
 	}
 }
