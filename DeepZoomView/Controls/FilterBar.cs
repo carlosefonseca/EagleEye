@@ -21,7 +21,7 @@ namespace DeepZoomView.Controls
 		private Run placeholderText;
 		public event EvHandler OnTextInsertion;
 		private ObservableCollection<AutocompleteOption> acOptions = new ObservableCollection<AutocompleteOption>();
-			//IEnumerable<AutocompleteOption> acOptions = new List<AutocompleteOption>();
+		//IEnumerable<AutocompleteOption> acOptions = new List<AutocompleteOption>();
 
 
 		public ObservableCollection<AutocompleteOption> AutocompleteOptions
@@ -159,25 +159,36 @@ namespace DeepZoomView.Controls
 				}
 
 				IEnumerable<Inline> runs = this.Inlines.Where(i => i.GetType() == typeof(Run));
-
 				Run txt = (Run)(runs.Last());
 
 				InlineUIContainer uic = new InlineUIContainer();
-				uic.Child = new FilterButton(txt.Text);
 
+				if (optionList.SelectedIndex != -1)
+				{
+					uic.Child = new FilterButton(((AutocompleteOption)optionList.SelectedItem).DisplayName);
+				}
+				else
+				{
+					uic.Child = new FilterButton(txt.Text);
+				}
 				int index = Inlines.IndexOf(txt);
-				/*Inlines.RemoveAt(index);
-				Inlines.Insert(index, uic);*/
-				//theParagraph.Inlines.Add(uic);
+				Inlines.RemoveAt(index);
+				Inlines.Insert(index, uic);
 				optionList.Visibility = System.Windows.Visibility.Collapsed;
 			}
 			else if (e.Key == Key.Down)
 			{
-				optionList.SelectedIndex = (optionList.SelectedIndex + 1) % optionList.Items.Count;
+				if (optionList.SelectedIndex + 1 < optionList.Items.Count())
+				{
+					optionList.SelectedIndex++;
+				}
 			}
 			else if (e.Key == Key.Up)
 			{
-				optionList.SelectedIndex = (optionList.SelectedIndex - 1 + optionList.Items.Count) % optionList.Items.Count;
+				if (optionList.SelectedIndex > -1)
+				{
+					optionList.SelectedIndex--;
+				}
 			}
 			else
 			{
@@ -267,8 +278,8 @@ namespace DeepZoomView.Controls
 				"xmlns:data='clr-namespace:System.Windows.Controls;assembly=System.Windows.Controls.Data' " +
 				"xmlns:mc='http://schemas.openxmlformats.org/markup-compatibility/2006' " +
 				"TargetType='Button' >" +
-				"<Border x:Name=\"Border\" Background=\"{TemplateBinding Background}\" CornerRadius=\"7\" Padding=\"3,0,3,0\" Margin=\"1,0,0,1\" " +
-														 "ToolTipService.ToolTip=\"{TemplateBinding tooltip}\"  ToolTipService.Placement=\"Mouse\" >" +
+				"<Border x:Name=\"Border\" Background=\"{{TemplateBinding Background}}\" CornerRadius=\"7\" Padding=\"3,0,3,0\" Margin=\"1,0,0,1\" " +
+														 "ToolTipService.ToolTip=\"{0}\"  ToolTipService.Placement=\"Mouse\" >" +
 					"<ContentPresenter VerticalAlignment=\"Bottom\" HorizontalAlignment=\"Center\" />" +
 				"</Border>" +
 			"</ControlTemplate>";
@@ -282,7 +293,7 @@ namespace DeepZoomView.Controls
 		{
 			Content = txt;
 			text = txt;
-			ControlTemplate ct = (ControlTemplate)XamlReader.Load(sb);
+			ControlTemplate ct = (ControlTemplate)XamlReader.Load(String.Format(sb, "Tooltip placeholder for " + txt));
 			Template = ct;
 			Paint();
 		}
