@@ -79,9 +79,15 @@ namespace DeepZoomView
 		/// Parses JSON data from the Tag field from inside the collection.xml file
 		/// </summary>
 		/// <param name="stream">The file contents of collection.xml</param>
-		internal void ParseXML(System.IO.StreamReader stream)
+		internal void ParseXML(System.IO.StreamReader stream, int msiSize)
 		{
 			XElement xml = XElement.Load(stream);
+
+			if (xml.Elements().First().Elements().Count() != msiSize)
+			{
+				System.Windows.Browser.HtmlPage.Window.Alert("Warning: XML file and the loaded images don't match. Please check if this is the correct file. Loading will continue though...");
+			}
+
 			foreach (XElement a in xml.Elements().First().Elements())
 			{
 				int id = int.Parse(a.Attribute("Id").Value);

@@ -445,7 +445,7 @@ namespace DeepZoomView
 			foreach (FileInfo file in ofd.Files)
 			{
 				StreamReader stream = file.OpenText();
-				metadataCollection.ParseXML(stream);
+				metadataCollection.ParseXML(stream, msi.SubImages.Count);
 				stream.Close();
 			}
 			if (failed.Count == 1)
@@ -1009,7 +1009,7 @@ namespace DeepZoomView
 			{
 				// Loading from embeded file, for debugging
 				StreamReader stream = new StreamReader(App.GetResourceStream(new Uri("smalldb.xml", UriKind.Relative)).Stream);
-				metadataCollection.ParseXML(stream);
+				metadataCollection.ParseXML(stream, msi.SubImages.Count);
 				stream.Close();
 			}
 			else if (AskForMetadata()) // normal loading
@@ -1110,7 +1110,7 @@ namespace DeepZoomView
 
 		private void AppStartDebug()
 		{
-			LoadMetadata(null, null);
+			//LoadMetadata(null, null);
 		}
 
 
