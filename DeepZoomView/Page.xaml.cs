@@ -23,6 +23,7 @@ using DeepZoomView.EECanvas;
 using DeepZoomView.EECanvas.Dispositions;
 using System.Windows.Markup;
 using DeepZoomView.Controls;
+using System.Windows.Controls.Primitives;
 
 namespace DeepZoomView
 {
@@ -55,6 +56,11 @@ namespace DeepZoomView
 		private Dictionary<String, DisplaySetting> DisplaySettings = new Dictionary<string, DisplaySetting>();
 		public static Dictionary<String, Type> DisplayOptions = new Dictionary<string, Type>();
 		private DisplaySetting currentDisplay = null;
+
+		enum MouseMode { Navigate, ImageSelect, GroupSelect }
+		MouseMode mouseMode;
+
+
 
 		public Double ZoomFactor
 		{
@@ -622,9 +628,6 @@ namespace DeepZoomView
 		}
 
 
-
-
-
 		private List<int> RandomizedListOfImages(List<int> idList)
 		{
 			Random ranNum = new Random();
@@ -1033,7 +1036,19 @@ namespace DeepZoomView
 			SearchField.AutoCompleteElement = SearchFieldAutocomplete;
 			SearchField.OnTextInsertion += new EvHandler(SearchField_OnTextInsertion);
 
+			selectionsButton.SelectionHandler += new EvHandler(selectionsButton_SelectionHandler);
+
 			UpdateView();
+		}
+
+		void selectionsButton_SelectionHandler(object sender, MyEventArgs e)
+		{
+			if (e.active.EndsWith("images")) {
+				selectionsButton.SetActive("Select Images (click to stop)");
+
+			} else if (e.active.EndsWith("groups")){
+				selectionsButton.SetActive("Select Groups (click to stop)");
+			}
 		}
 
 		void SearchField_OnTextInsertion(object sender, MyEventArgs e)

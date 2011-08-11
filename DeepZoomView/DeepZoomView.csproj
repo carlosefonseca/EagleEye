@@ -80,9 +80,16 @@
     </Compile>
     <Compile Include="Controls\FilterBarWithSuggestions.cs" />
     <Compile Include="Controls\SegmentedControl.cs" />
+    <Page Include="Controls\SelectionChooser.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Content Include="SegmentedControlStyle.xaml">
       <SubType>Designer</SubType>
     </Content>
+    <Compile Include="Controls\SelectionChooser.xaml.cs">
+      <DependentUpon>SelectionChooser.xaml</DependentUpon>
+    </Compile>
     <Compile Include="DisplaySetting.cs" />
     <Compile Include="EECanvas\Disposition\LinearDisposition.cs" />
     <Compile Include="EECanvas\Disposition\NotEnoughSpaceException.cs" />

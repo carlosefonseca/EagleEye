@@ -24,14 +24,11 @@
 
                 <VisualStateManager.VisualStateGroups>
 
-                    <!--Define the states for the common states.
-          The states in the VisualStateGroup are mutually exclusive to
-          each other.-->
+                    <!--Define the states for the common states. The states in the VisualStateGroup are mutually exclusive to each other.-->
                     <VisualStateGroup x:Name="CommonStates">
 
                         <!--The Normal state is the state the button is in when it is not in another state from this VisualStateGroup.-->
                         <VisualState x:Name="Normal" />
-
 
                         <VisualState x:Name="MouseOver">
                             <Storyboard Duration="0">
@@ -69,8 +66,8 @@
                 <ContentPresenter VerticalAlignment="Bottom" HorizontalAlignment="Center" />
             </Border>
         </ControlTemplate>
-        
-        
+
+
         <ControlTemplate x:Key="zoomInTemplate" TargetType="Button">
             <Grid>
                 <vsm:VisualStateManager.VisualStateGroups>
@@ -287,7 +284,7 @@
         </vsm:VisualStateManager.VisualStateGroups>
 
         <ListBox x:Name="SearchFieldAutocomplete" Visibility="Collapsed" />
-        
+
         <Grid Name="RootGrid">
             <Grid.RowDefinitions>
                 <RowDefinition Height="50"></RowDefinition>
@@ -301,6 +298,10 @@
 
             <Canvas Grid.Column="0" Grid.Row="0" Grid.ColumnSpan="2" Background="Black" Canvas.ZIndex="100"></Canvas>
 
+
+
+
+            <!-- TOOL BAR -->
             <StackPanel Grid.Column="0" Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Center" Canvas.ZIndex="1000">
                 <Button x:Name="load" Content="Load Metadata" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="7" Margin="0,0,10,0" Click="LoadMetadata"></Button>
 
@@ -309,7 +310,14 @@
                 <ToggleButton x:Name="showgroups" Template="{StaticResource ButtonTemplate}" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,10,0" Click="showgroups_Click" Content="Group Names" IsThreeState="False" Visibility="Collapsed"/>
                 <my:FilterBar x:Name="SearchField" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,10,0" Width="300"
                             KeyDown="SearchField_KeyDown" Visibility="Collapsed"></my:FilterBar>
+
+
+                <my:SelectionChooser x:Name="selectionsButton" Visibility="Collapsed" VerticalAlignment="Center" Margin="0,0,10,0" />
             </StackPanel>
+
+
+
+
 
             <MultiScaleImage x:Name="msi" Grid.Row="1" Grid.Column="1" Source="C:/SmallDB/collection.xml" Canvas.ZIndex="0"/>
 

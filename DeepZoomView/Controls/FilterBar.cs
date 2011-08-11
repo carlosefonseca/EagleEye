@@ -15,6 +15,7 @@ using System.Collections.ObjectModel;
 
 namespace DeepZoomView.Controls
 {
+	// it was a good idea to change the listbox to use the POPUP class instead of a canvas on the doc root...
 	public class FilterBar : RichTextBox
 	{
 		private ListBox optionList;
@@ -158,23 +159,7 @@ namespace DeepZoomView.Controls
 					return;
 				}
 
-				IEnumerable<Inline> runs = this.Inlines.Where(i => i.GetType() == typeof(Run));
-				Run txt = (Run)(runs.Last());
-
-				InlineUIContainer uic = new InlineUIContainer();
-
-				if (optionList.SelectedIndex != -1)
-				{
-					uic.Child = new FilterButton(((AutocompleteOption)optionList.SelectedItem).DisplayName);
-				}
-				else
-				{
-					uic.Child = new FilterButton(txt.Text);
-				}
-				int index = Inlines.IndexOf(txt);
-				Inlines.RemoveAt(index);
-				Inlines.Insert(index, uic);
-				optionList.Visibility = System.Windows.Visibility.Collapsed;
+				CreateAndAddNewFilterButton();
 			}
 			else if (e.Key == Key.Down)
 			{
@@ -191,14 +176,12 @@ namespace DeepZoomView.Controls
 				}
 			}
 			else
-			{
+			{	// This should be on a text changed event
 				IEnumerable<Inline> runs = Inlines.Where(i => i.GetType() == typeof(Run));
 				if (runs.Count() > 0)
 				{
 					Run txt = (Run)(runs.Last());
 					OnTextInsertion(this, new MyEventArgs(txt.Text));
-
-					//acOptions.Add(new AutocompleteOption(txt.Text));
 
 					if (optionList.Visibility == System.Windows.Visibility.Collapsed)
 					{
@@ -213,6 +196,27 @@ namespace DeepZoomView.Controls
 					optionList.Visibility = System.Windows.Visibility.Collapsed;
 				}
 			}
+		}
+
+		private void CreateAndAddNewFilterButton()
+		{
+			IEnumerable<Inline> runs = this.Inlines.Where(i => i.GetType() == typeof(Run));
+			Run txt = (Run)(runs.Last());
+
+			InlineUIContainer uic = new InlineUIContainer();
+
+			if (optionList.SelectedIndex != -1)
+			{
+				uic.Child = new FilterButton(((AutocompleteOption)optionList.SelectedItem).DisplayName);
+			}
+			else
+			{
+				uic.Child = new FilterButton(txt.Text);
+			}
+			int index = Inlines.IndexOf(txt);
+			Inlines.RemoveAt(index);
+			Inlines.Insert(index, uic);
+			optionList.Visibility = System.Windows.Visibility.Collapsed;
 		}
 
 		public void PaintButtonRed(String t)

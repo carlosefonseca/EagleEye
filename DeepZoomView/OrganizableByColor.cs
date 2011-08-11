@@ -183,7 +183,7 @@ namespace DeepZoomView
 
 			List<int> sortedKeys = groups.Keys.ToList<int>();
 			sortedKeys.Sort();
-			HslColor cccc = new HslColor();
+			HslColor hslcolor = new HslColor();
 
 			foreach (int c in sortedKeys)
 			{
@@ -191,19 +191,19 @@ namespace DeepZoomView
 				{
 					switch (c)
 					{
-						case WHITE: cccc.L = 1; break;
-						case GREY: cccc.L = 0.5; break;
-						case BLACK: cccc.L = 0; break;
+						case WHITE: hslcolor.L = 1; break;
+						case GREY: hslcolor.L = 0.5; break;
+						case BLACK: hslcolor.L = 0; break;
 					}
-					cccc.S = 0;
+					hslcolor.S = 0;
 				}
 				else
 				{
-					cccc.H = c;
-					cccc.S = 1;
-					cccc.L = 0.5;
+					hslcolor.H = c;
+					hslcolor.S = 1;
+					hslcolor.L = 0.5;
 				}
-				Color color = cccc.ToColor();
+				Color color = hslcolor.ToColor();
 				String s = String.Format("#{0} {1} {2}", color.R, color.G, color.B);
 				groupsOut.Add(new KeyValuePair<String, List<int>>(s, groups[c]));
 			}

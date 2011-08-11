@@ -1,0 +1,87 @@
+﻿<UserControl x:Class="DeepZoomView.Controls.SelectionChooser"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    d:DesignHeight="300" d:DesignWidth="400">
+    <UserControl.Resources>
+        <ControlTemplate x:Key="ButtonTemplate">
+            <Border x:Name="RootElement" CornerRadius="5" Padding="3,3,3,3" Margin="0" BorderThickness="2" BorderBrush="#555" HorizontalAlignment="Stretch" MinWidth="50" Height="28">
+                <Border.Resources>
+                    <LinearGradientBrush x:Key="CheckedStyle" StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Color="#e0ecf5" Offset="0.1"/>
+                        <GradientStop Color="#75abd8" Offset="0.9"/>
+                    </LinearGradientBrush>
+                    <LinearGradientBrush x:Key="PressedStyle" StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Color="#e0ecf5" Offset="0.1"/>
+                        <GradientStop Color="#FFFFFF" Offset="0.9"/>
+                    </LinearGradientBrush>
+                    <LinearGradientBrush x:Key="OverStyle" StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Color="#FFFFFF" Offset="0.1"/>
+                        <GradientStop Color="#E0ECF5" Offset="0.9"/>
+                    </LinearGradientBrush>
+                </Border.Resources>
+
+                <VisualStateManager.VisualStateGroups>
+
+                    <!--Define the states for the common states. The states in the VisualStateGroup are mutually exclusive to each other.-->
+                    <VisualStateGroup x:Name="CommonStates">
+
+                        <!--The Normal state is the state the button is in when it is not in another state from this VisualStateGroup.-->
+                        <VisualState x:Name="Normal" />
+
+                        <VisualState x:Name="MouseOver">
+                            <Storyboard Duration="0">
+                                <ObjectAnimationUsingKeyFrames Duration="0" Storyboard.TargetName="RootElement" Storyboard.TargetProperty="(UIElement.Background)">
+                                    <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="{StaticResource OverStyle}"></DiscreteObjectKeyFrame>
+                                </ObjectAnimationUsingKeyFrames>
+                            </Storyboard>
+                        </VisualState>
+
+                        <VisualState x:Name="Pressed">
+                            <Storyboard Duration="0">
+                                <ObjectAnimationUsingKeyFrames Duration="0" Storyboard.TargetName="RootElement" Storyboard.TargetProperty="(UIElement.Background)">
+                                    <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="{StaticResource PressedStyle}"></DiscreteObjectKeyFrame>
+                                </ObjectAnimationUsingKeyFrames>
+                            </Storyboard>
+                        </VisualState>
+
+                        <VisualState x:Name="Checked">
+                            <Storyboard>
+                                <ObjectAnimationUsingKeyFrames Duration="0" Storyboard.TargetName="RootElement" Storyboard.TargetProperty="(UIElement.Background)">
+                                    <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="{StaticResource CheckedStyle}"></DiscreteObjectKeyFrame>
+                                </ObjectAnimationUsingKeyFrames>
+                            </Storyboard>
+                        </VisualState>
+                    </VisualStateGroup>
+
+                </VisualStateManager.VisualStateGroups>
+
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Color="#FFF" Offset="0.1"/>
+                        <GradientStop Color="#C0C0C0" Offset="0.9"/>
+                    </LinearGradientBrush>
+                </Border.Background>
+                <ContentPresenter VerticalAlignment="Bottom" HorizontalAlignment="Center" />
+            </Border>
+        </ControlTemplate>
+    </UserControl.Resources>
+
+    <StackPanel x:Name="LayoutRoot">
+        <ToggleButton x:Name="button" Click="showPopup_Click" Content="Select images" Template="{StaticResource ButtonTemplate}" IsThreeState="False" />
+        <Popup x:Name="popup">
+            <Popup.Child>
+                <ListBox x:Name="popuplist" SelectionChanged="popuplist_SelectionChanged">
+                    <ListBox.Items>
+                        <ListBoxItem Content="Select images"></ListBoxItem>
+                        <ListBoxItem Content="Select groups"></ListBoxItem>
+                    </ListBox.Items>
+                </ListBox>
+            </Popup.Child>
+        </Popup>
+    </StackPanel>
+
+
+</UserControl>
