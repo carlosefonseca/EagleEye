@@ -303,14 +303,19 @@
 
             <!-- TOOL BAR -->
             <StackPanel Grid.Column="0" Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Center" Canvas.ZIndex="1000">
+                <TextBlock Text="Display:" Foreground="White" VerticalAlignment="Center" Margin="0,0,10,0"></TextBlock>
                 <Button x:Name="load" Content="Load Metadata" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="7" Margin="0,0,10,0" Click="LoadMetadata"></Button>
 
                 <my:SegmentedControl x:Name="DisplayOptionsButtons" VerticalAlignment="Center" HorizontalAlignment="Center" Visibility="Collapsed" Margin="0,0,10,0"/>
 
-                <ToggleButton x:Name="showgroups" Template="{StaticResource ButtonTemplate}" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,10,0" Click="showgroups_Click" Content="Group Names" IsThreeState="False" Visibility="Collapsed"/>
-                <my:FilterBar x:Name="SearchField" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,10,0" Width="300"
-                            KeyDown="SearchField_KeyDown" Visibility="Collapsed"></my:FilterBar>
+                <ToggleButton x:Name="showgroups" Template="{StaticResource ButtonTemplate}" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,10,0"
+                                                                                Click="showgroups_Click" Content="Group Names" IsThreeState="False" Visibility="Collapsed"/>
 
+                <Rectangle Fill="Silver" Height="20" Width="1" VerticalAlignment="Stretch" Margin="0,0,10,0"/>
+                <TextBlock Text="Filter:" Foreground="White" VerticalAlignment="Center" Margin="0,0,10,0"></TextBlock>
+                
+                <my:FilterBar x:Name="SearchField" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,10,0" Width="300"
+                                                                        KeyDown="SearchField_KeyDown" Visibility="Collapsed"></my:FilterBar>
 
                 <my:SelectionChooser x:Name="selectionsButton" Visibility="Collapsed" VerticalAlignment="Center" Margin="0,0,10,0" />
             </StackPanel>

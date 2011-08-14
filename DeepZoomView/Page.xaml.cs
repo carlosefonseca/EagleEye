@@ -149,7 +149,7 @@ namespace DeepZoomView
 					{
 						dontZoom = false;
 					}
-					else if (!shiftDown)
+					else if (shiftDown)
 					{
 						CanvasItem item = GetSubImageIndex(e.GetPosition(msi));
 						if (item != null)
@@ -158,10 +158,10 @@ namespace DeepZoomView
 							msi.ViewportOrigin = new Point(-item.MainImage.ViewportOrigin.X, -item.MainImage.ViewportOrigin.Y);
 						}
 					}
-					else if (shiftDown)
+/*					else if (!shiftDown)
 					{
 						newzoom /= 2;
-					}
+					}*/
 					else
 					{
 						newzoom *= 2;
@@ -212,8 +212,7 @@ namespace DeepZoomView
 				lastMousePos = e.GetPosition(msi);
 				if (mouseDown && !duringDrag && !duringDragSelection)
 				{
-					bool shiftDown = (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift;
-					if (shiftDown)
+					if (mouseMode == MouseMode.ImageSelect)
 					{
 						duringDragSelection = true;
 						foreach (MultiScaleSubImage img in selectedImages)
@@ -242,7 +241,6 @@ namespace DeepZoomView
 					newPoint.X += (lastMouseDownPos.X - lastMousePos.X) / msi.ActualWidth * msi.ViewportWidth;
 					newPoint.Y += (lastMouseDownPos.Y - lastMousePos.Y) / msi.ActualWidth * msi.ViewportWidth;
 					msi.ViewportOrigin = newPoint;
-
 				}
 				else if (duringDragSelection)
 				{
@@ -1037,18 +1035,29 @@ namespace DeepZoomView
 			SearchField.OnTextInsertion += new EvHandler(SearchField_OnTextInsertion);
 
 			selectionsButton.SelectionHandler += new EvHandler(selectionsButton_SelectionHandler);
+			selectionsButton.SelectionCleared += new EvHandler(selectionsButton_SelectionCleared);
 
 			UpdateView();
 		}
 
+		void selectionsButton_SelectionCleared(object sender, MyEventArgs e)
+		{
+			mouseMode = MouseMode.Navigate;
+		}
+
 		void selectionsButton_SelectionHandler(object sender, MyEventArgs e)
 		{
-			if (e.active.EndsWith("images")) {
+			if (e.active.EndsWith("images"))
+			{
 				selectionsButton.SetActive("Select Images (click to stop)");
-
-			} else if (e.active.EndsWith("groups")){
+			}
+			else if (e.active.EndsWith("groups"))
+			{
 				selectionsButton.SetActive("Select Groups (click to stop)");
 			}
+			else { return; }
+			mouseMode = MouseMode.ImageSelect;
+			dontZoom = true;
 		}
 
 		void SearchField_OnTextInsertion(object sender, MyEventArgs e)
@@ -1125,7 +1134,7 @@ namespace DeepZoomView
 
 		private void AppStartDebug()
 		{
-			//LoadMetadata(null, null);
+			LoadMetadata(null, null);
 		}
 
 
@@ -1190,7 +1199,7 @@ namespace DeepZoomView
 				{
 					filter = filter.Intersect(perSearchItem).ToList();
 				}
-				first = false;
+				first = false;			
 			}
 
 			NewCanvasDispositionFromUI(displaySetting, filter.Distinct());

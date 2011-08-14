@@ -16,6 +16,7 @@ namespace DeepZoomView.Controls
 	public partial class SelectionChooser : UserControl
 	{
 		public event EvHandler SelectionHandler;
+		public event EvHandler SelectionCleared;
 		private String defaultButtontext;
 
 
@@ -80,6 +81,7 @@ namespace DeepZoomView.Controls
 		{
 			button.Content = defaultButtontext;
 			button.IsChecked = false;
+			SelectionCleared(this, null);
 		}
 	}
 }
