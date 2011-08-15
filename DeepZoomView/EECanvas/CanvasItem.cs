@@ -72,7 +72,7 @@ namespace DeepZoomView.EECanvas
 			this.MainImage.Opacity = v;
 		}
 
-		public List<int> AddId(List<int> l)
+		public virtual List<int> AddId(List<int> l)
 		{
 			l.Add(this.ImageId);
 			return l;

@@ -169,7 +169,7 @@ namespace DeepZoomView.EECanvas
 			page.GroupNamesOverlay.Children.Clear();
 			this.AllOverlays.SetLayers(page.BorderOverlay, page.GroupNamesOverlay);
 			return placedItems.Select(c => c.ImageId);
-			return canvasIndex.Values.Select(c => c.ImageId);
+			//return canvasIndex.Values.Select(c => c.ImageId);
 		}
 
 
@@ -273,8 +273,10 @@ namespace DeepZoomView.EECanvas
 
 			if (!ANIMATE)
 			{
+#pragma warning disable
 				currentImage.ViewportOrigin = futurePosition;
 				currentImage.ViewportWidth = newWidth;
+#pragma warning restore
 			}
 			else
 			{

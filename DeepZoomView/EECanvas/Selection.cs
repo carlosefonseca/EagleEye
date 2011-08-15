@@ -7,6 +7,14 @@ namespace DeepZoomView.EECanvas
 {
 	internal class Selection : List<CanvasItem>
 	{
-		public MyCanvas canvas;
+		public Selection(IEnumerable<CanvasItem> iEnumerable)
+		{
+			this.AddRange(iEnumerable);
+		}
+
+		public Selection() : base()
+		{
+		}
+		//public MyCanvas canvas;
 	}
 }

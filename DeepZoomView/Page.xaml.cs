@@ -24,6 +24,7 @@ using DeepZoomView.EECanvas.Dispositions;
 using System.Windows.Markup;
 using DeepZoomView.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Data;
 
 namespace DeepZoomView
 {
@@ -44,7 +45,7 @@ namespace DeepZoomView
 		CanvasItem LastItemHovered = null;
 		Dictionary<long, string> _Metadata = new Dictionary<long, string>();
 		MetadataCollection metadataCollection = new MetadataCollection();
-		ObservableCollection<String> CbItems = null;
+		//ObservableCollection<String> CbItems = null;
 		Boolean dontZoom = false;
 
 		List<MyCanvas> CanvasHistory = new List<MyCanvas>();
@@ -158,10 +159,10 @@ namespace DeepZoomView
 							msi.ViewportOrigin = new Point(-item.MainImage.ViewportOrigin.X, -item.MainImage.ViewportOrigin.Y);
 						}
 					}
-/*					else if (!shiftDown)
-					{
-						newzoom /= 2;
-					}*/
+					/*					else if (!shiftDown)
+										{
+											newzoom /= 2;
+										}*/
 					else
 					{
 						newzoom *= 2;
@@ -197,6 +198,10 @@ namespace DeepZoomView
 						}
 					}
 					newSelections.Add(s);
+					FilterButton f = SearchField.NewButtonAtEnd(s.Count + " images");
+					f.type = "Selection";
+					f.relatedObject = s;
+					//Apply.IsEnabled = true;
 
 					Mouse.Children.Remove(selection);
 				}
@@ -1033,10 +1038,11 @@ namespace DeepZoomView
 			// Set the autocomplete stuff for the filter bar
 			SearchField.AutoCompleteElement = SearchFieldAutocomplete;
 			SearchField.OnTextInsertion += new EvHandler(SearchField_OnTextInsertion);
+			SearchField.ApplyButton = Apply;
 
 			selectionsButton.SelectionHandler += new EvHandler(selectionsButton_SelectionHandler);
 			selectionsButton.SelectionCleared += new EvHandler(selectionsButton_SelectionCleared);
-
+			
 			UpdateView();
 		}
 
@@ -1172,7 +1178,7 @@ namespace DeepZoomView
 
 			// FILTERS
 			LOGIC logic = LOGIC.AND;
-			IEnumerable<FilterButton> filterbarList = SearchField.FilterButtons;
+			IEnumerable<FilterButton> filterbarList = SearchField.FilterButtons.Where(f => f.type.CompareTo("Selection") != 0);
 			List<int> filter = new List<int>();
 
 			bool first = true;
@@ -1190,6 +1196,10 @@ namespace DeepZoomView
 				{
 					f.Paint(Colors.Red);
 				}
+				else
+				{
+					f.Paint(Colors.Green);
+				}
 
 				if (first || logic == LOGIC.OR)
 				{
@@ -1199,10 +1209,40 @@ namespace DeepZoomView
 				{
 					filter = filter.Intersect(perSearchItem).ToList();
 				}
-				first = false;			
+				first = false;
 			}
 
-			NewCanvasDispositionFromUI(displaySetting, filter.Distinct());
+			IEnumerable<FilterButton> selectionButtons = SearchField.FilterButtons.Where(f => f.type.CompareTo("Selection") == 0);
+			if (selectionButtons.Count() > 0)
+			{
+				Selection selectedItems;
+				if (selectionButtons.Count() > 1)
+				{
+					selectedItems = new Selection(selectionButtons.SelectMany(f => (Selection)f.relatedObject));
+					SearchField.RemoveButtons(selectionButtons.Skip(1));
+					selectionButtons.First().relatedObject = selectedItems;
+					selectionButtons.First().Text = selectedItems.Count + " items";
+				}
+				else
+				{
+					selectedItems = (Selection)selectionButtons.First().relatedObject;
+				}
+
+				IEnumerable<int> selectedIds = selectedItems.SelectMany(c => c.getAllIds());
+				if (filter.Count() != 0)
+				{
+					NewCanvasDispositionFromUI(displaySetting, filter.Distinct().Intersect(selectedIds));
+				}
+				else
+				{
+					NewCanvasDispositionFromUI(displaySetting, selectedIds);
+				}
+			}
+			else
+			{
+				NewCanvasDispositionFromUI(displaySetting, filter.Distinct());
+			}
+			SearchField.Dirty = false;
 		}
 
 		/// <summary>
@@ -1221,12 +1261,18 @@ namespace DeepZoomView
 			return new List<int>();
 		}
 
+
 		private void SearchField_KeyDown(object sender, KeyEventArgs e)
 		{
 			if (e.Key == Key.Enter)
 			{
 				UpdateView();
 			}
+		}
+
+		private void Apply_Click(object sender, RoutedEventArgs e)
+		{
+			UpdateView();
 		}
 	}
 }

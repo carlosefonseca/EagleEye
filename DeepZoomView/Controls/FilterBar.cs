@@ -21,9 +21,16 @@ namespace DeepZoomView.Controls
 		private ListBox optionList;
 		private Run placeholderText;
 		public event EvHandler OnTextInsertion;
+		public Button ApplyButton = null; // I tried using bindings but I failed.
 		private ObservableCollection<AutocompleteOption> acOptions = new ObservableCollection<AutocompleteOption>();
 		//IEnumerable<AutocompleteOption> acOptions = new List<AutocompleteOption>();
 
+		private Boolean dirty = false;
+		public Boolean Dirty
+		{
+			get { return dirty; }
+			set { dirty = value; if (ApplyButton != null) ApplyButton.IsEnabled = value; }
+		}
 
 		public ObservableCollection<AutocompleteOption> AutocompleteOptions
 		{
@@ -50,8 +57,6 @@ namespace DeepZoomView.Controls
 			this.Padding = new Thickness(1);
 			this.VerticalContentAlignment = System.Windows.VerticalAlignment.Center;
 			this.Height = 25;
-
-
 		}
 
 		/// <summary>
@@ -118,7 +123,7 @@ namespace DeepZoomView.Controls
 				List<String> list = new List<String>();
 				foreach (FilterButton i in FilterButtons)
 				{
-					list.Add(i.text);
+					list.Add(i.Text);
 				}
 				return list;
 			}
@@ -132,33 +137,13 @@ namespace DeepZoomView.Controls
 		{
 			base.OnKeyDown(e);
 
-			if (e == null)
-			{
-				Paragraph theParagraph = new Paragraph();
-				this.Blocks.Add(theParagraph);
-
-				InlineUIContainer uic = new InlineUIContainer();
-				uic.Child = new FilterButton("b1");
-				theParagraph.Inlines.Add(uic);
-
-				uic = new InlineUIContainer();
-				uic.Child = new FilterButton("Hello World"); ;
-				theParagraph.Inlines.Add(uic);
-
-				uic = new InlineUIContainer();
-				uic.Child = new FilterButton("b3");
-				theParagraph.Inlines.Add(uic);
-
-				return;
-			}
-
 			if (e.Key == Key.Enter)
 			{
 				if (!Inlines.Any(i => i.GetType() == typeof(Run)))
 				{
 					return;
 				}
-
+				Dirty = true;
 				CreateAndAddNewFilterButton();
 			}
 			else if (e.Key == Key.Down)
@@ -177,6 +162,7 @@ namespace DeepZoomView.Controls
 			}
 			else
 			{	// This should be on a text changed event
+				Dirty = true;
 				IEnumerable<Inline> runs = Inlines.Where(i => i.GetType() == typeof(Run));
 				if (runs.Count() > 0)
 				{
@@ -219,6 +205,21 @@ namespace DeepZoomView.Controls
 			optionList.Visibility = System.Windows.Visibility.Collapsed;
 		}
 
+		public FilterButton NewButtonAtEnd(String txt)
+		{
+			InlineUIContainer uic = new InlineUIContainer();
+			FilterButton f = new FilterButton(txt);
+
+			uic.Child = f;
+			if (Inlines.Contains(placeholderText))
+			{
+				Inlines.Remove(placeholderText);
+			}
+			Inlines.Add(uic);
+			Dirty = true;
+			return f;
+		}
+
 		public void PaintButtonRed(String t)
 		{
 			FilterButtons.First(b => t.Equals((String)b.Content)).Paint(Colors.Red);
@@ -251,6 +252,13 @@ namespace DeepZoomView.Controls
 			optionList.Items.Add(lbi);*/
 		}
 
+		public void RemoveButton(FilterButton f)
+		{
+			InlineUIContainer ic = Inlines.OfType<InlineUIContainer>().First(i => i.Child == f);
+			if (ic != null)
+				Inlines.Remove(ic);
+		}
+
 		private Rect GetElementPosition(UIElement element)
 		{
 			// Obtain transform information based off root element
@@ -264,6 +272,14 @@ namespace DeepZoomView.Controls
 
 			return new Rect(topLeft, bottomRight);
 		}
+
+		internal void RemoveButtons(IEnumerable<FilterButton> selectionButtons)
+		{
+			foreach (FilterButton f in selectionButtons.ToArray())
+			{
+				RemoveButton(f);
+			}
+		}
 	} // FilterBar
 
 
@@ -273,8 +289,22 @@ namespace DeepZoomView.Controls
 	public class FilterButton : Button
 	{
 		public String type = "Text";
-		public String text;
+		private String text;
 		public String tooltip = "Test";
+		public Object relatedObject;
+
+		public String Text
+		{
+			get
+			{
+				return text;
+			}
+			set
+			{
+				text = value;
+				this.Content = value;
+			}
+		}
 
 		const String sb =
 			"<ControlTemplate xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation' " +
@@ -295,17 +325,11 @@ namespace DeepZoomView.Controls
 		public FilterButton(String txt)
 			: base()
 		{
-			Content = txt;
-			text = txt;
+			this.Text = txt;
 			ControlTemplate ct = (ControlTemplate)XamlReader.Load(String.Format(sb, "Tooltip placeholder for " + txt));
 			Template = ct;
 			Paint();
 		}
-
-		/// <summary>
-		/// Gets the text of the button
-		/// </summary>
-		public String Text { get { return (String)Content; } }
 
 		/// <summary>
 		/// Paint the button with a color.

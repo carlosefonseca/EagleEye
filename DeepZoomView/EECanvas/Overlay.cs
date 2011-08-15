@@ -20,8 +20,8 @@ namespace DeepZoomView.EECanvas
 		public String Name;
 		public Color BackgroundColor;
 		private Border textborder = null;
-		private Canvas canvas = null;
-		private DisplayTypes lastDisplay;
+//		private Canvas canvas = null;
+	//	private DisplayTypes lastDisplay;
 		private Shape placedBorder = null;
 		private Shape placedColor = null;
 

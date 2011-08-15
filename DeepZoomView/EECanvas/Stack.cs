@@ -225,7 +225,7 @@ namespace DeepZoomView.EECanvas
 			this.subImages.ForEach(ci => ci.SetOpacity(v));
 		}
 
-		public List<int> AddId(List<int> l)
+		public override List<int> AddId(List<int> l)
 		{
 			l.AddRange(this.getAllIds());
 			return l;

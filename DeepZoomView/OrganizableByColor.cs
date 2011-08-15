@@ -251,7 +251,7 @@ namespace DeepZoomView
 			return invertedData.ContainsKey(k);
 		}
 
-		internal virtual IEnumerable<AutocompleteOption> RelatedKeys(String k)
+		internal override IEnumerable<AutocompleteOption> RelatedKeys(String k)
 		{
 			List<AutocompleteOption> list = new List<AutocompleteOption>();
 

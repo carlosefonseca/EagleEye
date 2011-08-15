@@ -22,9 +22,7 @@ namespace DeepZoomView
 		public new Dictionary<DateTime, List<int>> data = new Dictionary<DateTime, List<int>>();
 		public new Dictionary<int, DateTime> invertedData = new Dictionary<int, DateTime>();
 		public new Dictionary<DateTime, List<int>> dataWithStacks = new Dictionary<DateTime, List<int>>();
-		public new Dictionary<int, DateTime> invertedDataWithStacks = new Dictionary<int, DateTime>();
-
-		private int itemCount = -1;
+		public Dictionary<int, DateTime> invertedDataWithStacks = new Dictionary<int, DateTime>();
 
 		public override List<int> Ids
 		{
@@ -186,7 +184,7 @@ namespace DeepZoomView
 		}
 
 
-		internal virtual IEnumerable<AutocompleteOption> RelatedKeys(String k)
+		internal override IEnumerable<AutocompleteOption> RelatedKeys(String k)
 		{
 			List<AutocompleteOption> list = new List<AutocompleteOption>();
 

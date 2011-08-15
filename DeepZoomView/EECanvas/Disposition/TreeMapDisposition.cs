@@ -88,8 +88,9 @@ namespace DeepZoomView.EECanvas.Dispositions
                 }
             }
         }
+#pragma warning disable
 
-        public static RectWithRects TreeMap(IEnumerable<Group> groups, RectWithRects rect)
+		public static RectWithRects TreeMap(IEnumerable<Group> groups, RectWithRects rect)
         {
             if (groups.Count() == 1 && rect.Fits(groups.First().images.Count))
             {
@@ -271,6 +272,7 @@ namespace DeepZoomView.EECanvas.Dispositions
                 return rect;
             }
         }
+#pragma warning restore
 
         private enum RectSide { Left, Top }
 
