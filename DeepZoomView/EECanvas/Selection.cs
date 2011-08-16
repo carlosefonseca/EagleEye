@@ -15,6 +15,5 @@ namespace DeepZoomView.EECanvas
 		public Selection() : base()
 		{
 		}
-		//public MyCanvas canvas;
 	}
 }

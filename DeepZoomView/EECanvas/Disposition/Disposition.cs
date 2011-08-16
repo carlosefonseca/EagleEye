@@ -98,11 +98,7 @@ namespace DeepZoomView.EECanvas.Dispositions
             Color c;
             if (name.StartsWith("#"))
             {
-                String[] parts = name.Split(new char[] { ' ', '#' }, StringSplitOptions.RemoveEmptyEntries);
-                Byte R = Byte.Parse(parts[0]);
-                Byte G = Byte.Parse(parts[1]);
-                Byte B = Byte.Parse(parts[2]);
-                c = Color.FromArgb((byte)150, R, G, B);
+				c = ColorUtils.ColorUtil.ParseCardinalRGBColor(name);
             }
             else
             {

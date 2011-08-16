@@ -74,6 +74,21 @@ namespace DeepZoomView
 			Dispositions.Add("Linear");
 		}
 
+		public override Group GetGroupContainingKey(int k)
+		{
+			String id;
+			if (k < 0)
+				id = invertedDataWithStacks[k].Date.ToShortDateString();
+			else
+				id = invertedData[k].Date.ToShortDateString();
+
+			if (!String.IsNullOrEmpty(id))
+			{
+				return ListOfGroups.First(g => g.name.CompareTo(id) == 0);
+			}
+			return null;
+		}
+
 		public override void Add(int k, string p)
 		{
 			DateTime v = DateTime.Parse(p, new System.Globalization.CultureInfo("pt-PT"));
@@ -120,12 +135,7 @@ namespace DeepZoomView
 
 
 			IEnumerable<KeyValuePair<DateTime, List<int>>> ordered = filteredDataWithStacks;
-			List<KeyValuePair<String, List<int>>> reformated = new List<KeyValuePair<string, List<int>>>();
-			foreach (KeyValuePair<DateTime, List<int>> group in ordered)
-			{
-				reformated.Add(new KeyValuePair<string, List<int>>(group.Key.ToShortDateString(), group.Value));
-			}
-			return reformated;
+			return filteredDataWithStacks.Select(kv => new KeyValuePair<String, List<int>>(kv.Key.ToShortDateString(), kv.Value.OrderBy(i => invertedDataWithStacks[i]).ToList())).ToList();
 		}
 
 		public override List<KeyValuePair<String, List<int>>> GetGroups(List<int> subset)
@@ -189,14 +199,14 @@ namespace DeepZoomView
 			List<AutocompleteOption> list = new List<AutocompleteOption>();
 
 			DateTimeFormatInfo date = new CultureInfo("en-US").DateTimeFormat;
-			list.Concat(date.AbbreviatedMonthGenitiveNames.Where(s => s.Contains(k)).Select(s => new AutocompleteOption(s, "Taken in "+s, null, this)));
+			list.AddRange(date.AbbreviatedMonthGenitiveNames.Where(s => s.Contains(k)).Select(s => new AutocompleteOption(s, "Taken in " + s, null, this)));
 
-			list.Concat(new List<String>() { "Winter", "Spring", "Summer", "Autum" }.Where(s => s.Contains(k)).Select(s => new AutocompleteOption(s, "Taken during "+s, null, this)));
+			list.AddRange(new List<String>() { "Winter", "Spring", "Summer", "Autum" }.Where(s => s.Contains(k)).Select(s => new AutocompleteOption(s, "Taken during " + s, null, this)));
 
 			try
 			{
 				DateTime d = DateTime.Parse(k);
-				list.Concat(data.Keys.Where(dt => dt.Date.CompareTo(d.Date) == 0).Select(dd => new AutocompleteOption(dd.ToShortDateString(), "Taken in "+dd.ToShortDateString(), null, this)));
+				list.AddRange(data.Keys.Where(dt => dt.Date.CompareTo(d.Date) == 0).Select(dd => new AutocompleteOption(dd.ToShortDateString(), "Taken in " + dd.ToShortDateString(), null, this)));
 			}
 			catch { }
 

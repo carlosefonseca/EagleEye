@@ -21,6 +21,9 @@ namespace DeepZoomView
 		public new Dictionary<int, List<int>> data = new Dictionary<int, List<int>>();
 		public new Dictionary<int, Color> invertedData = new Dictionary<int, Color>();
 
+		double spread = 360.0 / 12; // 12 buckets
+
+
 		public override List<int> Ids
 		{
 			get
@@ -71,6 +74,14 @@ namespace DeepZoomView
 		{
 		}
 
+
+		public override Group GetGroupContainingKey(int k)
+		{
+			KeyValuePair<String, List<int>> g = GetGroups().First(kv => kv.Value.Contains(k));
+			Color c = ColorUtil.ParseCardinalRGBColor(g.Key);
+			HslColor hsl = HslColor.FromColor(c);
+			return new Group(hsl.Name, g.Value);
+		}
 
 		public override void Add(int k, string p)
 		{
@@ -149,9 +160,6 @@ namespace DeepZoomView
 
 			Color[] theColors = new Color[] { Colors.Red, Colors.Orange, Colors.Yellow, Colors.Green, Colors.Cyan, Colors.Blue, Colors.Purple };
 
-			int buckets = 12;
-			double spread = 360.0 / buckets;
-
 			foreach (KeyValuePair<int, List<int>> kv in set)
 			{
 				int group;
@@ -161,8 +169,13 @@ namespace DeepZoomView
 				}
 				else
 				{			// Hue
-					group = Convert.ToInt16(Math.Round((kv.Key % Math.Ceiling(360 - (spread / 2))) / spread));
-					group = (int)(group * spread + spread * 0.5);
+					group = Convert.ToInt16(
+										Math.Round(
+											(kv.Key % Math.Ceiling(
+																360 - (spread / 2)))
+											/ spread
+											));
+					group = (int)(group * spread);
 				}
 				if (!groups.ContainsKey(group))
 				{

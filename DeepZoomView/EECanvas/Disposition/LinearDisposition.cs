@@ -213,8 +213,16 @@ namespace DeepZoomView.EECanvas.Dispositions
                     p.Points.Add(new Point(x * cellSide, height * cellSide));
                     p.Points.Add(new Point(sx * cellSide, height * cellSide));
                 }
-                Color c = Color.FromArgb((byte)150, (byte)rand.Next(255), (byte)rand.Next(255), (byte)rand.Next(255));
-                Overlay overlay = new Overlay(g.name, p, ColorFromName(g.name));
+                Color c = ColorFromName(g.name);
+				Overlay overlay;
+				if (organizable.Name.CompareTo("Color") == 0)
+				{
+					overlay = new Overlay(ColorUtils.HslColor.FromColor(c).Name, p, c);
+				}
+				else
+				{
+					overlay = new Overlay(g.name, p, c);
+				}
                 //g.shape = p;
                 overlays.AddOverlay(overlay, g.images);
                 Debug.WriteLine("Real: Group: {0} : {1},{2} - {3},{4}", g.name, sx, sy, x, y);

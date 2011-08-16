@@ -89,6 +89,16 @@ namespace DeepZoomView
 		}
 
 
+		public virtual Group GetGroupContainingKey(int k)
+		{
+			String id = this.Id(k);
+			if (!String.IsNullOrEmpty(id))
+			{
+				return ListOfGroups.First(g => g.name.CompareTo(id) == 0);
+			}
+			return null;
+		}
+
 		/// <summary>
 		/// Total of Images
 		/// </summary>

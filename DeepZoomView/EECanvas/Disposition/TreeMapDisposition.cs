@@ -391,7 +391,16 @@ namespace DeepZoomView.EECanvas.Dispositions
                 Canvas.SetLeft(shape, bounds.X * cellSide);
                 Canvas.SetTop(shape, bounds.Y * cellSide);
 
-                overlays.AddOverlay(new Overlay(g.name, shape, c), g.images);
+				Overlay overlay;
+				if (organizable.Name.CompareTo("Color") == 0)
+				{
+					overlay = new Overlay(ColorUtils.HslColor.FromColor(c).Name, shape, c);
+				}
+				else
+				{
+					overlay = new Overlay(g.name, shape, c);
+				}
+				overlays.AddOverlay(overlay, g.images);
             }
 
 

@@ -30,6 +30,10 @@ namespace DeepZoomView
 {
 	public partial class Page : UserControl
 	{
+		// CONSTS
+		const double OPACITY_OF_SELECTED = 0.3;
+
+
 		Double zoom = 1;
 		bool duringDrag = false;
 		bool duringDragSelection = false;
@@ -46,7 +50,7 @@ namespace DeepZoomView
 		Dictionary<long, string> _Metadata = new Dictionary<long, string>();
 		MetadataCollection metadataCollection = new MetadataCollection();
 		//ObservableCollection<String> CbItems = null;
-		Boolean dontZoom = false;
+		Boolean ignoreMouseClickOnCanvas = false;
 
 		List<MyCanvas> CanvasHistory = new List<MyCanvas>();
 		Dictionary<String, MyCanvas> CanvasCache = new Dictionary<string, MyCanvas>();
@@ -61,7 +65,8 @@ namespace DeepZoomView
 		enum MouseMode { Navigate, ImageSelect, GroupSelect }
 		MouseMode mouseMode;
 
-
+		CanvasItem canvasItemUnderTheMouse;
+		CanvasItem imageUnderTheMouse;
 
 		public Double ZoomFactor
 		{
@@ -93,21 +98,20 @@ namespace DeepZoomView
 				}
 				else
 				{
-					CanvasItem item = GetSubImageIndex(e.GetPosition(msi));
-					CanvasItem image;
+					canvasItemUnderTheMouse = GetSubImageIndex(e.GetPosition(msi));
 
-					if (item != null && item.ImageId < 0)
+					if (canvasItemUnderTheMouse != null && canvasItemUnderTheMouse.ImageId < 0)
 					{
-						image = ((Stack)item).GetHoveredSubItem(e.GetPosition(msi));
+						imageUnderTheMouse = ((Stack)canvasItemUnderTheMouse).GetHoveredSubItem(e.GetPosition(msi));
 					}
 					else
 					{
-						image = item;
+						imageUnderTheMouse = canvasItemUnderTheMouse;
 					}
 
-					if (image == null)
+					if (imageUnderTheMouse == null)
 					{
-						if (image != LastItemHovered)
+						if (imageUnderTheMouse != LastItemHovered)
 						{
 							LastItemHovered = null;
 							HideTooltip();
@@ -117,11 +121,11 @@ namespace DeepZoomView
 					{
 						MouseTitle.Parent.SetValue(Canvas.TopProperty, e.GetPosition(msi).Y + 40);
 						MouseTitle.Parent.SetValue(Canvas.LeftProperty, e.GetPosition(msi).X + 40);
-						if (image != LastItemHovered)
+						if (imageUnderTheMouse != LastItemHovered)
 						{
-							LastItemHovered = image;
-							MakeTooltipText(image, e.GetPosition(msi));
-							CurrentCanvas.ShowGroupBorderFromImg(item, Overlays);
+							LastItemHovered = imageUnderTheMouse;
+							MakeTooltipText(imageUnderTheMouse, e.GetPosition(msi));
+							CurrentCanvas.ShowGroupBorderFromImg(canvasItemUnderTheMouse, Overlays);
 						}
 					}
 				}
@@ -141,16 +145,17 @@ namespace DeepZoomView
 			// RELEASE
 			this.MouseLeftButtonUp += delegate(object sender, MouseButtonEventArgs e)
 			{
-				if (!duringDrag && !duringDragSelection)
+				if (ignoreMouseClickOnCanvas)
+				{
+					ignoreMouseClickOnCanvas = false;
+					return;
+				}
+				if (!duringDrag && !duringDragSelection && mouseMode != MouseMode.GroupSelect)
 				{
 					bool shiftDown = (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift;
 					Double newzoom = zoom;
 
-					if (dontZoom)
-					{
-						dontZoom = false;
-					}
-					else if (shiftDown)
+					if (shiftDown)
 					{
 						CanvasItem item = GetSubImageIndex(e.GetPosition(msi));
 						if (item != null)
@@ -170,7 +175,8 @@ namespace DeepZoomView
 
 					Zoom(newzoom, msi.ElementToLogicalPoint(this.lastMousePos));
 				}
-				if (duringDragSelection)
+				// Image Selection
+				else if (duringDragSelection)
 				{
 					duringDragSelection = false;
 					//do stuff
@@ -192,7 +198,7 @@ namespace DeepZoomView
 							if (CurrentCanvas.canvasIndex.ContainsKey(x + ";" + y))
 							{
 								CanvasItem ci = CurrentCanvas.canvasIndex[x + ";" + y];
-								ci.SetOpacity(0.3);
+								ci.SetOpacity(OPACITY_OF_SELECTED);
 								s.Add(ci);
 							}
 						}
@@ -204,6 +210,17 @@ namespace DeepZoomView
 					//Apply.IsEnabled = true;
 
 					Mouse.Children.Remove(selection);
+				}
+				else if (mouseMode == MouseMode.GroupSelect && canvasItemUnderTheMouse != null)
+				{
+					Group g = currentDisplay.Organization.GetGroupContainingKey(canvasItemUnderTheMouse.ImageId);
+					IEnumerable<CanvasItem> cil = g.images.Select(i => CurrentCanvas.items[i]);
+
+					FilterButton b = SearchField.NewButtonAtEnd("Group " + g.name);
+					b.type = "Selection";
+					b.relatedObject = new Selection(cil);
+
+					cil.ToList().ForEach(c => c.SetOpacity(OPACITY_OF_SELECTED));
 				}
 				duringDrag = false;
 				mouseDown = false;
@@ -1020,7 +1037,7 @@ namespace DeepZoomView
 			}
 			else if (AskForMetadata()) // normal loading
 			{
-				dontZoom = true;
+				ignoreMouseClickOnCanvas = true;
 			}
 			else
 			{
@@ -1042,7 +1059,7 @@ namespace DeepZoomView
 
 			selectionsButton.SelectionHandler += new EvHandler(selectionsButton_SelectionHandler);
 			selectionsButton.SelectionCleared += new EvHandler(selectionsButton_SelectionCleared);
-			
+
 			UpdateView();
 		}
 
@@ -1056,14 +1073,15 @@ namespace DeepZoomView
 			if (e.active.EndsWith("images"))
 			{
 				selectionsButton.SetActive("Select Images (click to stop)");
+				mouseMode = MouseMode.ImageSelect;
 			}
 			else if (e.active.EndsWith("groups"))
 			{
 				selectionsButton.SetActive("Select Groups (click to stop)");
+				mouseMode = MouseMode.GroupSelect;
 			}
 			else { return; }
-			mouseMode = MouseMode.ImageSelect;
-			dontZoom = true;
+			ignoreMouseClickOnCanvas = true;
 		}
 
 		void SearchField_OnTextInsertion(object sender, MyEventArgs e)

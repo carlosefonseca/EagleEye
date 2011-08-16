@@ -34,16 +34,17 @@ namespace DeepZoomView.Controls
 			}
 			else
 			{
-
 				if (popup.IsOpen)
 				{
 					popup.IsOpen = false;
+					button.IsChecked = false;
 				}
 				else
 				{
 					popup.IsOpen = true;
 					popuplist.Width = button.ActualWidth;
 					popuplist.SelectedIndex = -1;
+					button.IsChecked = false;
 				}
 			}
 		}

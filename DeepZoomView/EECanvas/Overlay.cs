@@ -107,7 +107,7 @@ namespace DeepZoomView.EECanvas
 			textborder = new Border();
 			TextBlock text = new TextBlock();
 			text.Text = this.Name;
-			if (ColorUtils.HslColor.FromColor(this.BackgroundColor).L > 0.5)
+			if (ColorUtils.HslColor.FromColor(this.BackgroundColor).L > 0.5 || Name.Contains("Yellow"))
 			{
 				text.Foreground = new SolidColorBrush(Colors.Black);
 			}
