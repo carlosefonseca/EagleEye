@@ -55,6 +55,8 @@ namespace DeepZoomView
 		List<MyCanvas> CanvasHistory = new List<MyCanvas>();
 		Dictionary<String, MyCanvas> CanvasCache = new Dictionary<string, MyCanvas>();
 		MyCanvas CurrentCanvas;
+		int historyPosition = 0; // element of CanvasHistory counting from the end
+
 		internal List<Selection> newSelections = new List<Selection>();
 		internal IEnumerable<int> currentSelections = null;
 
@@ -428,6 +430,7 @@ namespace DeepZoomView
 			txt.TextAlignment = TextAlignment.Center;
 			txt.HorizontalAlignment = HorizontalAlignment.Center;
 			txt.VerticalAlignment = VerticalAlignment.Center;
+			txt.FontSize = 8.0;
 
 			Border b = new Border();
 			b.SetValue(dp, dpv);
@@ -435,12 +438,12 @@ namespace DeepZoomView
 
 			if (dp == Grid.RowProperty)
 			{	// Y
-				b.Width = 50;
+				b.Width = 20;
 				b.BorderThickness = new Thickness(0, 0, 0, 1);
 			}
 			else
 			{	// X
-				b.Height = 50;
+				b.Height = 20;
 				b.BorderThickness = new Thickness(0, 0, 1, 0);
 			}
 			b.Child = txt;
@@ -1046,8 +1049,8 @@ namespace DeepZoomView
 			}
 			// post loading actions
 			// Switch visible controls
-			((StackPanel)load.Parent).Children.ToList().ForEach(ui => ui.Visibility = System.Windows.Visibility.Visible);
-			load.Visibility = Visibility.Collapsed;
+			WithoutMetadata.Visibility = System.Windows.Visibility.Collapsed;
+			WithMetadata.Visibility = System.Windows.Visibility.Visible;
 
 			// set user options and display
 			SetVisualizationUI();
@@ -1060,7 +1063,35 @@ namespace DeepZoomView
 			selectionsButton.SelectionHandler += new EvHandler(selectionsButton_SelectionHandler);
 			selectionsButton.SelectionCleared += new EvHandler(selectionsButton_SelectionCleared);
 
+			Dictionary<String, RoutedEventHandler> bfbtns = new Dictionary<string, RoutedEventHandler>();
+			bfbtns.Add("◄", new RoutedEventHandler(goBack));
+			bfbtns.Add("►", new RoutedEventHandler(goForward));
+
+			backForwardBtn.SetButtons(bfbtns);
+
 			UpdateView();
+		}
+
+		internal void goBack(object sender, RoutedEventArgs e)
+		{
+			historyPosition++;
+			if (CanvasHistory.Count > historyPosition)
+			{
+				CanvasHistory.ElementAt(CanvasHistory.Count - 1 - historyPosition).Display();
+			}
+			else
+			{
+
+			}
+		}
+
+		internal void goForward(object sender, RoutedEventArgs e)
+		{
+			if (historyPosition > 0)
+			{
+				historyPosition--;
+				CanvasHistory.ElementAt(CanvasHistory.Count - 1 - historyPosition).Display();
+			}
 		}
 
 		void selectionsButton_SelectionCleared(object sender, MyEventArgs e)
@@ -1158,7 +1189,7 @@ namespace DeepZoomView
 
 		private void AppStartDebug()
 		{
-			LoadMetadata(null, null);
+			//LoadMetadata(null, null);
 		}
 
 

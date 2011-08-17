@@ -7,7 +7,7 @@
     d:DesignHeight="300" d:DesignWidth="400">
     <UserControl.Resources>
         <ControlTemplate x:Key="ButtonTemplate">
-            <Border x:Name="RootElement" CornerRadius="5" Padding="3,3,3,3" Margin="0" BorderThickness="2" BorderBrush="#555" HorizontalAlignment="Stretch" MinWidth="50" Height="28">
+            <Border x:Name="RootElement" CornerRadius="5" Padding="3,3,3,3" Margin="0" BorderThickness="2" BorderBrush="#555" HorizontalAlignment="Stretch" MinWidth="50" Height="24">
                 <Border.Resources>
                     <LinearGradientBrush x:Key="CheckedStyle" StartPoint="0,0" EndPoint="0,1">
                         <GradientStop Color="#e0ecf5" Offset="0.1"/>

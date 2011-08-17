@@ -43,6 +43,7 @@ namespace DeepZoomView.Controls
 		Border border;
 		StackPanel stack;
 
+
 		/// <summary>
 		/// Gets or sets the currently selected button.
 		/// </summary>
@@ -140,7 +141,7 @@ namespace DeepZoomView.Controls
 		{
 			Rectangle r = new Rectangle();
 			r.Width = 1;
-			r.Height = 24;
+			r.Height = 20;
 			r.VerticalAlignment = System.Windows.VerticalAlignment.Stretch;
 			r.Fill = new SolidColorBrush(Color.FromArgb(255, 80, 80, 80));
 			return r;
