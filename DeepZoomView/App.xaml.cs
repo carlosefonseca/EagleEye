@@ -54,8 +54,9 @@ namespace DeepZoomView
             try
             {
                 string errorMsg = e.ExceptionObject.Message + e.ExceptionObject.StackTrace;
-                errorMsg = errorMsg.Replace('"', '\'').Replace("\r\n", @"\n");
-
+                errorMsg = errorMsg.Replace('"', '\'').Replace("\r\n", Environment.NewLine);
+				
+				System.Windows.Browser.HtmlPage.Window.Alert(errorMsg);
                 System.Windows.Browser.HtmlPage.Window.Eval("throw new Error(\"Unhandled Error in Silverlight 2 Application " + errorMsg + "\");");
             }
             catch (Exception)
