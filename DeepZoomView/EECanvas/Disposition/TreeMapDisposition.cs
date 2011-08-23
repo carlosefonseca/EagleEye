@@ -91,6 +91,11 @@ namespace DeepZoomView.EECanvas.Dispositions
 #pragma warning disable
 
 		public static RectWithRects TreeMap(IEnumerable<Group> groups, RectWithRects rect)
+		{
+			return TreeMap(groups, rect, true);
+		}
+
+		public static RectWithRects TreeMap(IEnumerable<Group> groups, RectWithRects rect, Boolean throwException)
         {
             if (groups.Count() == 1 && rect.Fits(groups.First().images.Count))
             {
@@ -106,7 +111,7 @@ namespace DeepZoomView.EECanvas.Dispositions
             if (!rect.Fits(groups.First().images.Count))
             {
                 if (DEBUG_TREEMAP) Debug.WriteLine(id + ": !!! Group doesn't fit on the space...");
-                throw new NotEnoughSpaceException();
+                if (throwException) throw new NotEnoughSpaceException();
                 return rect;
             }
 
@@ -136,6 +141,7 @@ namespace DeepZoomView.EECanvas.Dispositions
             {
                 throw new NotImplementedException();
             }
+			
             d = CalculateSideFilling(groups.Take(n), fixedSide);
             if (DEBUG_TREEMAP) Debug.WriteLine("{0}: First MakeRect({1}) Waste:{2} Width:{3} AR:{4}", id, fixedSide, d.wastedSpace, d.calculatedSideLength, d.aspectRatioAverage);
             do
@@ -149,6 +155,7 @@ namespace DeepZoomView.EECanvas.Dispositions
                 d = CalculateSideFilling(groups.Take(n), fixedSide);
                 if (DEBUG_TREEMAP) Debug.WriteLine("{0}: MakeRect({1}/{2}) > Waste:{3} Width:{4} AR:{5}", id, n, groups.Count(), d.wastedSpace, d.calculatedSideLength, d.aspectRatioAverage);
 
+//				if (Math.Abs(rect.AspectRatio - prevD.aspectRatioAverage) < Math.Abs(rect.AspectRatio - d.aspectRatioAverage))
                 if (prevD.aspectRatioAverage < d.aspectRatioAverage)
                 {
                     break;	// If the new calculation yields a larger A.R., use the previous one.
@@ -218,7 +225,7 @@ namespace DeepZoomView.EECanvas.Dispositions
                     if (restOfGroups.Count() > 0)
                     {
                         if (DEBUG_TREEMAP) Debug.WriteLine("{0}: starting treemap on the rest...", id);
-                        rest = TreeMap(restOfGroups, rest);
+                        rest = TreeMap(restOfGroups, rest, throwException);
                         if (DEBUG_TREEMAP) Debug.WriteLine("{0}: treemap ended: {1}", id, rest);
                         rect.Add(rest);
                     }
@@ -238,7 +245,7 @@ namespace DeepZoomView.EECanvas.Dispositions
                     if (restOfGroups.Count() > 0)
                     {
                         if (DEBUG_TREEMAP) Debug.WriteLine("{0}: starting treemap...", id);
-                        rest = TreeMap(restOfGroups, rest);
+                        rest = TreeMap(restOfGroups, rest, throwException);
                         if (DEBUG_TREEMAP) Debug.WriteLine("{0}: treemap ended: {1}", id, rest);
                         rect.Add(rest);
                     }
@@ -265,7 +272,7 @@ namespace DeepZoomView.EECanvas.Dispositions
             if (groupsThatFit.Count() != 0)
             {
                 if (DEBUG_TREEMAP) Debug.WriteLine("#### Trying to place {0} groups on wasted space ({1})", groupsThatFit.Count(), space);
-                return TreeMap(groupsThatFit, rect);
+                return TreeMap(groupsThatFit, rect, false);
             }
             else
             {
