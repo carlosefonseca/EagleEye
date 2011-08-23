@@ -1292,6 +1292,7 @@ namespace DeepZoomView
 				NewCanvasDispositionFromUI(displaySetting, filter.Distinct());
 			}
 			SearchField.Dirty = false;
+			ShowAllContent();
 		}
 
 		/// <summary>
