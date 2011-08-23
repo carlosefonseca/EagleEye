@@ -135,7 +135,7 @@ namespace DeepZoomView
 
 
 			IEnumerable<KeyValuePair<DateTime, List<int>>> ordered = filteredDataWithStacks;
-			Dictionary<int, DateTime> iData = invertedDataWithStacks.Union(invertedData).ToDictionary(kv => kv.Key, kv=>kv.Value);
+			Dictionary<int, DateTime> iData = invertedDataWithStacks.Union(invertedData).ToDictionary(kv => kv.Key, kv => kv.Value);
 			return filteredDataWithStacks.Select(kv => new KeyValuePair<String, List<int>>(kv.Key.ToShortDateString(), kv.Value.OrderBy(i => iData[i]).ToList())).ToList();
 		}
 
