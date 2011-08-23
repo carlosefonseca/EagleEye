@@ -75,14 +75,17 @@ namespace DeepZoomView.Controls
 		public void SetActive(String btnText)
 		{
 			button.Content = btnText;
-			button.IsChecked = true;	
+			button.IsChecked = true;
 		}
 
-		private void SetDefault()
+		public void SetDefault()
 		{
-			button.Content = defaultButtontext;
-			button.IsChecked = false;
-			SelectionCleared(this, null);
+			if ((button.IsChecked.HasValue && button.IsChecked.Value != false) || !button.IsChecked.HasValue)
+			{
+				button.Content = defaultButtontext;
+				button.IsChecked = false;
+				SelectionCleared(this, null);
+			}
 		}
 	}
 }

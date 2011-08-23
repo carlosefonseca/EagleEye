@@ -1323,6 +1323,7 @@ namespace DeepZoomView
 		private void Apply_Click(object sender, RoutedEventArgs e)
 		{
 			UpdateView();
+			selectionsButton.SetDefault();
 		}
 	}
 }
