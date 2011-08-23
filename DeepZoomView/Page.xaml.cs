@@ -216,7 +216,7 @@ namespace DeepZoomView
 				else if (mouseMode == MouseMode.GroupSelect && canvasItemUnderTheMouse != null)
 				{
 					Group g = currentDisplay.Organization.GetGroupContainingKey(canvasItemUnderTheMouse.ImageId);
-					IEnumerable<CanvasItem> cil = g.images.Select(i => CurrentCanvas.items[i]);
+					IEnumerable<CanvasItem> cil = g.images.Intersect(CurrentCanvas.items.Keys).Select(i => CurrentCanvas.items[i]);
 
 					FilterButton b = SearchField.NewButtonAtEnd("Group " + g.name);
 					b.type = "Selection";
@@ -1261,21 +1261,31 @@ namespace DeepZoomView
 				first = false;
 			}
 
-			IEnumerable<FilterButton> selectionButtons = SearchField.FilterButtons.Where(f => f.type.CompareTo("Selection") == 0);
+			IEnumerable<FilterButton> selectionButtons = SearchField.FilterButtons.Where(f => f.type.CompareTo("Selection") == 0 || f.type.CompareTo("Selected") == 0);
 			if (selectionButtons.Count() > 0)
 			{
 				Selection selectedItems;
 				if (selectionButtons.Count() > 1)
 				{
-					selectedItems = new Selection(selectionButtons.SelectMany(f => (Selection)f.relatedObject));
-					SearchField.RemoveButtons(selectionButtons.Skip(1));
-					selectionButtons.First().relatedObject = selectedItems;
-					selectionButtons.First().Text = selectedItems.Count + " items";
+					FilterButton resultButton = selectionButtons.FirstOrDefault(f => f.type.CompareTo("Selected") == 0);
+					if (resultButton == null)
+					{
+						resultButton = SearchField.NewButtonAtEnd("");
+						resultButton.type = "Selected";
+					}
+					IEnumerable<FilterButton> newSelections = selectionButtons.Where(f => f != resultButton);
+
+					selectedItems = new Selection(newSelections.SelectMany(f => (Selection)f.relatedObject));
+					SearchField.RemoveButtons(newSelections);
+					resultButton.relatedObject = selectedItems;
+					resultButton.Text = selectedItems.Count + " items";
 				}
 				else
 				{
 					selectedItems = (Selection)selectionButtons.First().relatedObject;
+					selectionButtons.First().type = "Selected";
 				}
+				
 
 				IEnumerable<int> selectedIds = selectedItems.SelectMany(c => c.getAllIds());
 				if (filter.Count() != 0)
