@@ -256,7 +256,7 @@ namespace DeepZoomView.EECanvas
 				}
 				else
 				{
-					y += (currentImage.AspectRatio - 1) / 2;
+					y += (1 - (1 / currentImage.AspectRatio)) / 2;
 				}
 
 				newWidth = Math.Max(side, side / currentImage.AspectRatio);
