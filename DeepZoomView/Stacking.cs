@@ -10,6 +10,7 @@ using System.Windows.Media.Animation;
 using System.Windows.Shapes;
 using System.Collections.Generic;
 using System.Linq;
+using System.Diagnostics;
 
 namespace DeepZoomView
 {
@@ -36,7 +37,7 @@ namespace DeepZoomView
             // for each image, compares with previous
             foreach (KeyValuePair<int, DateTime> pair in sortedTimes)
             {
-                if (last.Value.AddSeconds(delta).CompareTo(pair.Value) >= 0)
+                if (pair.Value.Year != 1 && last.Value.AddSeconds(delta).CompareTo(pair.Value) >= 0)
                 {
                     if (!isInGroup)
                     {
