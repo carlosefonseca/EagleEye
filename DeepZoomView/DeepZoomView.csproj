@@ -13,13 +13,13 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>DeepZoomView</RootNamespace>
-    <AssemblyName>DeepZoomView</AssemblyName>
+    <AssemblyName>EagleEye</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <SilverlightApplication>true</SilverlightApplication>
     <SupportedCultures>
     </SupportedCultures>
     <XapOutputs>true</XapOutputs>
-    <GenerateSilverlightManifest>true</GenerateSilverlightManifest>
+    <GenerateSilverlightManifest>false</GenerateSilverlightManifest>
     <XapFilename>DeepZoomView.xap</XapFilename>
     <SilverlightManifestTemplate>Properties\AppManifest.xml</SilverlightManifestTemplate>
     <SilverlightAppEntry>DeepZoomView.App</SilverlightAppEntry>
