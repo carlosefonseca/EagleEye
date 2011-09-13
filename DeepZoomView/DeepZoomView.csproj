@@ -19,8 +19,8 @@
     <SupportedCultures>
     </SupportedCultures>
     <XapOutputs>true</XapOutputs>
-    <GenerateSilverlightManifest>false</GenerateSilverlightManifest>
-    <XapFilename>DeepZoomView.xap</XapFilename>
+    <GenerateSilverlightManifest>true</GenerateSilverlightManifest>
+    <XapFilename>EagleEye.xap</XapFilename>
     <SilverlightManifestTemplate>Properties\AppManifest.xml</SilverlightManifestTemplate>
     <SilverlightAppEntry>DeepZoomView.App</SilverlightAppEntry>
     <TestPageFileName>TestPage.html</TestPageFileName>
@@ -29,7 +29,7 @@
     <ThrowErrorsInValidation>false</ThrowErrorsInValidation>
     <EnableOutOfBrowser>true</EnableOutOfBrowser>
     <OutOfBrowserSettingsFile>Properties\OutOfBrowserSettings.xml</OutOfBrowserSettingsFile>
-    <SignAssembly>true</SignAssembly>
+    <SignAssembly>false</SignAssembly>
     <AssemblyOriginatorKeyFile>key.pfx</AssemblyOriginatorKeyFile>
     <FileUpgradeFlags>
     </FileUpgradeFlags>

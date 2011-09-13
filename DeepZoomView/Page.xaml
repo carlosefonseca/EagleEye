@@ -364,9 +364,14 @@
 
 
 
-
+            <!--<MultiScaleImage x:Name="msi" Grid.Row="1" Grid.Column="1" Source="Z:/collection.xml" Canvas.ZIndex="0"/>-->
+            <!--<MultiScaleImage x:Name="msi" Grid.Row="1" Grid.Column="1" Source="./collection.xml" Canvas.ZIndex="0"/>-->
             <MultiScaleImage x:Name="msi" Grid.Row="1" Grid.Column="1" Source="C:/SmallDB/collection.xml" Canvas.ZIndex="0"/>
 
+            
+            
+            
+            
             <Canvas Grid.Row="1" Grid.Column="1" Canvas.ZIndex="10" >
                 <Canvas Name="Overlays">
                     <Canvas.RenderTransform>
