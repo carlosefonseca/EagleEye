@@ -33,5 +33,15 @@ namespace DeepZoomView {
 	
 			invertedData[k] = p;
 		}
+
+		public override Group GetGroupContainingKey(int k)
+		{
+			String id = this.Id(k);
+			if (!String.IsNullOrEmpty(id))
+			{
+				return ListOfGroups.First(g => id.StartsWith(g.name));
+			}
+			return null;
+		}
 	}
 }
