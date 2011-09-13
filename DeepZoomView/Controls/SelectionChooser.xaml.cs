@@ -23,7 +23,6 @@ namespace DeepZoomView.Controls
 		public SelectionChooser()
 		{
 			InitializeComponent();
-			defaultButtontext = (String)button.Content;
 		}
 
 		private void showPopup_Click(object sender, RoutedEventArgs e)
@@ -41,6 +40,7 @@ namespace DeepZoomView.Controls
 				}
 				else
 				{
+					defaultButtontext = (String)button.Content;
 					popup.IsOpen = true;
 					popuplist.Width = button.ActualWidth;
 					popuplist.SelectedIndex = -1;
