@@ -80,7 +80,7 @@ namespace DeepZoomView.Controls
 
 		public void SetDefault()
 		{
-			if ((button.IsChecked.HasValue && button.IsChecked.Value != false) || !button.IsChecked.HasValue)
+			//if ((button.IsChecked.HasValue && button.IsChecked.Value != false) || !button.IsChecked.HasValue)
 			{
 				button.Content = defaultButtontext;
 				button.IsChecked = false;
