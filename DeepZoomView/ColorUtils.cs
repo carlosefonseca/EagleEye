@@ -35,8 +35,7 @@ namespace ColorUtils
 
 		public static String HueToName(int h, int spread)
 		{
-			int hue = Convert.ToInt16(Math.Round(
-														(h % Math.Ceiling(360 - (spread / 2)))
+			int hue = Convert.ToInt16(Math.Round(		(h % Math.Ceiling(360 - (spread / 2)))
 														/ spread) * spread);
 			switch (hue)
 			{
@@ -48,9 +47,10 @@ namespace ColorUtils
 				case 150: return "Blueish-Green";
 				case 180: return "Cyan";
 				case 210: return "Light Blue";
-				case 240: return "Violet";
-				case 270: return "Pink";
-				case 300: return "Fuchsia";
+				case 240: return "Blue";
+				case 270: return "Purple";
+				case 300: return "Violet";
+				case 330: return "Pink";
 				default: return "Hue " + hue;
 			}
 		}
