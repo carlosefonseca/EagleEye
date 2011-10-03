@@ -383,9 +383,9 @@ namespace DeepZoomView
 
 		private void Zoom(Double newzoom, Point p)
 		{
-			/*if (newzoom < 1) {
+			if (newzoom < 1) {
 				ShowAllContent();
-			} else*/
+			} else
 			{
 				msi.ZoomAboutLogicalPoint(newzoom / zoom, p.X, p.Y);
 				zoom = newzoom;
